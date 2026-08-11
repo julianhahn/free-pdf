@@ -1,0 +1,16 @@
+[package]
+name = "core_engine"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+# Only the formats the project actually takes in. The default feature set also
+# builds AVIF, EXR, QOI and friends, which nothing here reads or writes.
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+# default-features = false skips printpdf's HTML/SVG layout engine (azul), which
+# this project does not need. "jpeg" is what lets the embedded scans be
+# JPEG-compressed instead of stored as raw pixels.
+printpdf = { version = "0.12", default-features = false, features = ["jpeg"] }

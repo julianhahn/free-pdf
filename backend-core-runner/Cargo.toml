@@ -1,0 +1,13 @@
+[package]
+name = "backend-core-runner"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# No image crate here on purpose: the runner uses the types the engine
+# re-exports, so both sides can never disagree on the version.
+core_engine = { path = "../core_engine" }
+
+[dev-dependencies]
+# The HEIC test builds its own test photo, which needs an encoder.
+image = { version = "0.25", default-features = false, features = ["jpeg"] }
