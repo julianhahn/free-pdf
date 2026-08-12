@@ -3,7 +3,7 @@
 Photograph the pages of a paper document, get one clean PDF. Everything happens on the
 device: no network calls anywhere, no account, no server.
 
-Two parts:
+Four parts:
 
 - **`core_engine`** (Rust) - all image and PDF work. One function per step.
 - **`ffi`** (Rust) - the one library file a phone app links into itself, and the two C
@@ -11,6 +11,9 @@ Two parts:
 - **clients** - the user interface. The client decides the order of the steps and shows
   each one. The first graphical client is the iPhone app; `backend-core-runner` is the
   command-line one, and it is how the engine gets exercised without a phone.
+- **`client-guide-design-system`** - how every client looks and behaves: the tokens, the
+  components with their states and their English and German words, and what a client may
+  decide for itself. Written once, rebuilt natively per client.
 
 The engine offers single tools; the client owns the order. Nothing runs by itself, so the
 user can step in at any point: find the sheet, straighten it, brighten it, sharpen it -

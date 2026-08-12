@@ -8,6 +8,32 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-12 - the client can reach almost none of the engine, and now there is a plan for it
+
+The iOS client calls one fixed chain and nothing else: sixteen engine capabilities - grey,
+levels, sharpen, straighten, crop, rotate, paper finding, page size, resolution - have no
+control anywhere in the app. `user-flows.md` is now every flow the app should have, with the
+control each tool gets, and twelve open questions Julian decided in one pass (adjust after
+the automatic run on a page he can see, no live preview, all three deletions ask, the PDF can
+be named before sharing, a finished scan can take another page; A4, the resolution cap, the
+corner thumbnail and photo-library import stay unbuilt).
+
+`design/` holds the brief and what Claude Design returned. `storybook/` is where a component
+is approved before anyone writes Swift: plain HTML and CSS, Storybook on html-vite, and the
+same three components twice - the iPhone system look against the editorial theme.
+
+Then the decision that reshaped it: **there will be more than one client, so the style is
+defined once and rebuilt natively per client, for recognizability**. That rules out the
+system look as the source - a system look is by definition not recognizable. So
+`client-guide-design-system/` is now the single source of truth for how a client looks:
+tokens, components with their states and their English and German words, and what a client
+agent may decide for itself. Behaviour still belongs to `user-flows.md`.
+
+Not decided yet: the theme itself. Editorial is a proposal, and it is a reading aesthetic -
+serif faces and hairline gold - in an app that is mostly camera, thumb and sliders in bad
+light. The shutter and the destructive button are where that shows, which is why they are in
+Storybook rather than in an argument.
+
 ## 2026-08-12 - milestone 6: the export shrank to one line
 
 `ShareLink(item: scan.pdf)` on the done screen, `Scan.deletePhotos()` and `Scan.photoBytes`
