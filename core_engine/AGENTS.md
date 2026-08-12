@@ -1,0 +1,84 @@
+# core_engine
+
+All image and PDF work lives here. This crate takes images and paths and gives back images and
+sentences: no UI, no decision about the order of the steps.
+
+## How a new function looks like the old ones
+
+- Every module opens with a `//!` header saying why it exists at all. Every public function
+  gets a `///` block; a fallible one adds the `- Parameters:` / `- Returns:` pair, and the
+  `- Returns:` line describes the error in words (`rotate` in `src/tools.rs`).
+- Comments say WHY. When a number was chosen by measuring, the measurement goes in the
+  comment: `CLEAR_LINES` in `src/deskew.rs` carries "a photographed invoice scores 91 ... a
+  blank sheet lit unevenly 0.007".
+- Every tuning number is a named `const` with a doc comment. A bare number in an expression
+  cannot be found again when someone has to retune it against real photos.
+- The error String names the path or the offending value: `"A 50x10 crop at (180, 0) does not
+  fit inside the 200x300 image."` Wrapping a cause keeps one shape and no full stop, because
+  the cause ends the sentence: `Failed to write the PDF to {}: {}`.
+- No `unwrap()`, `expect()`, `panic!`, `unsafe`, no threads, no global state. `src/` has none
+  today, and a panic across the planned C boundary is undefined behaviour.
+
+## Suggest, then apply
+
+Anything automatic is two functions: the measure half returns plain data and cannot fail, the
+act half takes that same data as a parameter. `suggest_levels` / `apply_levels`,
+`find_paper` -> `Paper::corners` -> `deskew(img, corners)`. A new tool follows that shape. One
+function that finds its own parameters and applies them leaves the user no point to look at
+the proposal and move it.
+
+## Refuse instead of guess
+
+- A measure function that is unsure returns the do-nothing answer, never a guess: `find_paper`
+  returns `None`, `suggest_straightening` returns `0.0`. Doing nothing is visible and
+  reversible, a damaged picture is not.
+- An act function refuses input that does not fit instead of clamping it: `crop` refuses a box
+  outside the image, `rotate` a free angle, `straighten` more than `MOST_TILT`. A silently
+  shrunk result looks like the tool ignored the user.
+- Ask `Paper::runs_off_the_picture()` before deskewing. Those corners are only where the paper
+  leaves the frame, and pulling them into a rectangle bends the picture.
+
+## What the public API costs
+
+`src/lib.rs` is the whole contract: the `pub use` block is the list clients and the planned C
+wrapper call by name. Take and return the re-exported `DynamicImage`, so clients need no
+dependency on the `image` crate and can never link a different version than the engine. Only
+`load_image` reads a file and only `images_to_pdf` writes one; everything else is image in,
+image out, which is what lets the client rerun one step. Do not add a dependency.
+
+## pdf.rs: two ways into a PDF
+
+`images_to_pdf` takes the images themselves, which is what the command line runner holds.
+`save_page` writes one finished page as a JPEG and `pages_to_pdf` takes a list of those
+paths, which is the only shape under which a phone can name forty pages without holding
+them. Both write `<name>.part`, flush, `sync_all` and then rename, because a half-written
+file must never wear a real name. Both paths end in `place(id, px_w, px_h)`, so the fit and
+centre maths exists once.
+
+`images_to_pdf`, `to_raw_image`, `save_options` and `JPEG_QUALITY` stay untouched; two tests
+assert the size of what they write. `JPEG_QUALITY = 0.85` and the forced
+`ImageCompression::Jpeg` belong together: left alone, printpdf picks lossless LZW for grey,
+and a greyed scan grew from 107 KB to 347 KB. `PAGE_JPEG_QUALITY = 85` is the same quality in
+the scale the page encoder counts in, and the two have to keep agreeing.
+
+Why the page path exists at all, so nobody simplifies it away later:
+
+- `save_page` writes the page, rather than the client, for two reasons. Its bytes have to be
+  exactly the stream the PDF later embeds, or every page is compressed twice; and a PDF
+  ignores the camera rotation tag, so a page written by the phone's own image code lands
+  sideways.
+- `pages_to_pdf` takes a list of *paths* and hands each JPEG to the PDF untouched, never
+  decoding a page. Forty pages through `images_to_pdf` peak around 3.1 GB, and iOS kills an
+  app around 1.4 GB on a 3 GB phone; the path form keeps the peak near 140 MB, growing about
+  2 MB a page instead of about 70.
+- `page_files_go_into_the_pdf_without_being_decoded` is the only thing watching that. A
+  silently re-encoded page still opens and still looks right, so no other assertion can see
+  it - and it only works because the page it checks is noise
+  ([tests/AGENTS.md](./tests/AGENTS.md)).
+
+## Limits, not bugs
+
+Finding the sheet goes by brightness, so a document on a white desk breaks it. That is recorded
+as a `ponytail:` note in `src/paper.rs` with the way up; do not paper over it with a threshold.
+HEIC decoding stays out of this crate, the client's own system does it. And widening
+`MOST_TILT` is not how a page held sideways gets fixed; that is `rotate`.

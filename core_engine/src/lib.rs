@@ -10,7 +10,7 @@ pub mod tools;
 
 pub use deskew::{deskew, straighten, suggest_straightening};
 pub use paper::{find_paper, Paper, Point, Rect};
-pub use pdf::images_to_pdf;
+pub use pdf::{images_to_pdf, pages_to_pdf, save_page};
 pub use tools::{apply_levels, crop, rotate, sharpen, suggest_levels, to_grayscale, Levels};
 
 /// Re-exported so clients do not have to depend on the `image` crate themselves,

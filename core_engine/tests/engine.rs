@@ -5,8 +5,9 @@
 //! broken, and this is the part a client cannot work around.
 
 use core_engine::{
-    apply_levels, crop, deskew, find_paper, images_to_pdf, load_image, rotate, sharpen, straighten,
-    suggest_levels, suggest_straightening, to_grayscale, DynamicImage, Levels,
+    apply_levels, crop, deskew, find_paper, images_to_pdf, load_image, pages_to_pdf, rotate,
+    save_page, sharpen, straighten, suggest_levels, suggest_straightening, to_grayscale,
+    DynamicImage, Levels,
 };
 use image::{Rgb, RgbImage};
 use std::path::PathBuf;
@@ -118,6 +119,78 @@ fn refuses_to_write_a_pdf_without_pages() {
 
     assert!(images_to_pdf(&[], &out).is_err());
     assert!(!out.exists(), "an empty PDF was written anyway");
+}
+
+/// Pseudo-random pixels, because a page has to be able to *fail* the check that
+/// it went into the PDF untouched.
+///
+/// A JPEG of a smooth picture survives being decoded and encoded again byte for
+/// byte, so the same test on [`test_image`] passes on exactly the mistake it is
+/// there to catch. Measured on one round trip: of this page's 3,034,201 bytes
+/// 3,018,895 change, of a gradient's not one.
+fn noise_page(width: u32, height: u32) -> DynamicImage {
+    let mut img = RgbImage::new(width, height);
+    // xorshift, so the picture is the same on every run without a dependency.
+    let mut seed = 0x2545_F491_u32;
+    for pixel in img.pixels_mut() {
+        seed ^= seed << 13;
+        seed ^= seed >> 17;
+        seed ^= seed << 5;
+        *pixel = Rgb([(seed >> 8) as u8, (seed >> 16) as u8, (seed >> 24) as u8]);
+    }
+    DynamicImage::ImageRgb8(img)
+}
+
+#[test]
+fn page_files_go_into_the_pdf_without_being_decoded() {
+    let dir = temp_path("pages");
+    std::fs::create_dir_all(&dir).expect("could not create the page directory");
+    let (mut pages, mut jpeg_bytes) = (Vec::new(), 0u64);
+    for n in 0..12 {
+        // Page 0 is the one read back byte for byte below. Page 11 is grey,
+        // which is the other colour space the PDF can be told about.
+        let img = match n {
+            0 => noise_page(400, 500),
+            11 => to_grayscale(&test_image(1200, 1600)),
+            _ => test_image(1200, 1600),
+        };
+        let page = dir.join(format!("{n:04}.jpg"));
+        save_page(&img, &page).expect("writing the page failed");
+        jpeg_bytes += std::fs::metadata(&page).expect("no page written").len();
+        pages.push(page);
+    }
+    let out = temp_path("pages.pdf");
+
+    pages_to_pdf(&pages, &out).expect("writing the PDF failed");
+
+    let pdf = std::fs::read(&out).expect("the PDF was not written");
+    let page = std::fs::read(&pages[0]).expect("no page written");
+    // Find where the page sits by a slice out of its middle - the first bytes of
+    // a JPEG are its header and every page here has the same one - then compare
+    // the whole page against it.
+    let probe = &page[page.len() / 2..page.len() / 2 + 32];
+    let found = pdf
+        .windows(32)
+        .position(|window| window == probe)
+        .expect("the page is not in the PDF at all");
+    assert_eq!(
+        &pdf[found - page.len() / 2..found - page.len() / 2 + page.len()],
+        &page[..],
+        "the page was re-encoded on the way into the PDF"
+    );
+    assert!(
+        pdf.windows(10).any(|window| window == b"DeviceGray"),
+        "the grey page did not stay grey"
+    );
+    // 12 raw RGB pages would be 69 MB. What may sit on top of the pages
+    // themselves is a few kilobytes of PDF structure, nothing more.
+    let pdf_size = pdf.len() as u64;
+    assert!(
+        pdf_size > jpeg_bytes && pdf_size < jpeg_bytes + 16 * 1024,
+        "the PDF is {pdf_size} bytes, its 12 pages together {jpeg_bytes}"
+    );
+    assert!(pdf.ends_with(b"%%EOF"), "the PDF was cut off");
+    assert_eq!(parse_pdf(&pdf).pages.len(), 12);
 }
 
 #[test]
