@@ -24,7 +24,9 @@ that needed a Mac with iCloud on it. One line of code replaced a section.
 `photo/` survives `deletePhotos()` on purpose: every writer assumes the directory exists and
 `sweep()` only puts it back at the next launch, so a shot taken before that would fail.
 
-That was the last milestone. Nothing is scheduled; the README lists what is parked.
+That was the last milestone, and the manual check was walked on the iPhone 13 straight after
+it: shoot, share into Files, delete the photos, and the force-quit while aiming at the next
+page. Nothing is scheduled; the README lists what is parked.
 
 ## 2026-08-12 - milestone 5: the real camera, and the angle the plan got wrong
 

@@ -62,10 +62,11 @@ Riskiest thing first. Each milestone ends in something that runs, and every chec
 command. Full text: [plan section 7](./iphone-client-plan.md#7-build-order); the
 file-by-file list is [plan section 6](./iphone-client-plan.md#6-files).
 
-**Now: nothing is scheduled.** All six milestones are built. What is left is walking the
-manual check in [plan section 7](./iphone-client-plan.md#7-build-order) on a phone - five
-pages, force-quit while aiming at six, relaunch - and the parked items below, of which the
-10 degree engine bug is the one a real sheet of paper will hit.
+**Now: nothing is scheduled.** All six milestones are built, and the manual check in
+[plan section 7](./iphone-client-plan.md#7-build-order) was walked on an iPhone 13 on
+2026-08-12: shoot, share into Files, delete the photos, and the force-quit in the middle of
+shooting. What is left is the parked items below, of which the 10 degree engine bug is the
+one a real sheet of paper will hit.
 
 **The camera has seen a phone, once.** On an iPhone 13 on 2026-08-12 it shot a portrait
 sheet and the PDF came out upright, which settles `videoRotationAngle = 90` - the one number
