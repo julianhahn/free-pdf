@@ -9,3 +9,5 @@ test_images/
 # Xcode writes one person's window state, breakpoints and selected scheme in here.
 # The shared scheme under xcshareddata/ is the part that has to stay.
 xcuserdata/
+storybook/node_modules/
+storybook/storybook-static/
