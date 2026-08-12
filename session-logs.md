@@ -8,6 +8,24 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-12 - milestone 6: the export shrank to one line
+
+`ShareLink(item: scan.pdf)` on the done screen, `Scan.deletePhotos()` and `Scan.photoBytes`
+behind "Delete the 12 photos (78 MB)". Both checks still green.
+
+The plan had the app copy every finished scan into its own iCloud container by itself.
+**Julian's call: this is a tool, not an opinion about where his PDFs live** - he wants to
+move the PDF out, not to have it moved for him. The system share sheet already does that,
+Save to Files and iCloud Drive included, in his folder. Gone with it: the container, the
+iCloud entitlement (which a free personal team may not even be allowed), the
+copy-to-temp-then-rename dance, the `-2` suffix loop, the signed-out branch, and a check
+that needed a Mac with iCloud on it. One line of code replaced a section.
+
+`photo/` survives `deletePhotos()` on purpose: every writer assumes the directory exists and
+`sweep()` only puts it back at the next launch, so a shot taken before that would fail.
+
+That was the last milestone. Nothing is scheduled; the README lists what is parked.
+
 ## 2026-08-12 - milestone 5: the real camera, and the angle the plan got wrong
 
 `ios/FreePDF/CameraView.swift` is the camera: an `AVCaptureSession` on one queue of its

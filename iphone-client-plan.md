@@ -3,8 +3,9 @@
 One scan is one directory. The files in it are the only state. Nothing can disagree with
 the disk after a crash, because there is nothing else to disagree.
 
-Goal: photograph the pages of a document, get a clean PDF into iCloud, and be able to stop
-at any moment without losing a thing. Offline, no network calls anywhere.
+Goal: photograph the pages of a document, get a clean PDF he can share wherever he wants,
+and be able to stop at any moment without losing a thing. Offline, no network calls
+anywhere.
 
 ---
 
@@ -82,20 +83,17 @@ One thing this section had wrong is worth carrying forward as a warning: portrai
 the sensor's own landscape, so every page would have come out on its side; the angle has to
 be set, and on the preview's connection as well as the photo output's.
 
-### Export
+### Getting the PDF out
 
-```
-copy scan.pdf ─▶ <container>/<temp name>          (container root: invisible in Files)
-move           ─▶ <container>/Documents/Scan 2026-08-11 20.14.pdf     (atomic rename)
-```
+A `ShareLink` on `scan.pdf`, and that is the whole of it. The system sheet already has Save
+to Files - iCloud Drive included, in the folder he picks - plus AirDrop and Mail.
 
-`url(forUbiquityContainerIdentifier: nil)` off the main thread. A `-2` suffix loop covers
-two scans finished in the same minute. `copyItem`, not `setUbiquitous`: the move would
-consume the local file, and `scan.pdf` stays the record. Nothing waits for the upload — the
-system daemon finishes it with the app dead or the phone offline, so there is no progress
-bar and no background mode. Container nil (signed out, iCloud Drive off, out of quota) is
-one branch: keep the PDF local, show "iCloud is off, so the PDF is only on this iPhone."
-plus a `ShareLink`.
+The earlier plan uploaded every finished scan into the app's own iCloud container by
+itself. **Julian's call, 2026-08-12: this is a tool, not an opinion about where his PDFs
+live** - so nothing is uploaded unasked. That deleted the container, the iCloud entitlement
+(which a free personal team may not even have), the copy-to-temp-then-rename dance, the
+`-2` suffix loop for two scans finished in the same minute, the signed-out branch, and a
+check that needed a Mac with iCloud on it.
 
 Then, and only then, the quiet destructive button: **Delete the 40 photos (78 MB)**, size
 measured with `attributesOfItem`, asked every time, never remembered. Doing nothing is the
@@ -346,7 +344,6 @@ the three things worth knowing about a project file written by hand, are now in
 | `/Users/julianhahn/free-pdf/ios/FreePDF/FakeShoot.swift` | the camera stand-in: the drawn page and the `-autofake` launch argument. Not a screen any more, and it stays as long as nothing can tap a simulator |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/CameraView.swift` | session, preview, shutter, counter, `PageWriter` |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/FreePDFApp.swift` | `@main`, one `NavigationStack`, the launch sweep |
-| `/Users/julianhahn/free-pdf/ios/FreePDF/FreePDF.entitlements` | iCloud Documents only |
 | `/Users/julianhahn/free-pdf/ios/AGENTS.md` | the rules of the storage model and the screens, moved out of sections 2 and 3 |
 | `/Users/julianhahn/free-pdf/ios/check/main.swift` | the resume check, ten preconditions |
 | `/Users/julianhahn/free-pdf/ios/check/run.sh` | `swiftc` over `Scan.swift` + the check, then run it |
@@ -425,10 +422,9 @@ than reported through a closure: one continuation per press, resumed by whicheve
 AVFoundation callback comes first, which is what makes a photo that never arrives release
 the shutter instead of freezing it.
 
-**6 — iCloud and the photos.** `Scan.exportPDF()`, the done screen, entitlement and plist.
-Check: with iCloud signed in (`xcrun simctl icloud_sync booted` on the simulator),
-`find ~/Library/Mobile\ Documents -path '*iCloud~com~julianhahn~freepdf/Documents/*.pdf' -size +1k | grep . || echo FAIL`
-— on the Mac that only finds the file if it really went up.
+**6 — sharing and the photos.** A `ShareLink` on the done screen and `Scan.deletePhotos()`.
+Check: by hand on a phone - share the PDF into Files, open it there; then delete the photos
+and see the scan still open, still readable, still able to change its pages.
 
 ---
 
@@ -553,7 +549,7 @@ Manifest / SwiftData / Core Data. VisionKit (its delegate has no per-page hook, 
 at page 39 loses all 39 — that is the bug, not a shortcut). HEIC anywhere. Thumbnail files.
 Reorder and insert-in-the-middle. Renaming a scan. Per-page redo settings. Upload progress
 UI. Background execution. A settings screen or a remembered delete choice. The document
-picker as the normal destination. CloudKit. In-progress scans in iCloud. Landscape, iPad,
+picker as the normal destination. CloudKit. Uploading a finished scan by itself. Landscape, iPad,
 widgets, Shortcuts, photo-library import, OCR. UniFFI / swift-bridge / cbindgen /
 XCFramework / cdylib. `isExcludedFromBackup`. An XCTest target.
 
@@ -587,13 +583,11 @@ English is the source of truth in code. German is checked by hand, as always.
 | Check screen - primary button (was "Create PDF") | Make PDF | PDF erstellen |
 | Check screen - while the PDF is being written | Making the PDF… | PDF wird erstellt … |
 | Done screen - title | PDF ready | PDF fertig |
-| Done screen - where it went | In iCloud Drive › FreePDF › Scan 2026-08-11 20.14.pdf | In iCloud Drive › FreePDF › Scan 2026-08-11 20.14.pdf |
 | Done screen - button | Open PDF | PDF öffnen |
 | Done screen - button (this is "keep the photos too": doing nothing keeps them) | Done | Fertig |
 | Done screen - destructive action, quiet, below the two buttons (this is "keep only the PDF") | Delete the 40 photos (78 MB) | Die 40 Fotos löschen (78 MB) |
 | Done screen - line under that action | The PDF stays. Deleted photos cannot be brought back. | Das PDF bleibt. Gelöschte Fotos kann man nicht zurückholen. |
-| Done screen - iCloud is signed out, off, or full | iCloud is off, so the PDF is only on this iPhone. | iCloud ist aus, das PDF liegt nur auf diesem iPhone. |
-| Done screen - fallback button in that case (ShareLink) | Share PDF | PDF teilen |
+| Done screen - the export, and the only one there is (ShareLink) | Share PDF | PDF teilen |
 | Info.plist NSCameraUsageDescription - the ONLY place the word "document" is allowed, because there it means the paper in his hand | FreePDF uses the camera to photograph the pages of your document. | FreePDF nutzt die Kamera, um die Seiten deines Dokuments zu fotografieren. |
 | OPTIONAL, only if you want the final choice as an explicit two-way dialog instead of one quiet button - dialog title | Keep the photos? | Fotos behalten? |
 | OPTIONAL two-way dialog - keep option | Keep them (78 MB) | Behalten (78 MB) |

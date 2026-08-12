@@ -184,6 +184,27 @@ struct Scan: Hashable {
         }
     }
 
+    /// What the photos cost, for the sentence on the button that deletes them. Zero when
+    /// they are gone, which is also how the screen knows not to offer it twice.
+    var photoBytes: Int {
+        photos.reduce(0) { total, number in
+            let attributes = try? FileManager.default
+                .attributesOfItem(atPath: photoURL(number).path)
+            return total + (attributes?[.size] as? Int ?? 0)
+        }
+    }
+
+    /// Deletes the photos and keeps everything else - the pages, the PDF, and `photo/`
+    /// itself.
+    ///
+    /// The directory stays because every writer assumes it is there; `sweep()` would put
+    /// it back, but only at the next launch, and a shot taken before that would fail. What
+    /// is left is a scan with pages and no raw material, which `state` reads as finished
+    /// and `Change pages` can still work on - the pages are the work.
+    func deletePhotos() {
+        for number in photos { try? FileManager.default.removeItem(at: photoURL(number)) }
+    }
+
     /// Throws the whole scan away - photos, pages and PDF.
     ///
     /// Nothing is reported when it fails, because the list is read back from the disk

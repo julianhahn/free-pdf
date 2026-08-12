@@ -25,6 +25,8 @@ struct ScanFlow: View {
     /// this is what SwiftUI redraws on, and it is refreshed at every moment they change.
     @State private var photos: [Int] = []
     @State private var pages: [Int] = []
+    /// What the photos cost, read with them rather than on every redraw.
+    @State private var photoBytes = 0
     /// The page the carousel is on, by its number.
     @State private var showing = 0
     @State private var message: String?
@@ -243,12 +245,28 @@ struct ScanFlow: View {
             Button("Open PDF") { reading = true }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+            // The whole export. The system's own sheet has Save to Files - and with it
+            // iCloud Drive, in his folder rather than one this app picked - plus AirDrop
+            // and Mail. Nothing is uploaded behind his back and no entitlement is needed:
+            // this is a tool, not an opinion about where his PDFs live.
+            ShareLink(item: scan.pdf) { Text("Share PDF") }
             Button("Change pages") {
                 // Safe precisely because the PDF is derived: every page file is still
                 // there and rebuilding costs two seconds. Without it, a bad page spotted
                 // only after Make PDF would cost the whole scan.
                 try? FileManager.default.removeItem(at: scan.pdf)
                 refresh()
+            }
+            if photoBytes > 0 {
+                Button("Delete the \(photos.count) photos (\(megabytes))", role: .destructive) {
+                    scan.deletePhotos()
+                    refresh()
+                }
+                .padding(.top)
+                Text("The PDF stays. Deleted photos cannot be brought back.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
             }
         }
         .padding()
@@ -257,6 +275,11 @@ struct ScanFlow: View {
         .sheet(isPresented: $reading) {
             Reader(url: scan.pdf)
         }
+    }
+
+    /// "78 MB", in whatever the phone calls megabytes.
+    private var megabytes: String {
+        ByteCountFormatter.string(fromByteCount: Int64(photoBytes), countStyle: .file)
     }
 
     /// The finished PDF, read with the system's own PDF view. Nothing is copied and
@@ -281,6 +304,7 @@ struct ScanFlow: View {
     private func refresh() {
         photos = scan.photos
         pages = scan.pages
+        photoBytes = scan.photoBytes
         if !numbers.contains(showing) { showing = numbers.first ?? 0 }
     }
 }

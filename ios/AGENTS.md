@@ -114,6 +114,15 @@ redraw on, refreshed at every moment the files change, never a second truth.
   leaves the page merely unscanned, so the drain rebuilds it - never a fresh photo
   wearing a page made from the sheet before it, and never a page in the PDF he asked to
   be rid of.
+- **Getting the PDF out is a `ShareLink` and nothing else.** Save to Files, and with it
+  iCloud Drive in the folder he picks, plus AirDrop and Mail - all of it the system's,
+  none of it this app's. Nothing is uploaded unasked: **Julian's call, 2026-08-12 - this
+  is a tool, not an opinion about where his PDFs live** ([plan section
+  3](../iphone-client-plan.md#3-screens) says what that deleted).
+- **Deleting the photos keeps `photo/` itself.** Every writer assumes the directory is
+  there and `sweep()` only puts it back at the next launch, so a shot taken before that
+  would fail. The scan that is left - pages, no photos - reads as `.done`, and
+  `Change pages` still works on it, because the pages are the work.
 - **The sweep runs in `FreePDFApp.init`, not on the list screen.** The list comes back
   every time the user leaves a scan, and a sweep at that moment could delete the `.part`
   file the engine is writing right then.

@@ -62,22 +62,19 @@ Riskiest thing first. Each milestone ends in something that runs, and every chec
 command. Full text: [plan section 7](./iphone-client-plan.md#7-build-order); the
 file-by-file list is [plan section 6](./iphone-client-plan.md#6-files).
 
-**Now: milestone 6.** Export to iCloud Drive and the quiet "delete the photos" action.
-`Scan` still has no `exportPDF()`, and the done screen still has no "Delete the 40 photos".
-[Plan section 3](./iphone-client-plan.md#3-screens) is what is left of that section and
-holds it; everything the screens already do is next to them in
-[`ios/AGENTS.md`](./ios/AGENTS.md).
+**Now: nothing is scheduled.** All six milestones are built. What is left is walking the
+manual check in [plan section 7](./iphone-client-plan.md#7-build-order) on a phone - five
+pages, force-quit while aiming at six, relaunch - and the parked items below, of which the
+10 degree engine bug is the one a real sheet of paper will hit.
 
-Three things milestone 5 leaves for you. **The camera has now seen a phone, once.** On an
-iPhone 13 on 2026-08-12 it shot a portrait sheet and the PDF came out upright, which settles
-`videoRotationAngle = 90` - the one number in it that was triangulated rather than measured.
-What that run did not walk is the rest of the manual check in
-[plan section 7](./iphone-client-plan.md#7-build-order): five pages, force-quit while aiming
-at six, relaunch. **The 10 degree engine bug below is now reachable**: the drawn pages dodge
-it by being dead straight and real paper will not. And **one line of the plan's text is not
-built**: the corner thumbnail of the last shot, "Retake page 7" / "Seite 7 neu
-fotografieren". Retaking a page already works from the check screen, so it is parked below
-rather than lost.
+**The camera has seen a phone, once.** On an iPhone 13 on 2026-08-12 it shot a portrait
+sheet and the PDF came out upright, which settles `videoRotationAngle = 90` - the one number
+in the camera that was triangulated rather than measured. The commands that put a build on a
+phone are in [`ios/AGENTS.md`](./ios/AGENTS.md).
+
+Milestone 6 is deliberately smaller than it was written: the automatic upload into the app's
+own iCloud container is gone, and a `ShareLink` is the whole export
+([plan section 3](./iphone-client-plan.md#3-screens) says why and what that deleted).
 
 | # | State | What gets built | Check |
 | --- | --- | --- | --- |
@@ -86,7 +83,7 @@ rather than lost.
 | 3 | **done** | `ios/FreePDF/Scan.swift` plus `ios/check/`: the folder layout, the derived step, the sweep. Foundation only. ([rules](./ios/AGENTS.md)) | `bash ios/check/run.sh` -> "resume ok" (~2 s, no Xcode) |
 | 4 | **done** | The Xcode project and the app: list, flow, the scan loop, the two FFI calls, and the camera stand-in with its `-autofake` launch argument. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` -> "scan ok" (~3 min, "iPhone 17 Pro" simulator) |
 | 5 | **done** | `ios/FreePDF/CameraView.swift`: the session, the preview, the shutter and `PageWriter`. The stand-in lost its button and kept its drawing. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` still says "scan ok"; the camera itself is by hand: shoot 5 pages, force-quit while aiming at 6, relaunch - the row reads "5 pages - keep shooting" and the counter says "Page 6" |
-| 6 | **now** | Export to iCloud Drive, and the quiet "delete the photos" action. | With iCloud signed in, find the PDF under `~/Library/Mobile Documents` on the Mac - it only appears there if it really went up |
+| 6 | **done** | A `ShareLink` on the done screen, and `Scan.deletePhotos()` behind "Delete the 12 photos (78 MB)". The automatic iCloud upload was [dropped on purpose](./iphone-client-plan.md#3-screens). | By hand: share the PDF into Files and open it there; then delete the photos and see the scan still readable and still able to change its pages |
 
 ### Parked
 
