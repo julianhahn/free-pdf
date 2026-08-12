@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#EFEFF2;-webkit-font-smoothing:antialiased}
+a{color:#007AFF;text-decoration:none}
+a:hover{color:#0056B3}
+@media (max-width:1180px){section[data-spec]{grid-template-columns:1fr !important;gap:24px !important}}
+div[data-pair]>div{min-width:0}
+@media (max-width:820px){div[data-pair]{grid-template-columns:1fr !important}}
+@media (max-width:700px){body div[style*="padding:56px 40px"]{padding-left:20px !important;padding-right:20px !important}}
+dt{color:#8A8A8E}
+dd{margin:0}
+</style>
+</helmet>
+
+<div style="font-family:-apple-system,'SF Pro Text','Helvetica Neue',system-ui,sans-serif;background:#EFEFF2;min-height:100vh;padding:56px 40px 120px;color:#1C1C1E">
+<div style="max-width:1240px;margin:0 auto">
+
+<header style="margin-bottom:36px">
+  <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8A8A8E;margin-bottom:14px">FreePDF · iPhone, portrait · iOS 18 and up</div>
+  <h1 style="font-size:44px;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin:0 0 16px">Component specifications</h1>
+  <p style="font-size:16px;line-height:1.6;max-width:66ch;margin:0 0 10px;color:#3A3A3C;text-wrap:pretty">Twenty components, each named as the code will name it, in every state, light and dark. Sizes are in points at the Large (default) Dynamic Type setting; nothing is given a fixed height, so larger settings grow the component rather than clipping it. Every touch target is at least 44×44 pt. Every label leaves room for German, which runs about 30% longer.</p>
+  <p style="font-size:16px;line-height:1.6;max-width:66ch;margin:0;color:#8A8A8E;text-wrap:pretty">A scan is made of <em>pages</em>, a page starts as a <em>photo</em>, the finished result is <em>the PDF</em>. No control is icon-only. Nothing here implies a network.</p>
+</header>
+
+<div style="display:flex;flex-wrap:wrap;gap:0 28px;padding:20px 24px;background:#fff;border-radius:14px;margin-bottom:8px">
+  <div style="flex:1 1 220px;min-width:200px">
+    <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light palette</div>
+    <dl style="display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12.5px;line-height:1.45;margin:0"><dt>Background</dt><dd>#F2F2F7</dd><dt>Surface</dt><dd>#FFFFFF</dd><dt>Label</dt><dd>#1C1C1E</dd><dt>Secondary</dt><dd>#6C6C70</dd><dt>Separator</dt><dd>#C6C6C8</dd><dt>Tint</dt><dd>#007AFF</dd><dt>Destructive</dt><dd>#FF3B30</dd></dl>
+  </div>
+  <div style="flex:1 1 220px;min-width:200px">
+    <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark palette</div>
+    <dl style="display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12.5px;line-height:1.45;margin:0"><dt>Background</dt><dd>#000000</dd><dt>Surface</dt><dd>#1C1C1E</dd><dt>Label</dt><dd>#FFFFFF</dd><dt>Secondary</dt><dd>#98989F</dd><dt>Separator</dt><dd>#38383A</dd><dt>Tint</dt><dd>#0A84FF</dd><dt>Destructive</dt><dd>#FF453A</dd></dl>
+  </div>
+  <div style="flex:1 1 220px;min-width:200px">
+    <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Type</div>
+    <dl style="display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12.5px;line-height:1.45;margin:0"><dt>Large title</dt><dd>34 pt bold</dd><dt>Title 3</dt><dd>20 pt semibold</dd><dt>Headline</dt><dd>17 pt semibold</dd><dt>Body</dt><dd>17 pt regular</dd><dt>Subheadline</dt><dd>15 pt regular</dd><dt>Footnote</dt><dd>13 pt regular</dd><dt>Caption</dt><dd>12 pt regular</dd></dl>
+  </div>
+  <div style="flex:1 1 220px;min-width:200px">
+    <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Metrics</div>
+    <dl style="display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12.5px;line-height:1.45;margin:0"><dt>Side margin</dt><dd>20 pt</dd><dt>Row height</dt><dd>64 pt min</dd><dt>Corner, control</dt><dd>12 pt</dd><dt>Corner, card</dt><dd>14 pt</dd><dt>Min target</dt><dd>44 × 44 pt</dd></dl>
+  </div>
+</div>
+
+<!-- 01 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">01</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">PrimaryButton</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">The one action a screen is for: Make PDF, Open PDF, Share PDF, Scan 8 pages, Open Settings. Full width, sitting above the home indicator.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>50 pt tall, full width less 20 pt side margins, radius 12</dd>
+      <dt>Type</dt><dd>Headline 17 pt semibold, centred; wraps to two lines and the button grows</dd>
+      <dt>Light</dt><dd>Fill #007AFF, label #FFFFFF · disabled #E5E5EA / #AEAEB2</dd>
+      <dt>Dark</dt><dd>Fill #0A84FF, label #FFFFFF · disabled #2C2C2E / #5A5A5E</dd>
+      <dt>States</dt><dd>normal · pressed (fill at 80%, no scale) · disabled · busy with label</dd>
+      <dt>VoiceOver</dt><dd>“Make PDF, button”. Disabled: “Make PDF, dimmed, button”. Busy: “Making the PDF, in progress”.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px">
+        <div style="height:50px;border-radius:12px;background:#007AFF;color:#fff;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center">Make PDF</div>
+        <div style="height:50px;border-radius:12px;background:rgba(0,122,255,.8);color:#fff;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center">Make PDF</div>
+        <div style="height:50px;border-radius:12px;background:#E5E5EA;color:#AEAEB2;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center">Make PDF</div>
+        <div style="height:50px;border-radius:12px;background:#007AFF;color:#fff;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px"><span style="width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff"></span>Making the PDF…</div>
+        <div style="font-size:12px;color:#8A8A8E">normal · pressed · disabled · busy</div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px">
+        <div style="height:50px;border-radius:12px;background:#0A84FF;color:#fff;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center">Make PDF</div>
+        <div style="height:50px;border-radius:12px;background:rgba(10,132,255,.8);color:#fff;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center">Make PDF</div>
+        <div style="height:50px;border-radius:12px;background:#2C2C2E;color:#5A5A5E;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center">Make PDF</div>
+        <div style="height:50px;border-radius:12px;background:#0A84FF;color:#fff;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px"><span style="width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff"></span>Making the PDF…</div>
+        <div style="font-size:12px;color:#98989F">normal · pressed · disabled · busy</div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">02</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">PlainButton</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">The second action, under the primary one, and the text actions in bars and cards: Change pages, Cancel, Scan this page again.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>44 pt tall minimum, hugs its label, 16 pt padding each side</dd>
+      <dt>Type</dt><dd>Body 17 pt regular</dd>
+      <dt>Light</dt><dd>#007AFF · pressed #0056B3 · disabled #AEAEB2</dd>
+      <dt>Dark</dt><dd>#0A84FF · pressed #4DA6FF · disabled #5A5A5E</dd>
+      <dt>States</dt><dd>normal · pressed · disabled</dd>
+      <dt>VoiceOver</dt><dd>“Change pages, button”</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:6px">
+        <div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#007AFF">Change pages</div>
+        <div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#0056B3">Change pages</div>
+        <div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#AEAEB2">Change pages</div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:6px">
+        <div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#0A84FF">Change pages</div>
+        <div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#4DA6FF">Change pages</div>
+        <div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#5A5A5E">Change pages</div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">03</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">DestructiveButton</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">The quiet kind, at the foot of the done screen, with a footnote under it. Never a red fill: findable, not loud.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>44 pt tall, full width, centred; footnote 6 pt below, 20 pt side margins</dd>
+      <dt>Type</dt><dd>Body 17 pt · footnote 13 pt, centred, up to two lines</dd>
+      <dt>Light</dt><dd>#FF3B30 · pressed #C72C23 · footnote #6C6C70</dd>
+      <dt>Dark</dt><dd>#FF453A · pressed #FF7A72 · footnote #98989F</dd>
+      <dt>States</dt><dd>normal · pressed · absent — once the photos are gone the whole block including its footnote is removed, not dimmed</dd>
+      <dt>VoiceOver</dt><dd>“Delete the 40 photos, 78 megabytes, button.” Hint: “The PDF stays. Deleted photos cannot be brought back.”</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:18px">
+        <div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#FF3B30">Delete the 40 photos (78 MB)</div><div style="font-size:13px;line-height:1.35;color:#6C6C70;text-align:center">The PDF stays. Deleted photos cannot be brought back.</div></div>
+        <div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#C72C23">Delete the 40 photos (78 MB)</div><div style="font-size:13px;line-height:1.35;color:#6C6C70;text-align:center">The PDF stays. Deleted photos cannot be brought back.</div></div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:18px">
+        <div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#FF453A">Delete the 40 photos (78 MB)</div><div style="font-size:13px;line-height:1.35;color:#98989F;text-align:center">The PDF stays. Deleted photos cannot be brought back.</div></div>
+        <div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#FF7A72">Delete the 40 photos (78 MB)</div><div style="font-size:13px;line-height:1.35;color:#98989F;text-align:center">The PDF stays. Deleted photos cannot be brought back.</div></div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">04</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">TopBar</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">Back on the left, title in the middle, one trailing action or menu on the right. Three configurations cover the whole app.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>44 pt tall under the status bar, 16 pt side padding, hairline separator at the foot</dd>
+      <dt>Type</dt><dd>Title headline 17 pt semibold · actions body 17 pt; the Scans list uses the 34 pt large title instead</dd>
+      <dt>Light</dt><dd>Bar #F2F2F7 at 94% blur, title #1C1C1E, actions #007AFF, separator #C6C6C8</dd>
+      <dt>Dark</dt><dd>Bar #1C1C1E at 94% blur, title #FFFFFF, actions #0A84FF, separator #38383A</dd>
+      <dt>States</dt><dd>with back · without back · trailing action · trailing menu · trailing action disabled</dd>
+      <dt>VoiceOver</dt><dd>Back: “Scans, back”. Title is a heading. Menu: “Page, menu, button”.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#F2F2F7;border-bottom:1px solid #C6C6C8;height:44px;display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;padding:0 16px;white-space:nowrap;font-size:17px"><span style="color:#007AFF">‹ Scans</span><span style="font-weight:600">Page 3 of 12</span><span style="color:#007AFF;text-align:right">Page ⌄</span></div>
+        <div style="background:#F2F2F7;border-bottom:1px solid #C6C6C8;height:44px;display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;padding:0 16px;white-space:nowrap;font-size:17px"><span style="color:#007AFF">Cancel</span><span style="font-weight:600">Adjust page 3</span><span style="color:#007AFF;text-align:right;font-weight:600">Apply</span></div>
+        <div style="background:#F2F2F7;border-bottom:1px solid #C6C6C8;padding:8px 16px 12px;display:flex;justify-content:space-between;align-items:flex-end"><span style="font-size:34px;font-weight:700;letter-spacing:-.02em">Scans</span><span style="font-size:17px;color:#007AFF;padding-bottom:6px">New scan</span></div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;color:#fff">
+        <div style="background:#1C1C1E;border-bottom:1px solid #38383A;height:44px;display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;padding:0 16px;white-space:nowrap;font-size:17px"><span style="color:#0A84FF">‹ Scans</span><span style="font-weight:600">Page 3 of 12</span><span style="color:#0A84FF;text-align:right">Page ⌄</span></div>
+        <div style="background:#1C1C1E;border-bottom:1px solid #38383A;height:44px;display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;padding:0 16px;white-space:nowrap;font-size:17px"><span style="color:#0A84FF">Cancel</span><span style="font-weight:600">Adjust page 3</span><span style="color:#0A84FF;text-align:right;font-weight:600">Apply</span></div>
+        <div style="background:#1C1C1E;border-bottom:1px solid #38383A;padding:8px 16px 12px;display:flex;justify-content:space-between;align-items:flex-end"><span style="font-size:34px;font-weight:700;letter-spacing:-.02em">Scans</span><span style="font-size:17px;color:#0A84FF;padding-bottom:6px">New scan</span></div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">05</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">ScanRow</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">One scan in the list. The date is the title, because there is no renaming. One line of status under it, then a chevron. Swiping left reveals Delete.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>64 pt tall minimum, 20 pt side padding, 12 pt vertical, separator inset to 20 pt</dd>
+      <dt>Type</dt><dd>Title body 17 pt, tabular figures · status subheadline 15 pt · chevron 13 pt</dd>
+      <dt>Light</dt><dd>Row #FFFFFF, pressed #E5E5EA, title #1C1C1E, status #6C6C70, chevron #C6C6C8, delete fill #FF3B30</dd>
+      <dt>Dark</dt><dd>Row #1C1C1E, pressed #2C2C2E, title #FFFFFF, status #98989F, chevron #48484A, delete fill #FF453A</dd>
+      <dt>Status</dt><dd>No pages yet · 8 pages — keep shooting · 12 of 40 pages scanned · 40 pages — ready to check · 40 pages — PDF ready · 40 pages — PDF ready, photos deleted</dd>
+      <dt>States</dt><dd>normal · pressed · swiped open</dd>
+      <dt>VoiceOver</dt><dd>“11 August 2026 at 20:14, 40 pages, PDF ready, button.” Swipe action: “Delete, actions available”.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:10px;overflow:hidden">
+          <div style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #E5E5EA"><div><div style="font-size:17px;font-variant-numeric:tabular-nums">11 Aug 2026, 20:14</div><div style="font-size:15px;color:#6C6C70">40 pages — PDF ready</div></div><div style="color:#C6C6C8;font-size:15px">›</div></div>
+          <div style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #E5E5EA"><div><div style="font-size:17px;font-variant-numeric:tabular-nums">11 Aug 2026, 09:02</div><div style="font-size:15px;color:#6C6C70">12 of 40 pages scanned</div></div><div style="color:#C6C6C8;font-size:15px">›</div></div>
+          <div style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #E5E5EA;background:#E5E5EA"><div><div style="font-size:17px;font-variant-numeric:tabular-nums">10 Aug 2026, 17:40</div><div style="font-size:15px;color:#6C6C70">8 pages — keep shooting</div></div><div style="color:#C6C6C8;font-size:15px">›</div></div>
+          <div style="display:flex"><div style="flex:1;padding:12px 20px;transform:translateX(0)"><div style="font-size:17px;font-variant-numeric:tabular-nums">09 Aug 2026, 11:20</div><div style="font-size:15px;color:#6C6C70">No pages yet</div></div><div style="width:92px;background:#FF3B30;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center">Delete</div></div>
+        </div>
+        <div style="font-size:12px;color:#8A8A8E">normal · normal · pressed · swiped open</div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;color:#fff">
+        <div style="background:#1C1C1E;border-radius:10px;overflow:hidden">
+          <div style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #38383A"><div><div style="font-size:17px;font-variant-numeric:tabular-nums">11 Aug 2026, 20:14</div><div style="font-size:15px;color:#98989F">40 pages — PDF ready</div></div><div style="color:#48484A;font-size:15px">›</div></div>
+          <div style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #38383A"><div><div style="font-size:17px;font-variant-numeric:tabular-nums">11 Aug 2026, 09:02</div><div style="font-size:15px;color:#98989F">12 of 40 pages scanned</div></div><div style="color:#48484A;font-size:15px">›</div></div>
+          <div style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #38383A;background:#2C2C2E"><div><div style="font-size:17px;font-variant-numeric:tabular-nums">10 Aug 2026, 17:40</div><div style="font-size:15px;color:#98989F">8 pages — keep shooting</div></div><div style="color:#48484A;font-size:15px">›</div></div>
+          <div style="display:flex"><div style="flex:1;padding:12px 20px"><div style="font-size:17px;font-variant-numeric:tabular-nums">09 Aug 2026, 11:20</div><div style="font-size:15px;color:#98989F">No pages yet</div></div><div style="width:92px;background:#FF453A;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center">Delete</div></div>
+        </div>
+        <div style="font-size:12px;color:#98989F">normal · normal · pressed · swiped open</div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">06</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">EmptyState</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">Icon, headline, one paragraph. No button — the action is already in the top bar.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>Centred in the list area, 40 pt side margins, icon 44 pt, 16 pt to the headline, 8 pt to the paragraph</dd>
+      <dt>Type</dt><dd>Headline title 3 20 pt semibold · paragraph subheadline 15 pt, centred, max 3 lines at Large</dd>
+      <dt>Light</dt><dd>Icon #AEAEB2, headline #1C1C1E, paragraph #6C6C70</dd>
+      <dt>Dark</dt><dd>Icon #5A5A5E, headline #FFFFFF, paragraph #98989F</dd>
+      <dt>States</dt><dd>one only</dd>
+      <dt>VoiceOver</dt><dd>Read as one element: “No scans yet. Tap New scan and photograph the pages, one after another. You can stop whenever you like.” The icon is decorative and hidden.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:40px 34px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#AEAEB2" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6z"></path><path d="M15 2v4a2 2 0 0 0 2 2h4"></path></svg>
+        <div style="font-size:20px;font-weight:600">No scans yet</div>
+        <div style="font-size:15px;line-height:1.45;color:#6C6C70;max-width:34ch">Tap New scan and photograph the pages, one after another. You can stop whenever you like.</div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:40px 34px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px;color:#fff">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#5A5A5E" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6z"></path><path d="M15 2v4a2 2 0 0 0 2 2h4"></path></svg>
+        <div style="font-size:20px;font-weight:600">No scans yet</div>
+        <div style="font-size:15px;line-height:1.45;color:#98989F;max-width:34ch">Tap New scan and photograph the pages, one after another. You can stop whenever you like.</div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">07</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">ErrorBanner</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">One red sentence. Inline at the top of a list, or laid over the camera preview. It states what happened and what is still safe. It never blocks anything.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>Full width, 12 pt vertical / 20 pt side padding, wraps to as many lines as needed</dd>
+      <dt>Type</dt><dd>Subheadline 15 pt</dd>
+      <dt>Light</dt><dd>Inline: fill #FFEBEA, text #C72C23. Over camera: fill rgba(0,0,0,.72), text #FF6961</dd>
+      <dt>Dark</dt><dd>Inline: fill #3A1D1B, text #FF7A72. Over camera: identical to light</dd>
+      <dt>Variants</dt><dd>inline · over-preview</dd>
+      <dt>VoiceOver</dt><dd>Announced as an alert the moment it appears, then reachable in order: “Warning. Page 7 was not saved: the iPhone is out of storage. Nothing already photographed is lost.”</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#FFEBEA;color:#C72C23;font-size:15px;line-height:1.4;padding:12px 20px;border-radius:10px">The iPhone is out of storage. New pages cannot be saved.</div>
+        <div style="background:#3A3A3C;border-radius:10px;padding:0;overflow:hidden"><div style="background:rgba(0,0,0,.72);color:#FF6961;font-size:15px;line-height:1.4;padding:12px 20px">Page 7 was not saved: the iPhone is out of storage. Nothing already photographed is lost.</div><div style="height:52px"></div></div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#3A1D1B;color:#FF7A72;font-size:15px;line-height:1.4;padding:12px 20px;border-radius:10px">The iPhone is out of storage. New pages cannot be saved.</div>
+        <div style="background:#2C2C2E;border-radius:10px;overflow:hidden"><div style="background:rgba(0,0,0,.72);color:#FF6961;font-size:15px;line-height:1.4;padding:12px 20px">Page 7 was not saved: the iPhone is out of storage. Nothing already photographed is lost.</div><div style="height:52px"></div></div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">08</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">ConfirmDialog</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">Nothing is deleted without one of these. Title, body that says exactly what goes, destructive confirm, cancel. Three uses: a scan, a page, the photos.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>270 pt wide, centred; 20 pt padding; buttons 44 pt tall, split by hairlines</dd>
+      <dt>Type</dt><dd>Title headline 17 pt semibold · body footnote 13 pt · buttons body 17 pt, confirm regular, Cancel semibold</dd>
+      <dt>Light</dt><dd>Sheet #F7F7F7 blurred, backdrop black 20%, confirm #FF3B30, cancel #007AFF, hairlines #C6C6C8</dd>
+      <dt>Dark</dt><dd>Sheet #2C2C2E blurred, backdrop black 40%, confirm #FF453A, cancel #0A84FF, hairlines #48484A</dd>
+      <dt>States</dt><dd>one per use; Cancel is always the default and sits last</dd>
+      <dt>VoiceOver</dt><dd>Focus moves to the title on appear; the dialog traps focus. “Delete scan, button” carries the trait destructive.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#6f6f74;border:1px solid #D6D6DA;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px;align-items:center">
+        <div style="width:100%;max-width:270px;background:#F7F7F7;border-radius:14px;overflow:hidden;text-align:center"><div style="padding:19px 16px 15px"><div style="font-size:17px;font-weight:600;margin-bottom:4px">Delete this scan?</div><div style="font-size:13px;line-height:1.35;color:#1C1C1E">40 pages, the PDF and 40 photos go. This cannot be undone.</div></div><div style="height:1px;background:#C6C6C8"></div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#FF3B30">Delete scan</div><div style="height:1px;background:#C6C6C8"></div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#007AFF;font-weight:600">Cancel</div></div>
+        <div style="width:100%;max-width:270px;background:#F7F7F7;border-radius:14px;overflow:hidden;text-align:center"><div style="padding:19px 16px 15px"><div style="font-size:17px;font-weight:600;margin-bottom:4px">Delete this page?</div><div style="font-size:13px;line-height:1.35;color:#1C1C1E">The photo goes too. This cannot be undone.</div></div><div style="height:1px;background:#C6C6C8"></div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#FF3B30">Delete page</div><div style="height:1px;background:#C6C6C8"></div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#007AFF;font-weight:600">Cancel</div></div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#111;border:1px solid #38383A;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px;align-items:center;color:#fff">
+        <div style="width:100%;max-width:270px;background:#2C2C2E;border-radius:14px;overflow:hidden;text-align:center"><div style="padding:19px 16px 15px"><div style="font-size:17px;font-weight:600;margin-bottom:4px">Delete the 40 photos?</div><div style="font-size:13px;line-height:1.35">The PDF stays. Without the photos the pages can no longer be adjusted.</div></div><div style="height:1px;background:#48484A"></div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#FF453A">Delete photos</div><div style="height:1px;background:#48484A"></div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#0A84FF;font-weight:600">Cancel</div></div>
+        <div style="width:100%;max-width:270px;background:#2C2C2E;border-radius:14px;overflow:hidden;text-align:center"><div style="padding:19px 16px 15px"><div style="font-size:17px;font-weight:600;margin-bottom:4px">Delete this page?</div><div style="font-size:13px;line-height:1.35">The photo goes too. This cannot be undone.</div></div><div style="height:1px;background:#48484A"></div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#FF453A">Delete page</div><div style="height:1px;background:#48484A"></div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:17px;color:#0A84FF;font-weight:600">Cancel</div></div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">09</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">ShutterButton</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">The big round one. It sits 24 pt above the “Scan 8 pages” button and 96 pt above the bottom of the screen, inside the one-handed thumb arc. One press is one page: it goes disabled the instant it fires and comes back when the photo is written.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>72 pt outer ring (3 pt stroke), 60 pt inner disc, 6 pt gap</dd>
+      <dt>Light</dt><dd>Always on the camera's own dark chrome: ring #FFFFFF, disc #FFFFFF, pressed disc #D1D1D6 at 90%</dd>
+      <dt>Dark</dt><dd>Identical — the camera screen is dark in both appearances</dd>
+      <dt>States</dt><dd>normal · pressed (disc shrinks to 52 pt) · disabled while the photo is written (disc 40% opacity, no ring animation)</dd>
+      <dt>VoiceOver</dt><dd>“Photograph page 7, button.” Disabled: “Saving page 7, please wait.” Not icon-only: the label “Page 7” sits above it in the bar.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light and dark alike</div>
+      <div style="background:#1a1a1c;border:1px solid #D6D6DA;border-radius:14px;padding:26px;display:flex;gap:26px;align-items:center;justify-content:center">
+        <div style="width:72px;height:72px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center"><div style="width:60px;height:60px;border-radius:50%;background:#fff"></div></div>
+        <div style="width:72px;height:72px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center"><div style="width:52px;height:52px;border-radius:50%;background:#D1D1D6"></div></div>
+        <div style="width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center"><div style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.4)"></div></div>
+      </div>
+      <div style="font-size:12px;color:#8A8A8E;margin-top:8px">normal · pressed · disabled, photo being written</div>
+    </div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">In place, with its label and the end-shooting button</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:18px">
+        <div style="width:150px;height:200px;border-radius:6px;background:linear-gradient(#3a3a3c,#232325);border:1px solid #48484A"></div>
+        <div style="width:72px;height:72px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center"><div style="width:60px;height:60px;border-radius:50%;background:#fff"></div></div>
+        <div style="width:100%;height:50px;border-radius:12px;background:#0A84FF;color:#fff;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center">Scan 8 pages</div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">10</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">CameraPageTitle</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">The camera's title is the page the next shot will land on, so the count is always one ahead of what has been taken. It is the only counter on the screen; there is no corner thumbnail.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>Sits in the 44 pt top bar over the camera chrome, centred</dd>
+      <dt>Type</dt><dd>Headline 17 pt semibold, tabular figures, so the width does not jump from “Page 9” to “Page 10”</dd>
+      <dt>Light</dt><dd>#FFFFFF on the camera chrome #000000 at 60%</dd>
+      <dt>Dark</dt><dd>Identical</dd>
+      <dt>States</dt><dd>Page 1 · Page 7 · Page 40 (three digits fit without truncation)</dd>
+      <dt>VoiceOver</dt><dd>Heading: “Page 7. The next photo becomes page 7.”</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light and dark alike</div>
+      <div style="background:#1a1a1c;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px">
+        <div style="background:rgba(0,0,0,.6);height:44px;display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;padding:0 16px;white-space:nowrap;font-size:17px;color:#fff;border-radius:8px"><span style="color:#0A84FF">‹ Scans</span><span style="font-weight:600;font-variant-numeric:tabular-nums">Page 1</span><span></span></div>
+        <div style="background:rgba(0,0,0,.6);height:44px;display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;padding:0 16px;white-space:nowrap;font-size:17px;color:#fff;border-radius:8px"><span style="color:#0A84FF">‹ Scans</span><span style="font-weight:600;font-variant-numeric:tabular-nums">Page 7</span><span></span></div>
+        <div style="background:rgba(0,0,0,.6);height:44px;display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;padding:0 16px;white-space:nowrap;font-size:17px;color:#fff;border-radius:8px"><span style="color:#0A84FF">‹ Scans</span><span style="font-weight:600;font-variant-numeric:tabular-nums">Page 128</span><span></span></div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">German, 30% longer</div>
+      <div style="background:#1a1a1c;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px">
+        <div style="background:rgba(0,0,0,.6);height:44px;display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;padding:0 16px;white-space:nowrap;font-size:17px;color:#fff;border-radius:8px"><span style="color:#0A84FF">‹ Scans</span><span style="font-weight:600;font-variant-numeric:tabular-nums">Seite 7</span><span></span></div>
+        <div style="background:rgba(0,0,0,.6);height:44px;display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;padding:0 16px;white-space:nowrap;font-size:17px;color:#fff;border-radius:8px;gap:8px"><span style="color:#0A84FF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">‹ Scans</span><span style="font-weight:600;font-variant-numeric:tabular-nums">Seite 128</span><span></span></div>
+        <div style="font-size:12px;color:#98989F">The back label truncates before the title does; the title never truncates.</div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">11</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">CameraTakeover</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">Full-screen, replacing the preview, when there is nothing to show: permission denied, no camera hardware, camera could not start. One sentence, and an action only where an action exists.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>Full screen on the camera's black; content centred, 40 pt side margins; the action is a PrimaryButton pinned at the foot</dd>
+      <dt>Type</dt><dd>Sentence body 17 pt, centred, up to 4 lines</dd>
+      <dt>Light</dt><dd>Ground #000000, text #FFFFFF, icon #98989F — the takeover is dark in both appearances</dd>
+      <dt>Dark</dt><dd>Identical</dd>
+      <dt>States</dt><dd>permission denied (with Open Settings) · no camera hardware (no action) · camera could not start (with Try again)</dd>
+      <dt>VoiceOver</dt><dd>Focus lands on the sentence: “FreePDF cannot use the camera…”, then “Open Settings, button”.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Permission denied</div>
+      <div style="background:#000;border:1px solid #D6D6DA;border-radius:14px;padding:34px 24px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;color:#fff;min-height:280px;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:26px">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#98989F" stroke-width="1.4" stroke-linecap="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+          <div style="font-size:17px;line-height:1.45;max-width:30ch">FreePDF cannot use the camera. Allow it in Settings and come back.</div>
+        </div>
+        <div style="width:100%;height:50px;border-radius:12px;background:#0A84FF;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center">Open Settings</div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">No hardware · could not start</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:30px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;color:#fff"><div style="font-size:17px;line-height:1.45;max-width:30ch">This iPhone has no camera FreePDF can use.</div></div>
+        <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:30px 24px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;color:#fff"><div style="font-size:17px;line-height:1.45;max-width:30ch">The camera could not start. Close other apps using it and try again.</div><div style="width:100%;height:50px;border-radius:12px;background:#0A84FF;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center">Try again</div></div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">12</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">ProgressBlock</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">A line of text, a determinate bar, a note underneath. Used by the scanning run and by Apply to all pages. The note differs: scanning carries on in the background, applying does not.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>Bar 4 pt tall, radius 2, full width less 40 pt margins; 12 pt above, 10 pt below</dd>
+      <dt>Type</dt><dd>Line body 17 pt with tabular figures · note footnote 13 pt</dd>
+      <dt>Light</dt><dd>Track #E5E5EA, fill #007AFF, line #1C1C1E, note #6C6C70, refusal line #C72C23</dd>
+      <dt>Dark</dt><dd>Track #38383A, fill #0A84FF, line #FFFFFF, note #98989F, refusal line #FF7A72</dd>
+      <dt>States</dt><dd>running · a refused page (a red line appears and the run continues) · applying to all pages, full-screen</dd>
+      <dt>VoiceOver</dt><dd>Progress is announced at each page: “Scanning page 4 of 12.” Note read once. Never “uploading” or “syncing”.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:22px">
+        <div><div style="font-size:17px;font-variant-numeric:tabular-nums;margin-bottom:12px">Scanning page 4 of 12</div><div style="height:4px;border-radius:2px;background:#E5E5EA"><div style="width:33%;height:4px;border-radius:2px;background:#007AFF"></div></div><div style="font-size:13px;color:#6C6C70;margin-top:10px">You can close the app. It carries on from here.</div></div>
+        <div><div style="font-size:17px;font-variant-numeric:tabular-nums;margin-bottom:12px">Scanning page 9 of 12</div><div style="height:4px;border-radius:2px;background:#E5E5EA"><div style="width:75%;height:4px;border-radius:2px;background:#007AFF"></div></div><div style="font-size:13px;color:#C72C23;margin-top:10px">Page 6 could not be scanned. The rest carries on.</div></div>
+        <div><div style="font-size:17px;font-variant-numeric:tabular-nums;margin-bottom:12px">Applying to 40 pages…</div><div style="height:4px;border-radius:2px;background:#E5E5EA"><div style="width:30%;height:4px;border-radius:2px;background:#007AFF"></div></div><div style="font-size:13px;color:#6C6C70;margin-top:10px;font-variant-numeric:tabular-nums">Page 12 of 40 · Keep the app open.</div></div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:22px;color:#fff">
+        <div><div style="font-size:17px;font-variant-numeric:tabular-nums;margin-bottom:12px">Scanning page 4 of 12</div><div style="height:4px;border-radius:2px;background:#38383A"><div style="width:33%;height:4px;border-radius:2px;background:#0A84FF"></div></div><div style="font-size:13px;color:#98989F;margin-top:10px">You can close the app. It carries on from here.</div></div>
+        <div><div style="font-size:17px;font-variant-numeric:tabular-nums;margin-bottom:12px">Scanning page 9 of 12</div><div style="height:4px;border-radius:2px;background:#38383A"><div style="width:75%;height:4px;border-radius:2px;background:#0A84FF"></div></div><div style="font-size:13px;color:#FF7A72;margin-top:10px">Page 6 could not be scanned. The rest carries on.</div></div>
+        <div><div style="font-size:17px;font-variant-numeric:tabular-nums;margin-bottom:12px">Applying to 40 pages…</div><div style="height:4px;border-radius:2px;background:#38383A"><div style="width:30%;height:4px;border-radius:2px;background:#0A84FF"></div></div><div style="font-size:13px;color:#98989F;margin-top:10px;font-variant-numeric:tabular-nums">Page 12 of 40 · Keep the app open.</div></div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">13</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">PageCarousel</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">One page per swipe, pinch to zoom. Below it the dots with arrows on each side, and a jump control, because forty pages must not mean forty swipes. Numbers only, no thumbnails.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>Frame fills the width less 20 pt margins, aspect fitted, 1 pt border; dots 7 pt, 8 pt apart; arrows 44×44 pt; jump control 44 pt tall</dd>
+      <dt>Dots</dt><dd>Above 10 pages the dots condense: 7 shown, the ends shrink to 5 pt and then 3 pt. The jump control carries the real count.</dd>
+      <dt>Light</dt><dd>Frame #FFFFFF, border #C6C6C8, dot #C6C6C8, current dot #1C1C1E, arrows #007AFF, arrows at the end #C6C6C8</dd>
+      <dt>Dark</dt><dd>Frame #1C1C1E, border #48484A, dot #48484A, current dot #FFFFFF, arrows #0A84FF, arrows at the end #48484A</dd>
+      <dt>States</dt><dd>first page (left arrow disabled) · middle · last page (right arrow disabled) · zoomed · jump control open</dd>
+      <dt>VoiceOver</dt><dd>Frame: “Page 3 of 12, image. Swipe left for the next page.” Arrows: “Previous page, button” / “Next page, button”. Jump: “Go to page, 3 of 12, adjustable”.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;align-items:center">
+        <div style="width:172px;height:230px;background:#fff;border:1px solid #C6C6C8;border-radius:3px;padding:20px 16px;display:flex;flex-direction:column;gap:7px"><div style="height:8px;background:#D6D6DA;width:70%"></div><div style="height:5px;background:#E5E5EA"></div><div style="height:5px;background:#E5E5EA"></div><div style="height:5px;background:#E5E5EA;width:85%"></div><div style="height:5px;background:#E5E5EA;margin-top:8px"></div><div style="height:5px;background:#E5E5EA;width:60%"></div></div>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:#007AFF;font-size:20px">‹</div><div style="display:flex;gap:8px;align-items:center"><span style="width:3px;height:3px;border-radius:50%;background:#C6C6C8"></span><span style="width:5px;height:5px;border-radius:50%;background:#C6C6C8"></span><span style="width:7px;height:7px;border-radius:50%;background:#1C1C1E"></span><span style="width:7px;height:7px;border-radius:50%;background:#C6C6C8"></span><span style="width:7px;height:7px;border-radius:50%;background:#C6C6C8"></span><span style="width:5px;height:5px;border-radius:50%;background:#C6C6C8"></span><span style="width:3px;height:3px;border-radius:50%;background:#C6C6C8"></span></div><div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:#007AFF;font-size:20px">›</div></div>
+        <div style="height:44px;padding:0 18px;border-radius:12px;background:#fff;border:1px solid #C6C6C8;display:flex;align-items:center;gap:10px;font-size:17px;font-variant-numeric:tabular-nums">Go to page <span style="font-weight:600">3</span> <span style="color:#6C6C70">of 12</span></div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark — first page, left arrow disabled</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;align-items:center;color:#fff">
+        <div style="width:172px;height:230px;background:#1C1C1E;border:1px solid #48484A;border-radius:3px;padding:20px 16px;display:flex;flex-direction:column;gap:7px"><div style="height:8px;background:#48484A;width:70%"></div><div style="height:5px;background:#2C2C2E"></div><div style="height:5px;background:#2C2C2E"></div><div style="height:5px;background:#2C2C2E;width:85%"></div><div style="height:5px;background:#2C2C2E;margin-top:8px"></div><div style="height:5px;background:#2C2C2E;width:60%"></div></div>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:#48484A;font-size:20px">‹</div><div style="display:flex;gap:8px;align-items:center"><span style="width:7px;height:7px;border-radius:50%;background:#fff"></span><span style="width:7px;height:7px;border-radius:50%;background:#48484A"></span><span style="width:7px;height:7px;border-radius:50%;background:#48484A"></span><span style="width:7px;height:7px;border-radius:50%;background:#48484A"></span><span style="width:5px;height:5px;border-radius:50%;background:#48484A"></span><span style="width:3px;height:3px;border-radius:50%;background:#48484A"></span></div><div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:#0A84FF;font-size:20px">›</div></div>
+        <div style="height:44px;padding:0 18px;border-radius:12px;background:#1C1C1E;border:1px solid #48484A;display:flex;align-items:center;gap:10px;font-size:17px;font-variant-numeric:tabular-nums">Go to page <span style="font-weight:600">1</span> <span style="color:#98989F">of 12</span></div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">14</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">RefusedPageCard</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">Sits exactly where the page image would, at the same size, so the carousel does not jump. A message and one action.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>The page frame's dimensions, radius 3, dashed 1 pt border; content centred, 24 pt padding</dd>
+      <dt>Type</dt><dd>Message body 17 pt centred · action body 17 pt, 44 pt tall</dd>
+      <dt>Light</dt><dd>Fill #F2F2F7, border #C6C6C8 dashed, message #6C6C70, action #007AFF</dd>
+      <dt>Dark</dt><dd>Fill #1C1C1E, border #48484A dashed, message #98989F, action #0A84FF</dd>
+      <dt>States</dt><dd>refused · retaking (the action becomes “Opening the camera…”, dimmed)</dd>
+      <dt>VoiceOver</dt><dd>“Page 6. This page could not be scanned.” then “Scan this page again, button”.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;justify-content:center">
+        <div style="width:172px;height:230px;background:#F2F2F7;border:1px dashed #C6C6C8;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center"><div style="font-size:17px;line-height:1.4;color:#6C6C70">This page could not be scanned.</div><div style="font-size:17px;color:#007AFF">Scan this page again</div></div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;justify-content:center">
+        <div style="width:172px;height:230px;background:#1C1C1E;border:1px dashed #48484A;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center"><div style="font-size:17px;line-height:1.4;color:#98989F">This page could not be scanned.</div><div style="font-size:17px;color:#0A84FF">Scan this page again</div></div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 15 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">15</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">PageMenu</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">Behind the trailing “Page” action on the Pages screen. Three items while checking; a fourth, Shoot another page, once the PDF has been made. Delete is destructive and separated.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>250 pt wide, items 44 pt tall, 16 pt side padding, radius 14, anchored under its button</dd>
+      <dt>Type</dt><dd>Body 17 pt; icon trailing, 17 pt, always beside a word</dd>
+      <dt>Light</dt><dd>Sheet #F7F7F7 blurred, label #1C1C1E, destructive #FF3B30, separators #C6C6C8, shadow y8 b24 black 18%</dd>
+      <dt>Dark</dt><dd>Sheet #2C2C2E blurred, label #FFFFFF, destructive #FF453A, separators #48484A</dd>
+      <dt>States</dt><dd>three items, scan in progress · four items, finished scan · an item pressed</dd>
+      <dt>VoiceOver</dt><dd>“Page, menu, button, pop-up.” Items are buttons; “Delete page” carries the destructive trait.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light — checking</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;justify-content:flex-end">
+        <div style="width:250px;background:#F7F7F7;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18)">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:17px">Retake this page<span>􀌞</span></div><div style="height:1px;background:#C6C6C8"></div>
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:17px">Adjust page<span>􀍟</span></div><div style="height:1px;background:#C6C6C8"></div>
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:17px;color:#FF3B30">Delete page<span>􀈑</span></div>
+        </div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark — finished scan, item pressed</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;justify-content:flex-end;color:#fff">
+        <div style="width:250px;background:#2C2C2E;border-radius:14px;overflow:hidden">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:17px">Retake this page<span>􀌞</span></div><div style="height:1px;background:#48484A"></div>
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:17px;background:#3A3A3C">Adjust page<span>􀍟</span></div><div style="height:1px;background:#48484A"></div>
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:17px">Shoot another page<span>􀌞</span></div><div style="height:1px;background:#48484A"></div>
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:17px;color:#FF453A">Delete page<span>􀈑</span></div>
+        </div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 16 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">16</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">ToolStrip</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">The six tools on the Adjust screen, one active at a time: Edges, Straighten, Brightness, Sharpen, Crop, Turn. Words, not icons. It scrolls sideways so German never truncates.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>52 pt tall, items 44 pt tall with 14 pt side padding, 8 pt apart, radius 10; strip padded 20 pt at each end</dd>
+      <dt>Type</dt><dd>Subheadline 15 pt; selected semibold</dd>
+      <dt>Light</dt><dd>Strip #F2F2F7, item #FFFFFF, label #1C1C1E; selected fill #007AFF, label #FFFFFF; pressed #E5E5EA</dd>
+      <dt>Dark</dt><dd>Strip #000000, item #1C1C1E, label #FFFFFF; selected fill #0A84FF, label #FFFFFF; pressed #2C2C2E</dd>
+      <dt>States</dt><dd>each of the six selected · pressed · scrolled, with the strip clipped at the edge to show there is more</dd>
+      <dt>VoiceOver</dt><dd>“Brightness, selected, button, 3 of 6”. The strip is a tab list.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;gap:8px;overflow:hidden;min-width:0"><div style="height:44px;padding:0 14px;border-radius:10px;background:#007AFF;color:#fff;font-size:15px;font-weight:600;display:flex;align-items:center">Edges</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#fff;font-size:15px;display:flex;align-items:center">Straighten</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#fff;font-size:15px;display:flex;align-items:center">Brightness</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#fff;font-size:15px;display:flex;align-items:center">Sharpen</div></div>
+        <div style="display:flex;gap:8px;overflow:hidden;min-width:0"><div style="height:44px;padding:0 14px;border-radius:10px;background:#E5E5EA;font-size:15px;display:flex;align-items:center">Straighten</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#007AFF;color:#fff;font-size:15px;font-weight:600;display:flex;align-items:center">Brightness</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#fff;font-size:15px;display:flex;align-items:center">Sharpen</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#fff;font-size:15px;display:flex;align-items:center">Crop</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#fff;font-size:15px;display:flex;align-items:center">Turn</div></div>
+        <div style="font-size:12px;color:#8A8A8E">Edges selected · Brightness selected, Straighten pressed</div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark — German labels</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;color:#fff">
+        <div style="display:flex;gap:8px;overflow:hidden;min-width:0"><div style="height:44px;padding:0 14px;border-radius:10px;background:#0A84FF;font-size:15px;font-weight:600;display:flex;align-items:center;white-space:nowrap">Edges</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#1C1C1E;font-size:15px;display:flex;align-items:center;white-space:nowrap">Straighten</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#1C1C1E;font-size:15px;display:flex;align-items:center;white-space:nowrap">Brightness</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#1C1C1E;font-size:15px;display:flex;align-items:center;white-space:nowrap">Sharpen</div></div>
+        <div style="display:flex;gap:8px;overflow:hidden;min-width:0"><div style="height:44px;padding:0 14px;border-radius:10px;background:#0A84FF;font-size:15px;font-weight:600;display:flex;align-items:center;white-space:nowrap">Ränder</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#1C1C1E;font-size:15px;display:flex;align-items:center;white-space:nowrap">Ausrichten</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#1C1C1E;font-size:15px;display:flex;align-items:center;white-space:nowrap">Helligkeit</div><div style="height:44px;padding:0 14px;border-radius:10px;background:#1C1C1E;font-size:15px;display:flex;align-items:center;white-space:nowrap">Schärfen</div></div>
+        <div style="font-size:12px;color:#98989F">The strip scrolls; labels never truncate.</div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 17 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">17</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">LabelledSlider</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">Name on the left, current value on the right, ends marked under the track, and a reset back to the suggestion. Moving it changes nothing on screen until Apply is tapped — there is no live preview in this app.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>Row 64 pt tall, track 4 pt, thumb 28 pt, end labels 6 pt below the track, 20 pt side margins</dd>
+      <dt>Type</dt><dd>Name subheadline 15 pt · value 15 pt semibold tabular · ends caption 12 pt</dd>
+      <dt>Light</dt><dd>Track #E5E5EA, fill #007AFF, thumb #FFFFFF with shadow, name #1C1C1E, ends #8A8A8E, reset #007AFF</dd>
+      <dt>Dark</dt><dd>Track #38383A, fill #0A84FF, thumb #FFFFFF, name #FFFFFF, ends #98989F, reset #0A84FF</dd>
+      <dt>Uses</dt><dd>Straighten −10…+10°, one decimal · Black point · White point · Sharpen 0…20, opening at 0.6, where 0 means no sharpening</dd>
+      <dt>States</dt><dd>at the suggested value (reset hidden) · moved (reset shown) · dragging (thumb 32 pt) · disabled</dd>
+      <dt>VoiceOver</dt><dd>“Straighten, −1.4 degrees, adjustable. Swipe up or down to change.” Reset: “Back to the suggestion, button”.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:20px">
+        <div><div style="display:flex;justify-content:space-between;font-size:15px;margin-bottom:10px"><span>Straighten</span><span style="font-weight:600;font-variant-numeric:tabular-nums">−1.4°</span></div><div style="position:relative;height:28px;display:flex;align-items:center"><div style="height:4px;border-radius:2px;background:#E5E5EA;width:100%"></div><div style="position:absolute;left:0;height:4px;border-radius:2px;background:#007AFF;width:43%"></div><div style="position:absolute;left:43%;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.28);transform:translateX(-14px)"></div></div><div style="display:flex;justify-content:space-between;font-size:12px;color:#8A8A8E;margin-top:2px"><span>−10°</span><span>+10°</span></div><div style="font-size:15px;color:#007AFF;height:44px;display:flex;align-items:center">Back to the suggestion</div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:15px;margin-bottom:10px"><span>Sharpen</span><span style="font-weight:600;font-variant-numeric:tabular-nums">0.6</span></div><div style="position:relative;height:28px;display:flex;align-items:center"><div style="height:4px;border-radius:2px;background:#E5E5EA;width:100%"></div><div style="position:absolute;left:0;height:4px;border-radius:2px;background:#007AFF;width:3%"></div><div style="position:absolute;left:3%;width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.32);transform:translateX(-16px)"></div></div><div style="display:flex;justify-content:space-between;font-size:12px;color:#8A8A8E;margin-top:2px"><span>0 — none</span><span>20</span></div></div>
+        <div style="opacity:.4"><div style="display:flex;justify-content:space-between;font-size:15px;margin-bottom:10px"><span>White point</span><span style="font-weight:600;font-variant-numeric:tabular-nums">228</span></div><div style="position:relative;height:28px;display:flex;align-items:center"><div style="height:4px;border-radius:2px;background:#E5E5EA;width:100%"></div><div style="position:absolute;left:0;height:4px;border-radius:2px;background:#007AFF;width:70%"></div><div style="position:absolute;left:70%;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.28);transform:translateX(-14px)"></div></div><div style="display:flex;justify-content:space-between;font-size:12px;color:#8A8A8E;margin-top:2px"><span>160</span><span>255</span></div></div>
+        <div style="font-size:12px;color:#8A8A8E">moved, reset shown · dragging · disabled</div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark — at the suggested value</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:20px;color:#fff">
+        <div><div style="display:flex;justify-content:space-between;font-size:15px;margin-bottom:10px"><span>Black point</span><span style="font-weight:600;font-variant-numeric:tabular-nums">24</span></div><div style="position:relative;height:28px;display:flex;align-items:center"><div style="height:4px;border-radius:2px;background:#38383A;width:100%"></div><div style="position:absolute;left:0;height:4px;border-radius:2px;background:#0A84FF;width:22%"></div><div style="position:absolute;left:22%;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.6);transform:translateX(-14px)"></div></div><div style="display:flex;justify-content:space-between;font-size:12px;color:#98989F;margin-top:2px"><span>0</span><span>90</span></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:15px;margin-bottom:10px"><span>White point</span><span style="font-weight:600;font-variant-numeric:tabular-nums">228</span></div><div style="position:relative;height:28px;display:flex;align-items:center"><div style="height:4px;border-radius:2px;background:#38383A;width:100%"></div><div style="position:absolute;left:0;height:4px;border-radius:2px;background:#0A84FF;width:70%"></div><div style="position:absolute;left:70%;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.6);transform:translateX(-14px)"></div></div><div style="display:flex;justify-content:space-between;font-size:12px;color:#98989F;margin-top:2px"><span>160</span><span>255</span></div></div>
+        <div style="font-size:12px;color:#98989F">Both at the app's suggestion, so no reset is offered.</div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 18 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">18</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">LabelledSwitch</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">Three uses: “Pull the sheet flat” under the Edges tool, “Apply to all pages” at the foot of Adjust, and Colour / Grey on the Pages screen — that one is a two-option segmented control, not a toggle, because neither side is off.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>Row 44 pt minimum, toggle 51×31 pt; segmented control 32 pt tall, full width; note line 13 pt, 4 pt under the row</dd>
+      <dt>Type</dt><dd>Label body 17 pt · note footnote 13 pt · segment subheadline 15 pt</dd>
+      <dt>Light</dt><dd>Toggle off #E5E5EA, on #34C759, knob #FFFFFF; segment track #E5E5EA, selected #FFFFFF with shadow; note #6C6C70, warning #C72C23</dd>
+      <dt>Dark</dt><dd>Toggle off #38383A, on #30D158; segment track #2C2C2E, selected #48484A; note #98989F, warning #FF7A72</dd>
+      <dt>States</dt><dd>off · on · with a note · with a warning note · disabled</dd>
+      <dt>VoiceOver</dt><dd>“Pull the sheet flat, switch, on.” Note is the hint. Segmented: “Colour, selected, 1 of 2.”</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:18px">
+        <div><div style="min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:16px"><span style="font-size:17px">Pull the sheet flat</span><div style="width:51px;height:31px;border-radius:16px;background:#34C759;display:flex;align-items:center;justify-content:flex-end;padding:2px"><div style="width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div></div></div><div style="font-size:13px;color:#6C6C70">The sheet fills the whole photo, so there is nothing to cut away.</div></div>
+        <div><div style="min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:16px"><span style="font-size:17px">Pull the sheet flat</span><div style="width:51px;height:31px;border-radius:16px;background:#E5E5EA;display:flex;align-items:center;padding:2px"><div style="width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div></div></div><div style="font-size:13px;color:#C72C23">The page runs off the frame. Move back and photograph it again.</div></div>
+        <div style="min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:16px"><span style="font-size:17px">Apply to all pages</span><div style="width:51px;height:31px;border-radius:16px;background:#E5E5EA;display:flex;align-items:center;padding:2px"><div style="width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div></div></div>
+        <div style="display:flex;background:#E5E5EA;border-radius:9px;padding:2px;height:32px"><div style="flex:1;background:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.14)">Colour</div><div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:15px">Grey</div></div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:18px;color:#fff">
+        <div><div style="min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:16px"><span style="font-size:17px">Pull the sheet flat</span><div style="width:51px;height:31px;border-radius:16px;background:#30D158;display:flex;align-items:center;justify-content:flex-end;padding:2px"><div style="width:27px;height:27px;border-radius:50%;background:#fff"></div></div></div><div style="font-size:13px;color:#98989F">The sheet fills the whole photo, so there is nothing to cut away.</div></div>
+        <div style="min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:16px;opacity:.4"><span style="font-size:17px">Apply to all pages</span><div style="width:51px;height:31px;border-radius:16px;background:#38383A;display:flex;align-items:center;padding:2px"><div style="width:27px;height:27px;border-radius:50%;background:#fff"></div></div></div>
+        <div style="display:flex;background:#2C2C2E;border-radius:9px;padding:2px;height:32px"><div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:15px">Colour</div><div style="flex:1;background:#48484A;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600">Grey</div></div>
+        <div style="font-size:12px;color:#98989F">on with a note · disabled · Grey selected</div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 19 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">19</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">CornerHandles</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">Four draggable corners over the page picture, shown by the Edges and Crop tools. They open on the corners the app found. The picture behind them does not change while they move.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>Handle 28 pt visible, 44 pt touch target; quadrilateral outline 2 pt; grabbed handle grows to 36 pt and lifts a 96 pt magnifier above the thumb</dd>
+      <dt>Light</dt><dd>Outline #FFC300, handles #FFFFFF with a 2 pt #FFC300 ring, area outside the quad black at 45%</dd>
+      <dt>Dark</dt><dd>Identical — the picture is the ground, so the handles do not follow the appearance</dd>
+      <dt>Edges vs Crop</dt><dd>Edges moves a four-cornered quadrilateral, corners free. Crop keeps a rectangle: dragging one corner moves its two neighbours.</dd>
+      <dt>States</dt><dd>at the found corners · one handle grabbed · a corner pushed outside the photo (outline turns #FF3B30 and the warning note appears)</dd>
+      <dt>VoiceOver</dt><dd>“Top left corner, 12 percent from the left, 8 percent from the top, adjustable. Swipe up or down to move; flick right for the next corner.”</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">At the found corners</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;justify-content:center">
+        <div style="position:relative;width:190px;height:250px;background:#5c5a56;border-radius:4px;overflow:hidden">
+          <div style="position:absolute;left:22px;top:20px;right:20px;bottom:22px;border:2px solid #FFC300;background:#e9e6df"></div>
+          <div style="position:absolute;left:22px;top:20px;width:28px;height:28px;border-radius:50%;background:#fff;border:2px solid #FFC300;transform:translate(-14px,-14px)"></div>
+          <div style="position:absolute;right:20px;top:20px;width:28px;height:28px;border-radius:50%;background:#fff;border:2px solid #FFC300;transform:translate(14px,-14px)"></div>
+          <div style="position:absolute;left:22px;bottom:22px;width:28px;height:28px;border-radius:50%;background:#fff;border:2px solid #FFC300;transform:translate(-14px,14px)"></div>
+          <div style="position:absolute;right:20px;bottom:22px;width:28px;height:28px;border-radius:50%;background:#fff;border:2px solid #FFC300;transform:translate(14px,14px)"></div>
+        </div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Grabbed · corner outside the photo</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;gap:14px;justify-content:center">
+        <div style="position:relative;width:150px;height:200px;background:#5c5a56;border-radius:4px;overflow:hidden">
+          <div style="position:absolute;left:34px;top:26px;right:16px;bottom:18px;border:2px solid #FFC300;background:#e9e6df"></div>
+          <div style="position:absolute;left:34px;top:26px;width:36px;height:36px;border-radius:50%;background:#fff;border:3px solid #FFC300;transform:translate(-18px,-18px);box-shadow:0 0 0 6px rgba(255,195,0,.25)"></div>
+          <div style="position:absolute;left:8px;top:-6px;width:60px;height:60px;border-radius:50%;background:#e9e6df;border:2px solid #fff"></div>
+        </div>
+        <div style="position:relative;width:150px;height:200px;background:#5c5a56;border-radius:4px;overflow:hidden">
+          <div style="position:absolute;left:-10px;top:14px;right:14px;bottom:16px;border:2px solid #FF3B30;background:#e9e6df"></div>
+          <div style="position:absolute;left:-10px;top:14px;width:28px;height:28px;border-radius:50%;background:#fff;border:2px solid #FF3B30;transform:translate(-14px,-14px)"></div>
+        </div>
+      </div></div>
+  </div>
+</section>
+
+<!-- 20 -->
+<section data-spec="1" style="display:grid;grid-template-columns:300px 1fr;gap:40px;align-items:start;padding:36px 0;border-top:1px solid #D6D6DA;border-bottom:1px solid #D6D6DA">
+  <div>
+    <div style="font-size:12px;letter-spacing:.12em;color:#8A8A8E;font-variant-numeric:tabular-nums;margin-bottom:8px">20</div>
+    <h3 style="font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px">TextField</h3>
+    <p style="font-size:14px;line-height:1.55;margin:0 0 16px;color:#3A3A3C">Used once, on the done screen. The name it holds travels only with the copy that leaves through Share; nothing is stored, so it opens empty every time.</p>
+    <dl style="display:grid;grid-template-columns:96px 1fr;gap:6px 14px;font-size:12.5px;line-height:1.5;margin:0">
+      <dt>Size</dt><dd>44 pt tall, full width less 20 pt margins, radius 10, 14 pt inner padding; label 6 pt above; suffix “.pdf” pinned right</dd>
+      <dt>Type</dt><dd>Label footnote 13 pt · value body 17 pt · suffix body 17 pt</dd>
+      <dt>Light</dt><dd>Fill #FFFFFF, border #C6C6C8, focused border #007AFF, label #6C6C70, placeholder #AEAEB2, suffix #8A8A8E</dd>
+      <dt>Dark</dt><dd>Fill #1C1C1E, border #48484A, focused border #0A84FF, label #98989F, placeholder #5A5A5E, suffix #8A8A8E</dd>
+      <dt>States</dt><dd>empty with placeholder · focused with caret · filled · filled with the clear control</dd>
+      <dt>VoiceOver</dt><dd>“Name for the shared copy, text field, empty. Default: scan.” Clear: “Clear text, button”.</dd>
+    </dl>
+  </div>
+  <div data-pair="1" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Light</div>
+      <div style="background:#F2F2F7;border:1px solid #D6D6DA;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:16px">
+        <div><div style="font-size:13px;color:#6C6C70;margin-bottom:6px">Name for the shared copy</div><div style="height:44px;border-radius:10px;background:#fff;border:1px solid #C6C6C8;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:17px"><span style="color:#AEAEB2">scan</span><span style="color:#8A8A8E">.pdf</span></div></div>
+        <div><div style="font-size:13px;color:#6C6C70;margin-bottom:6px">Name for the shared copy</div><div style="height:44px;border-radius:10px;background:#fff;border:2px solid #007AFF;display:flex;align-items:center;justify-content:space-between;padding:0 13px;font-size:17px"><span style="display:flex;align-items:center">Rechnung<span style="width:2px;height:20px;background:#007AFF;margin-left:1px"></span></span><span style="display:flex;align-items:center;gap:10px;color:#8A8A8E"><span style="width:18px;height:18px;border-radius:50%;background:#C6C6C8;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center">✕</span>.pdf</span></div></div>
+      </div></div>
+    <div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A8A8E;margin-bottom:10px">Dark</div>
+      <div style="background:#000;border:1px solid #38383A;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:16px;color:#fff">
+        <div><div style="font-size:13px;color:#98989F;margin-bottom:6px">Name for the shared copy</div><div style="height:44px;border-radius:10px;background:#1C1C1E;border:1px solid #48484A;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:17px"><span style="color:#5A5A5E">scan</span><span style="color:#8A8A8E">.pdf</span></div></div>
+        <div><div style="font-size:13px;color:#98989F;margin-bottom:6px">Name for the shared copy</div><div style="height:44px;border-radius:10px;background:#1C1C1E;border:2px solid #0A84FF;display:flex;align-items:center;justify-content:space-between;padding:0 13px;font-size:17px"><span>Rechnung</span><span style="display:flex;align-items:center;gap:10px;color:#8A8A8E"><span style="width:18px;height:18px;border-radius:50%;background:#48484A;color:#1C1C1E;font-size:12px;display:flex;align-items:center;justify-content:center">✕</span>.pdf</span></div></div>
+      </div></div>
+  </div>
+</section>
+
+<p style="font-size:14px;line-height:1.6;color:#8A8A8E;max-width:66ch;margin:28px 0 0">Screen mockups — all eight screens in their states, light and dark — are the next piece, built on these components.</p>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}"></script>
+</body>
+</html>
