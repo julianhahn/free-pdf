@@ -402,14 +402,14 @@ fn page_files_go_into_the_pdf_without_being_decoded() {
 
 ## 5. The C surface
 
-`/Users/julianhahn/free-pdf/ffi/include/freepdf.h` — hand-written, and also the Swift
-bridging header. No cbindgen, no generator.
+Built, and its rules now live next to it in [`ffi/AGENTS.md`](./ffi/AGENTS.md): what may
+cross the boundary, why every entry point is wrapped against panics, the order of tools
+inside `freepdf_scan_page`, the 3000 px cap, and the check. What the app has to know is
+the header it imports as its bridging header,
+[`ffi/include/freepdf.h`](./ffi/include/freepdf.h) — hand-written, no cbindgen, no
+generator:
 
 ```c
-#pragma once
-#include <stdint.h>
-#include <stddef.h>
-
 /* 0 = ok. Anything else = failed, and `error` holds a sentence (may be NULL). */
 int32_t freepdf_scan_page(const char *photo_path, const char *out_page_path,
                           char *error, size_t error_size);
@@ -418,61 +418,16 @@ int32_t freepdf_pages_to_pdf(const char *const *page_paths, size_t page_count,
                              char *error, size_t error_size);
 ```
 
-Two functions. What crosses: C strings, a size and an int32. What never crosses: a pixel
-buffer, an image handle, an allocation Swift has to free, a struct, a callback.
-
 The error buffer replaces a `freepdf_last_error()` thread-local. That is not only one
 function fewer — the drain `await`s a detached task between the call and the error read,
 and a thread-local would return an empty string there, giving "Page 12 failed: " in the one
 place the message is the only clue.
 
-Every entry point is wrapped:
-
-```rust
-fn guard(err: *mut c_char, cap: usize, work: impl FnOnce() -> Result<(), String> + UnwindSafe) -> i32 {
-    match catch_unwind(work).unwrap_or_else(|_| {
-        // ponytail: a panic is a bug, not a user error. This only stops it from becoming
-        // undefined behaviour across the boundary.
-        Err("The engine hit an internal error.".to_string())
-    }) {
-        Ok(()) => 0,
-        Err(m) => { put(&m, err, cap); 1 }   // copy + NUL, truncate to cap - 1
-    }
-}
-```
-
-`catch_unwind` rather than `panic = "abort"`: cargo refuses `panic` in a package profile,
-so it would have to go in the workspace root and would hit the runner and the test harness.
-
-`freepdf_scan_page` is the runner's `--scan` chain, lifted into the **ffi crate**, not the
-engine — the README's own principle is that the engine exposes single tools and the client
-owns the order:
-
-```rust
-let mut img = load_image(&photo)?;
-if let Some(sheet) = find_paper(&img) {                    // skipped when no sheet, or when
-    if !sheet.runs_off_the_picture() {                     // it runs off the frame
-        img = deskew(&img, sheet.corners())?;
-    }
-}
-let degrees = suggest_straightening(&img);
-if degrees != 0.0 { img = straighten(&img, degrees)?; }
-img = apply_levels(&img, suggest_levels(&img));
-
-// ponytail: 3000 px long edge (~257 dpi on A4). image 0.25's unsharpen allocates TWO f32
-// planes of w*h*3*4 bytes (sample.rs:1437, :1464), so 12 MP would peak at ~400 MB here.
-// thumbnail() is the integer box filter - no f32 scratch. Raise the cap if fine print is
-// soft: the cost is 33 bytes of peak per pixel.
-if img.width().max(img.height()) > 3000 { img = img.thumbnail(3000, 3000); }
-
-img = sharpen(&img, 0.6, 0)?;
-save_page(&img, &page_out)
-```
-
-Swallowing "no sheet found" and "nothing crooked" is not politeness: one awkward photo that
-returned an error would make the scan unfinishable, and resume would retry it forever.
-
-Swift wrapper, the whole thing:
+Swift wrapper, the whole thing. This exact text was compiled and linked against the real
+library, and the sentence came back out of it, so it can be copied as it stands. Two
+spellings in it are load-bearing and were found by the compiler: `strdup(…)!`, and
+`UnsafePointer<CChar>` written out — without either, Swift cannot work out the element
+type of the array C wants and refuses the whole function.
 
 ```swift
 enum Engine {
@@ -484,9 +439,9 @@ enum Engine {
         try call { e, n in freepdf_scan_page(photo.path, out.path, e, n) }
     }
     static func pagesToPDF(_ pages: [URL], out: URL) throws {
-        let owned = pages.map { strdup($0.path) }
+        let owned = pages.map { strdup($0.path)! }
         defer { owned.forEach { free($0) } }
-        var c = owned.map { UnsafePointer($0) }
+        var c: [UnsafePointer<CChar>?] = owned.map { UnsafePointer<CChar>($0) }
         try call { e, n in freepdf_pages_to_pdf(&c, c.count, out.path, e, n) }
     }
     private static func call(_ body: (UnsafeMutablePointer<CChar>, Int) -> Int32) throws {
@@ -498,15 +453,9 @@ enum Engine {
 
 ### Build and link
 
-```sh
-rustup target add aarch64-apple-ios aarch64-apple-ios-sim   # neither is installed yet
-IPHONEOS_DEPLOYMENT_TARGET=18.0 cargo build -p core_engine_ffi --release \
-    --target aarch64-apple-ios
-IPHONEOS_DEPLOYMENT_TARGET=18.0 cargo build -p core_engine_ffi --release \
-    --target aarch64-apple-ios-sim
-```
-
-Four build settings on the app target, nothing else:
+`bash /Users/julianhahn/free-pdf/ffi/build-ios.sh` writes both libraries, one per
+platform, and why there are two rather than one `lipo`'d file is in
+[`ffi/AGENTS.md`](./ffi/AGENTS.md). Four build settings on the app target, nothing else:
 
 ```
 OTHER_LDFLAGS                              = -lfreepdf
@@ -516,9 +465,7 @@ SWIFT_OBJC_BRIDGING_HEADER                 = $(SRCROOT)/../ffi/include/freepdf.h
 ```
 
 No wrapper target, no Swift package, no framework, no XCFramework, no Run Script phase.
-Device arm64 and simulator arm64 cannot be `lipo`'d — same architecture, different platform
-— and the SDK condition is what replaces the XCFramework people reach for. Nothing in the
-dependency tree is C, so cross-compiling needs only `rustup target add`.
+The SDK condition is what replaces the XCFramework people reach for.
 
 ---
 
@@ -531,10 +478,11 @@ dependency tree is C, so cross-compiling needs only `rustup target add`.
 | `/Users/julianhahn/free-pdf/core_engine/tests/engine.rs` | + one test |
 | `/Users/julianhahn/free-pdf/Cargo.toml` | `members = [..., "ffi"]` |
 | `/Users/julianhahn/free-pdf/ffi/Cargo.toml` | `core_engine_ffi`, `[lib] name = "freepdf"`, `crate-type = ["staticlib"]` |
-| `/Users/julianhahn/free-pdf/ffi/src/lib.rs` | two `extern "C"` functions, `guard`, `put`, the scan chain (~110 lines) |
+| `/Users/julianhahn/free-pdf/ffi/src/lib.rs` | two `extern "C"` functions, `guard`, `put`, the scan chain |
 | `/Users/julianhahn/free-pdf/ffi/include/freepdf.h` | 8 lines, also the bridging header |
 | `/Users/julianhahn/free-pdf/ffi/bridge_check.sh` | the FFI check (host arch) |
 | `/Users/julianhahn/free-pdf/ffi/build-ios.sh` | the two cargo builds |
+| `/Users/julianhahn/free-pdf/ffi/AGENTS.md` | the rules of the boundary, moved out of section 5 |
 | `/Users/julianhahn/free-pdf/ios/FreePDF.xcodeproj` | one app target, four build settings, iCloud Documents |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/Scan.swift` | the storage model and the whole state machine. Foundation only |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/Engine.swift` | the two FFI calls (~20 lines) |
@@ -558,24 +506,23 @@ Riskiest thing first. Each milestone ends in something that runs.
 
 **1 — Engine.** `save_page` + `pages_to_pdf` + the one test. No phone involved. The
 load-bearing unknown is whether printpdf reads back a hand-built `/DCTDecode` XObject.
-Check: `cargo test --workspace` → 42 green (~5 s). Also confirm the runner still works:
+Check: `cargo test --workspace` → all green (~5 s; the count is in the README, so it lives
+in one place). Also confirm the runner still works:
 `cargo run -p backend-core-runner -- photo.jpg -o out.pdf --scan`.
 
-**2 — FFI.** The crate, the header, the scan chain with the resolution cap.
-Check: `bash /Users/julianhahn/free-pdf/ffi/bridge_check.sh` → "bridge ok". It builds the
-host staticlib, compiles a heredoc Swift file with `swiftc -import-objc-header` (the same
-mechanism as Xcode's bridging header setting), and asserts: a missing input returns non-zero
-with a message naming the file; a null path does not crash; a NULL error buffer does not
-crash; a panicking input returns a status with the process alive; and a generated
-3200x2400 JPEG goes through `scan_page` to a page file whose long edge is 3000 px, then
-through `pages_to_pdf` to a PDF ending in `%%EOF`.
+**2 — FFI.** The crate, the header, the scan chain with the resolution cap. **Done**, and
+what it asserts is written down in [`ffi/AGENTS.md`](./ffi/AGENTS.md).
+Check: `bash /Users/julianhahn/free-pdf/ffi/bridge_check.sh` → "bridge ok" (~1 s).
+One thing turned out different: no input reaches the panic branch, because the engine has
+no panic path, so that branch is checked by a Rust unit test that panics on purpose rather
+than through Swift.
 
 **3 — Resume rules.** `Scan.swift` + `check/main.swift`.
 Check: `bash /Users/julianhahn/free-pdf/ios/check/run.sh` (~2 s, no Xcode, no simulator).
 Ten `precondition`s, each a moment the process could die: killed after New scan; mid-shooting
 (`nextPage == 9`); mid-scanning (`unscanned == [7…12]`, pages 1-6 not redone); after the
 last page; with `scan.pdf` present but pages missing (`.done` wins); with debris
-(`0007.jpg.part`, `.dat.nosync4f1a`, `IMG_0042.jpg`, `0003.jpeg`) invisible before sweep and
+(`0007.part`, `.dat.nosync4f1a`, `IMG_0042.jpg`, `0003.jpeg`) invisible before sweep and
 gone after; an orphan page file (must not wedge); a deleted middle page; an orphan page as
 the highest number (`nextPage == 5` — never reuse a number the disk has seen); list order.
 `precondition`, never `assert` — `assert(1 == 2)` prints nothing and exits 0 under `-O`,
@@ -626,12 +573,12 @@ a background kill. They are the same event to this design.
 | tapping New scan | the folder, or nothing | a row "No pages yet", tap → viewfinder | nothing |
 | shooting, between shots | photos 1-11 | camera, "Page 12" (read from disk) | nothing |
 | shooting, mid-write | 1-11 plus an aux file the sweep deletes | camera, "Page 12" again | **one photo** — the sheet is still in front of him |
-| scanning page 13 of 40 | pages 1-12, plus `0013.jpg.part` | "12 of 40 pages scanned", continues at 13 | ~2 s of CPU |
+| scanning page 13 of 40 | pages 1-12, plus `0013.part` | "12 of 40 pages scanned", continues at 13 | ~2 s of CPU |
 | backgrounded with 28 of 40 done | pages 1-28 | "28 of 40 pages scanned", resumes at 29 | nothing |
 | reviewing | unchanged | the same carousel | the scroll position |
 | mid-retake of page 7 | `page/0007.jpg` gone, old photo still there | page 7 rescanned from the old photo | the retake, never a wrong page |
 | mid-Delete page | page file gone, photo still there | that page unscanned, drain rebuilds it | the deletion |
-| building the PDF | `scan.pdf.part`, swept | "ready to check", press Make PDF again | ~2 s. **No page is touched** |
+| building the PDF | `scan.part`, swept | "ready to check", press Make PDF again | ~2 s. **No page is touched** |
 | exporting | an invisible temp at the container root | the done screen, export again | nothing (worst case one duplicate PDF) |
 | deleting the photos | some photos left | "photos kept", the button is still there | nothing, self-healing on one tap |
 

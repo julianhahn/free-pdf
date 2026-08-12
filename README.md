@@ -6,9 +6,10 @@ device: no network calls anywhere, no account, no server.
 Two parts:
 
 - **`core_engine`** (Rust) - all image and PDF work. One function per step.
+- **`ffi`** (Rust) - the one library file a phone app links into itself, and the two C
+  functions it calls.
 - **clients** - the user interface. The client decides the order of the steps and shows
-  each one. Clients will call the engine through a plain C interface, which is milestone 2
-  below. The first graphical client is the iPhone app; `backend-core-runner` is the
+  each one. The first graphical client is the iPhone app; `backend-core-runner` is the
   command-line one, and it is how the engine gets exercised without a phone.
 
 The engine offers single tools; the client owns the order. Nothing runs by itself, so the
@@ -23,7 +24,7 @@ Every command in this file runs from the repository root, `/Users/julianhahn/fre
 cargo test --workspace
 ```
 
-42 green on a Mac, 39 elsewhere - three tests need `sips` for HEIC. Then read
+44 green on a Mac, 41 elsewhere - three tests need `sips` for HEIC. Then read
 [Next steps](#next-steps): it is the one place that says what is being built right now, and
 every session leaves it correct.
 
@@ -61,19 +62,20 @@ Riskiest thing first. Each milestone ends in something that runs, and every chec
 command. Full text: [plan section 7](./iphone-client-plan.md#7-build-order); the
 file-by-file list is [plan section 6](./iphone-client-plan.md#6-files).
 
-**Now: milestone 2.** Create `ffi/`, the crate that builds the one library file the app
-links into itself. Two C functions and nothing else: `freepdf_scan_page` is the runner's
-`--scan` order lifted into the wrapper, capped at 3000 px on the long edge and skipping
-deskew when no sheet was found or the sheet runs off the frame; `freepdf_pages_to_pdf` hands
-a list of paths straight to the engine. Signatures, the header, and how a Rust `String` error
-crosses to C: [plan section 5](./iphone-client-plan.md#5-the-c-surface). Give the new
-directory its own AGENTS.md and move its rules out of the plan as you go.
+**Now: milestone 3.** Write `ios/FreePDF/Scan.swift`: the folder layout, the step derived
+from what lies on disk, and the sweep. Then `ios/check/` beside it - ten `precondition`s,
+each one a moment the process could die. Foundation only, so no Xcode and no simulator:
+[plan section 2](./iphone-client-plan.md#2-storage) holds the model and
+[plan section 7](./iphone-client-plan.md#7-build-order) lists the ten. Give `ios/` its own
+AGENTS.md and move its rules out of the plan as you go. One correction milestone 2 already
+made for you: the half-written file `save_page` leaves behind is `0007.part`, not
+`0007.jpg.part` - the extension is replaced, not added to.
 
 | # | State | What gets built | Check |
 | --- | --- | --- | --- |
-| 1 | **done** | `save_page`, `pages_to_pdf`, `place(...)` in the engine. | `cargo test --workspace` -> 42 green, and `--scan` on any photo still produces a PDF |
-| 2 | **now** | `ffi/`: one `staticlib` the app links into itself, the hand-written `ffi/include/freepdf.h`, and two C functions, `freepdf_scan_page` and `freepdf_pages_to_pdf`. ([detail](./iphone-client-plan.md#5-the-c-surface)) | `bash ffi/bridge_check.sh` -> "bridge ok". Host architecture, no simulator, no Xcode |
-| 3 | to do | `ios/FreePDF/Scan.swift` plus `ios/check/`: the folder layout, the derived step, the sweep. Foundation only. | `bash ios/check/run.sh` -> ten `precondition`s, one per moment the process could die (~2 s, no Xcode) |
+| 1 | **done** | `save_page`, `pages_to_pdf`, `place(...)` in the engine. | `cargo test --workspace`, and `--scan` on any photo still produces a PDF |
+| 2 | **done** | `ffi/`: one `staticlib` the app links into itself, the hand-written `ffi/include/freepdf.h`, and two C functions, `freepdf_scan_page` and `freepdf_pages_to_pdf`. ([rules](./ffi/AGENTS.md)) | `bash ffi/bridge_check.sh` -> "bridge ok" (~1 s, host architecture) |
+| 3 | **now** | `ios/FreePDF/Scan.swift` plus `ios/check/`: the folder layout, the derived step, the sweep. Foundation only. | `bash ios/check/run.sh` -> ten `precondition`s, one per moment the process could die (~2 s, no Xcode) |
 | 4 | to do | The Xcode project and the app: list, flow, the scan loop, the two FFI calls. One temporary "Fake shoot" button in place of the camera. | Build for the "iPhone 17 Pro" simulator, fake-shoot 12 pages, kill the app mid-scan: it must come back at page 7 by itself, leave the finished pages byte-identical, and finish. Needs `rustup target add aarch64-apple-ios-sim` first |
 | 5 | to do | The real camera: JPEG at the moment of capture, locked to portrait. Deletes the "Fake shoot" button. | By hand: shoot 5 pages, force-quit while aiming at 6, relaunch - the row reads "5 pages - keep shooting" and the counter says "Page 6" |
 | 6 | to do | Export to iCloud Drive, and the quiet "delete the photos" action. | With iCloud signed in, find the PDF under `~/Library/Mobile Documents` on the Mac - it only appears there if it really went up |
@@ -82,6 +84,16 @@ directory its own AGENTS.md and move its rules out of the plan as you go.
 
 Things noticed but not scheduled.
 
+- **Writing crooked by 10 degrees or more makes a page unscannable.** `suggest_straightening`
+  proposes an angle `straighten` then refuses, so `freepdf_scan_page` fails - and it fails the
+  same way every time, so resume would retry that photo for ever. The coarse pass keeps a peak
+  at `MOST_TILT` (10.0) and the fine search then runs to 11.0, so the proposal leaves the range
+  the act half accepts. Measured through the real C boundary: 3, 8, 9.5 degrees pass; 10, 10.5,
+  11, 11.5 and 12 all come back "was given -10.000004" and worse. The engine's own rule is that
+  a suggestion is something the act half accepts, so the fix belongs in
+  `core_engine/src/deskew.rs:255` - one line, `-tilt.clamp(-MOST_TILT, MOST_TILT)` - plus a test
+  at 10.5 degrees. It is engine work, not client work, so it is written down here rather than
+  patched over in `ffi/`.
 - **The memory numbers are the plan's, not measured.** "Around 140 MB for forty pages" comes
   from reading printpdf's sources, and nothing has weighed the real thing. Milestone 4 runs
   twelve pages on a simulator, which is the first honest chance to check it.
@@ -96,12 +108,12 @@ beside it - not this page.
 | [`AGENTS.md`](./AGENTS.md) | How to work in this repository, and the three things that must stay true whatever gets built. |
 | [`core_engine/AGENTS.md`](./core_engine/AGENTS.md) | The shape of an engine function: suggest-then-apply, refuse instead of guess, what the public API costs, and the engine's own limits. |
 | [`core_engine/tests/AGENTS.md`](./core_engine/tests/AGENTS.md) | How to add a test: the fixtures that already exist, temp file names, and which assertions must never be relaxed. |
+| [`ffi/AGENTS.md`](./ffi/AGENTS.md) | The C boundary: what may cross it, why every entry point is wrapped against panics, the order of tools a photo goes through, and the check. |
 | [`backend-core-runner/AGENTS.md`](./backend-core-runner/AGENTS.md) | The tool order, which is a contract; flags, messages and exit codes; HEIC. |
 | [`iphone-client-plan.md`](./iphone-client-plan.md) | The authority on the phone side, in twelve numbered sections: storage, screens, the C surface, the Swift wrapper, memory, every line of UI text in English and German. |
 | [`session-logs.md`](./session-logs.md) | What each session actually did, newest first. |
 
-`ffi/` and `ios/` do not exist yet, so their rules live in the plan until those directories
-are real.
+`ios/` does not exist yet, so its rules live in the plan until that directory is real.
 
 ## Limits worth knowing
 

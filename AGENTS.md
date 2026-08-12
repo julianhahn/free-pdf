@@ -2,7 +2,7 @@
 
 Photograph the pages of a paper document, get one clean PDF. `core_engine` (Rust) does all
 image and PDF work, one function per step; a client drives it - `backend-core-runner` on the
-command line today, an iPhone app next.
+command line today, an iPhone app next, through the C surface in `ffi/`.
 
 ## General rules
 
@@ -34,19 +34,20 @@ answer here.
 
 Every rule sits next to the thing it governs, and this file only carries what has no smaller
 home. The engine keeps its own AGENTS.md in [`core_engine/`](./core_engine/AGENTS.md), the
-tests theirs in [`core_engine/tests/`](./core_engine/tests/AGENTS.md), and the command line
-tool theirs in [`backend-core-runner/`](./backend-core-runner/AGENTS.md). Before you touch a
-file, read the AGENTS.md beside it.
+tests theirs in [`core_engine/tests/`](./core_engine/tests/AGENTS.md), the C surface theirs
+in [`ffi/`](./ffi/AGENTS.md), and the command line tool theirs in
+[`backend-core-runner/`](./backend-core-runner/AGENTS.md). Before you touch a file, read the
+AGENTS.md beside it.
 
 [`README.md`](./README.md) is the front door: what the project is, where to find what, and
 what happens next. [`iphone-client-plan.md`](./iphone-client-plan.md) is the authority on the
 phone side in twelve numbered sections. Point at both instead of repeating them - a fact
 written down twice is a fact that will disagree with itself.
 
-`ffi/` and `ios/` do not exist yet, and neither does any Swift code, so their rules stay in
-[plan section 5](./iphone-client-plan.md#5-the-c-surface) and
-[plan section 6](./iphone-client-plan.md#6-files) until those directories are real. When you
-create one of those directories, give it an AGENTS.md and move its rules out of the plan.
+`ios/` does not exist yet, and neither does any Swift code that ships, so its rules stay in
+[plan section 6](./iphone-client-plan.md#6-files) until that directory is real. When you
+create it, give it an AGENTS.md and move its rules out of the plan - that is what `ffi/` did
+with section 5.
 
 ## Every session ends in these two files
 

@@ -40,11 +40,12 @@ the proposal and move it.
 
 ## What the public API costs
 
-`src/lib.rs` is the whole contract: the `pub use` block is the list clients and the planned C
-wrapper call by name. Take and return the re-exported `DynamicImage`, so clients need no
-dependency on the `image` crate and can never link a different version than the engine. Only
-`load_image` reads a file and only `images_to_pdf` writes one; everything else is image in,
-image out, which is what lets the client rerun one step. Do not add a dependency.
+`src/lib.rs` is the whole contract: the `pub use` block is the list clients and the C wrapper
+in [`../ffi`](../ffi/AGENTS.md) call by name. Take and return the re-exported `DynamicImage`,
+so clients need no dependency on the `image` crate and can never link a different version than
+the engine. `load_image` and `pdf.rs` are the only places that touch the file system; every
+tool is image in, image out, which is what lets the client rerun one step. Do not add a
+dependency.
 
 ## pdf.rs: two ways into a PDF
 

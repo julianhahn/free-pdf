@@ -8,6 +8,37 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-12 - milestone 2: the C surface, and Swift really calls it
+
+`ffi/` is there: `freepdf_scan_page`, `freepdf_pages_to_pdf`, the hand-written header, and
+`bridge_check.sh` -> "bridge ok" in about a second. 44 tests green. Both iOS libraries build
+(`bash ffi/build-ios.sh`, ~40 s), and `nm` shows exactly the two symbols in each.
+
+Three things the plan claimed did not survive contact:
+
+- **Its Swift wrapper does not compile.** `owned.map { UnsafePointer($0) }` leaves Swift
+  unable to work out the element type of the array C wants. It needs `strdup(…)!` and
+  `UnsafePointer<CChar>` spelled out; the fixed version in plan section 5 was compiled,
+  linked and run against the real library, so milestone 3 can copy it as it stands.
+- **No input reaches the panic branch.** A 1x1 photo, a 2x1 one, a missing file, a directory
+  as the output - all come back as sentences, because the engine has no panic path. So that
+  branch is checked by a Rust unit test that panics on purpose, not through Swift.
+- **`save_page` writes `0007.part`, not `0007.jpg.part`.** `with_extension` replaces the
+  extension. Corrected in plan sections 7 and 8, which milestone 3's sweep fixtures use.
+
+A review of the new crate then found an engine bug the FFI made reachable: writing crooked by
+10 degrees or more fails the whole page, because `suggest_straightening` proposes an angle
+`straighten` refuses. Parked in the README with the measurement and the one-line fix - it is
+engine work, and patching it in `ffi/` would leave the runner broken. Two doc claims were wrong
+and are now corrected: `core_engine/tests/AGENTS.md` still counted 42, and
+`core_engine/AGENTS.md` claimed only `load_image` and `images_to_pdf` touch files, which
+`save_page` and `pages_to_pdf` ended six lines below it.
+
+Also: `precondition` prints its sentence only in an unoptimised build, so `bridge_check.sh`
+compiles the Swift check without `-O`. With `-O` it still aborts, but silently - a check that
+cannot say what it saw is half a check. Both new assertions were broken on purpose once and
+watched to fail.
+
 ## 2026-08-12 - milestone 1: the engine can write pages and stitch them
 
 `save_page` and `pages_to_pdf` are in `core_engine/src/pdf.rs`, `place(...)` is pulled out of

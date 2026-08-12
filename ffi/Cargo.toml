@@ -1,0 +1,16 @@
+[package]
+name = "core_engine_ffi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+# One library file the app links into itself, named so the linker flag reads
+# -lfreepdf. A staticlib rather than a cdylib: a dynamic library on iOS has to be
+# embedded as a framework and signed, and buys nothing here.
+name = "freepdf"
+crate-type = ["staticlib"]
+
+[dependencies]
+# No image crate here either: this crate hands the engine's own re-exported types
+# around, so the two can never disagree on the version.
+core_engine = { path = "../core_engine" }

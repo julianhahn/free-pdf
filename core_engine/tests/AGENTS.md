@@ -8,8 +8,8 @@ cargo test --workspace
 ```
 
 37 tests are in this file. Five more are in `backend-core-runner/src/main.rs`, three of them
-only on macOS, so the workspace shows 42 green on a Mac and 39 elsewhere. A different number
-means something else was touched. [`../../README.md`](../../README.md) prints both counts
+only on macOS, and two in `ffi/src/lib.rs`, so the workspace shows 44 green on a Mac and 41
+elsewhere. A different number means something else was touched. [`../../README.md`](../../README.md) prints both counts
 under "Start here" - move them with the count, in the same commit.
 
 ## Tests build their own images

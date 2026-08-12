@@ -186,6 +186,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "core_engine_ffi"
+version = "0.1.0"
+dependencies = [
+ "core_engine",
+]
+
+[[package]]
 name = "cpubits"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
