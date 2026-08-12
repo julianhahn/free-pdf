@@ -1,7 +1,8 @@
 # ios
 
-The iPhone app. `FreePDF/` is what ships, `check/` is how the part that has no screen is
-proven without Xcode. The engine is reached through the two C functions in
+The iPhone app. `FreePDF/` is what ships - the screens and the storage model under them -
+and `check/` holds the two checks: one that needs no Xcode at all, one that drives the
+whole app on a simulator. The engine is reached through the two C functions in
 [`../ffi`](../ffi/AGENTS.md) and nothing else - no image work and no PDF work belongs in
 here.
 
@@ -82,11 +83,101 @@ A manifest is pure addition: it needs its own atomic write, and (photo, manifest
 atomic as a pair, so it can lag the files by one page - forcing exactly the file-derived
 reconciliation it was meant to replace, plus a schema.
 
-## The check
+## The screens
+
+```
+ScanList ──"New scan"──▶ Scan.create() ──▶ ScanFlow
+   │  tap a scan ──────────────────────────▶ ScanFlow
+   ▼
+ScanFlow - one screen, and it switches on what the files say
+   ├─ shooting ─▶ the camera        "Scan 7 pages" ─┐
+   ├─ scanning ◀───────────────────────────────────-┘   the drain, below
+   ├─ ready      the pages, one per swipe           "Make PDF" ─▶ scan.pdf
+   └─ done       Open PDF │ Change pages
+```
+
+`ScanFlow` owns one piece of view state that decides a screen, `shooting`. Everything
+else it shows is read from the files; `photos` and `pages` are a copy for SwiftUI to
+redraw on, refreshed at every moment the files change, never a second truth.
+
+- **The screen is not `scan.state` alone.** A photo the engine refuses stays unscanned
+  for ever, so the scan would sit in front of a progress bar that can never move again.
+  The drain running out of work counts as arriving at the pages, which is where the user
+  can retake that one or delete it.
+- **Make PDF is hidden until every photo has a page**, so a scan cannot quietly lose a
+  page to a PDF the user thought was whole.
+- **"Change pages" deletes `scan.pdf`**, which drops the scan back to the pages. That is
+  safe precisely because the PDF is derived: every page file is still there and
+  rebuilding costs two seconds. Without it, a bad page spotted after Make PDF costs the
+  whole scan.
+- **Retake and delete remove the page file first, the photo second.** A kill in between
+  leaves the page merely unscanned, so the drain rebuilds it - never a fresh photo
+  wearing a page made from the sheet before it, and never a page in the PDF he asked to
+  be rid of.
+- **The sweep runs in `FreePDFApp.init`, not on the list screen.** The list comes back
+  every time the user leaves a scan, and a sweep at that moment could delete the `.part`
+  file the engine is writing right then.
+
+### The drain
+
+One page at a time, from the first photo that has no page file, until there is none
+left it can do. That is the memory guarantee, and it is the shape of the loop rather
+than a comment: sharpening one page peaks near 220 MB on its own
+([`../ffi/AGENTS.md`](../ffi/AGENTS.md)).
+
+- **`failed` lives in memory only**, so it dies with the process and a relaunch retries
+  each refused page once. Without it the loop would pick the same number for ever, and
+  one unreadable photo would make the scan unfinishable.
+- **A page already in flight when the screen goes away runs to the end.**
+  `Task.detached` does not inherit cancellation, and that is what is wanted: a page
+  either lands on disk whole or was never there.
+
+## How the Rust library gets in
+
+Four settings on the app target and nothing else - no wrapper target, no Swift package,
+no framework, no XCFramework, no Run Script phase:
+
+```
+OTHER_LDFLAGS                              = -lfreepdf
+LIBRARY_SEARCH_PATHS[sdk=iphoneos*]        = $(SRCROOT)/../target/aarch64-apple-ios/release
+LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*] = $(SRCROOT)/../target/aarch64-apple-ios-sim/release
+SWIFT_OBJC_BRIDGING_HEADER                 = $(SRCROOT)/../ffi/include/freepdf.h
+```
+
+The SDK condition is what replaces the XCFramework people reach for
+([`../ffi/AGENTS.md`](../ffi/AGENTS.md)). Three more things about `FreePDF.xcodeproj`,
+which was written by hand and never opened in Xcode:
+
+- **The sources are a synchronised group** (`PBXFileSystemSynchronizedRootGroup`), so a
+  new `.swift` file in `FreePDF/` joins the target without the project file being
+  touched at all.
+- **`SWIFT_TREAT_WARNINGS_AS_ERRORS` is load bearing.** SwiftUI's `View` is
+  `@preconcurrency @MainActor`, so a real data race inside a view comes out as a warning
+  and the build goes green without it.
+- **Xcode does not know about cargo**, so `scan_check.sh` builds the library itself. A
+  green check can never be about yesterday's Rust.
+
+## The checks
 
 ```sh
-bash ios/check/run.sh      # -> "resume ok", about 2 seconds
+bash ios/check/run.sh          # -> "resume ok", about 2 seconds, no Xcode at all
+bash ios/check/scan_check.sh   # -> "scan ok", about 3 minutes on the simulator
 ```
+
+While a screen is being written there is a loop faster than either, and it needs no
+project and no simulator - about a third of a second for the whole app:
+
+```sh
+swiftc -typecheck -parse-as-library -swift-version 6 -warnings-as-errors \
+  -sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
+  -target arm64-apple-ios18.0-simulator \
+  -import-objc-header ffi/include/freepdf.h ios/FreePDF/*.swift
+```
+
+`-parse-as-library` is not decoration: without it a single file is read as a script, and
+the concurrency diagnostics quietly disappear.
+
+### run.sh - the resume rules
 
 Twelve moments - ten where the process is killed, and two the user reaches on his own -
 built as real files in a temporary directory and read back through the model the app itself
@@ -110,12 +201,37 @@ what a new Xcode project defaults to.
   check compares the name against a POSIX formatter, which is Gregorian by definition, so
   the mutation aborts on a phone set to the Buddhist calendar and passes on this Mac.
 
+### scan_check.sh - the app, killed in the middle of a scan
+
+Twelve pages shot, killed after three, opened again. It has to carry on at page four by
+itself, leave the three finished pages byte-identical **and written at the same moment**,
+sweep away the debris planted while it was dead, and end in a PDF that ends in `%%EOF`.
+That one kill exercises the whole design at once: the step derived from the files, temp
+file plus rename, the sweep, the C boundary and the streamed PDF.
+
+- **Identical bytes are not enough, so the moment is checked too.** The engine is
+  deterministic: a page scanned twice comes out byte for byte the same, so a checksum
+  alone cannot tell resumed work from repeated work. The modification time can.
+- **There is no way to tap a simulator from a script.** `simctl` has no touch command,
+  and AppleScript is refused without a human granting assistive access. So the app is
+  driven by `-autofake 12`, which stands in for the thirteen taps and lives in
+  [`FreePDF/FakeShoot.swift`](./FreePDF/FakeShoot.swift) with the rest of the camera
+  stand-in.
+- **It cannot see which screen the app is on**, only the files. The one screen rule that
+  matters after a kill - a scan that has pages belongs on the progress line, not in the
+  viewfinder - is watched by a guard inside `autoShoot`, which refuses to press on and
+  lets the check run out of pages instead.
+- **Three mutations were run against it**, each aborting on the line meant to catch it: a
+  sweep that eats the finished pages ("a finished page was written again"), reopening
+  that lands on the viewfinder ("only 3 of 5 pages after the relaunch"), and nothing
+  swept at launch ("debris left behind"). A fourth attempt never got as far as running,
+  because it left a variable unused and `SWIFT_TREAT_WARNINGS_AS_ERRORS` stopped the
+  build - which is that setting earning its place.
+
 ## What is not written here
 
-The screens, the drain, the camera and the export are
-[plan section 3](../iphone-client-plan.md#3-screens); the memory budget is
-[section 9](../iphone-client-plan.md#9-memory); every line of text the app shows, in
-English and German, is [section 12](../iphone-client-plan.md#12-every-line-of-text-the-app-shows).
-The four build settings that link the Rust library are
-[section 5](../iphone-client-plan.md#5-the-c-surface). Each of those moves into this file
-when the code it governs is written.
+The camera and the export are [plan section 3](../iphone-client-plan.md#3-screens); the
+memory budget is [section 9](../iphone-client-plan.md#9-memory); every line of text the
+app shows, in English and German, is
+[section 12](../iphone-client-plan.md#12-every-line-of-text-the-app-shows). Each of those
+moves into this file when the code it governs is written.

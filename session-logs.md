@@ -8,6 +8,42 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-12 - milestone 4: the app, and thirteen taps nobody can make
+
+`ios/FreePDF.xcodeproj` exists and was never opened in Xcode - `project.pbxproj` is hand
+written, about 200 lines, with a file-system-synchronised group, so a new `.swift` file
+joins the target without the project file being touched. Around it: `ScanList`,
+`ScanFlow` with the drain, `Engine`, and `FakeShoot` as the camera's stand-in.
+`bash ios/check/scan_check.sh` -> "scan ok" in about three minutes.
+
+The check was the half worth the time. Nothing can tap a simulator: `simctl` has no touch
+command, AppleScript is refused without a human granting assistive access, and neither
+`idb` nor `cliclick` is here. So the stand-in also carries a `-autofake 12` launch
+argument, which makes the thirteen taps and lets the whole thing be one command. Three
+things it then taught:
+
+- **Byte-identical pages prove nothing.** The engine is deterministic, so a page scanned
+  twice comes out the same. A checksum passes against an app that redoes all the work.
+  The check compares the moment each page was written as well, and that is the assertion
+  the first mutation - a sweep that eats the finished pages - aborts on.
+- **A files-only check cannot see which screen the app is on.** Reopening after a kill has
+  to land on the progress line, not the viewfinder, and `-autofake` would have papered
+  straight over that by pressing on regardless. One guard in `autoShoot` refuses to
+  shoot when the scan already has pages, so the wrong landing runs the check out of pages
+  instead. Mutation two aborts with "only 2 of 5 pages after the relaunch".
+- **`Scan.sweep()` had nothing watching it here** until the check started planting debris
+  while the app is dead. Mutation three, the launch sweep removed, aborts on it.
+
+A fourth mutation never got as far as running: it left a variable unused, and
+`SWIFT_TREAT_WARNINGS_AS_ERRORS` stopped the build. That setting is in for a sharper
+reason - SwiftUI's `View` is `@preconcurrency @MainActor`, so a genuine data race inside a
+view comes out as a warning and the build otherwise goes green.
+
+And the parked memory question got an answer. Twelve 12 MP pages through the real app peak
+at 334 MB for the whole run, of which the PDF step is about 23 MB - the plan's "2 MB a
+page" holds. What is still unweighed is forty pages on a real phone, because this is the
+Mac process's resident size and iOS kills on `phys_footprint`.
+
 ## 2026-08-12 - milestone 3: the resume rules, and seventeen ways to break them
 
 `ios/` exists: `FreePDF/Scan.swift` is the whole storage model in about 190 lines of

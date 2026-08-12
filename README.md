@@ -62,27 +62,29 @@ Riskiest thing first. Each milestone ends in something that runs, and every chec
 command. Full text: [plan section 7](./iphone-client-plan.md#7-build-order); the
 file-by-file list is [plan section 6](./iphone-client-plan.md#6-files).
 
-**Now: milestone 4.** The Xcode project and the app around the model: `ScanList`,
-`ScanFlow`, `Engine.swift`, the drain, and one temporary "Fake shoot" button in place of the
-camera. [Plan section 3](./iphone-client-plan.md#3-screens) holds the screens and the drain;
-the four build settings that link the Rust library, and the Swift wrapper that was already
-compiled and run against it, are [section 5](./iphone-client-plan.md#5-the-c-surface). Start
-with `rustup target add aarch64-apple-ios-sim` and `bash ffi/build-ios.sh`.
+**Now: milestone 5.** The real camera: an `AVCaptureSession`, JPEG asked for at the moment
+of capture, portrait locked. [Plan section 3](./iphone-client-plan.md#3-screens) is what is
+left of that section and holds it. Everything the screens already do is next to them in
+[`ios/AGENTS.md`](./ios/AGENTS.md).
 
-Three things milestone 3 leaves for you. `Scan.sweep()` exists and nothing calls it - the
-launch path has to, on every scan, before the list is shown, because it is also the only
-repair pass: a scan whose `page/` never got made can never be scanned otherwise. `Scan` has
-no `title`, no `delete()` and no `exportPDF()`; each was left for the screen that needs it.
-And an engine bug is still parked below: a page whose writing is crooked by 10 degrees or
-more fails every time, so a fake page drawn dead straight is the safe one to shoot with.
+Three things milestone 4 leaves for you. **Decide about `-autofake` before you delete the
+stand-in**, not after: `ios/FreePDF/FakeShoot.swift` reaches out of itself in exactly two
+lines, so deleting the file makes the compiler point at both - but the launch argument in
+there is what lets `bash ios/check/scan_check.sh` run without hands, and nothing can tap a
+simulator. Keeping the drawing and the argument, and deleting only the button and its
+screen, keeps the only end-to-end check there is; milestone 6 needs it as well. **`Scan`
+still has no `exportPDF()`**, and the done screen has no "Delete the 40 photos" - both are
+milestone 6. And **the engine bug below is still parked**: a page whose writing is crooked
+by 10 degrees or more fails every time. The fake pages dodge it by being drawn dead
+straight. A real camera will not.
 
 | # | State | What gets built | Check |
 | --- | --- | --- | --- |
 | 1 | **done** | `save_page`, `pages_to_pdf`, `place(...)` in the engine. | `cargo test --workspace`, and `--scan` on any photo still produces a PDF |
 | 2 | **done** | `ffi/`: one `staticlib` the app links into itself, the hand-written `ffi/include/freepdf.h`, and two C functions, `freepdf_scan_page` and `freepdf_pages_to_pdf`. ([rules](./ffi/AGENTS.md)) | `bash ffi/bridge_check.sh` -> "bridge ok" (~1 s, host architecture) |
 | 3 | **done** | `ios/FreePDF/Scan.swift` plus `ios/check/`: the folder layout, the derived step, the sweep. Foundation only. ([rules](./ios/AGENTS.md)) | `bash ios/check/run.sh` -> "resume ok" (~2 s, no Xcode) |
-| 4 | **now** | The Xcode project and the app: list, flow, the scan loop, the two FFI calls. One temporary "Fake shoot" button in place of the camera. | Build for the "iPhone 17 Pro" simulator, fake-shoot 12 pages, kill the app mid-scan: it must come back at page 7 by itself, leave the finished pages byte-identical, and finish. Needs `rustup target add aarch64-apple-ios-sim` first |
-| 5 | to do | The real camera: JPEG at the moment of capture, locked to portrait. Deletes the "Fake shoot" button. | By hand: shoot 5 pages, force-quit while aiming at 6, relaunch - the row reads "5 pages - keep shooting" and the counter says "Page 6" |
+| 4 | **done** | The Xcode project and the app: list, flow, the scan loop, the two FFI calls, and the camera stand-in with its `-autofake` launch argument. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` -> "scan ok" (~3 min, "iPhone 17 Pro" simulator) |
+| 5 | **now** | The real camera: JPEG at the moment of capture, locked to portrait. Deletes the "Fake shoot" button. | By hand: shoot 5 pages, force-quit while aiming at 6, relaunch - the row reads "5 pages - keep shooting" and the counter says "Page 6" |
 | 6 | to do | Export to iCloud Drive, and the quiet "delete the photos" action. | With iCloud signed in, find the PDF under `~/Library/Mobile Documents` on the Mac - it only appears there if it really went up |
 
 ### Parked
@@ -99,9 +101,11 @@ Things noticed but not scheduled.
   `core_engine/src/deskew.rs:255` - one line, `-tilt.clamp(-MOST_TILT, MOST_TILT)` - plus a test
   at 10.5 degrees. It is engine work, not client work, so it is written down here rather than
   patched over in `ffi/`.
-- **The memory numbers are the plan's, not measured.** "Around 140 MB for forty pages" comes
-  from reading printpdf's sources, and nothing has weighed the real thing. Milestone 4 runs
-  twelve pages on a simulator, which is the first honest chance to check it.
+- **Forty pages on a real phone is still unweighed.** Twelve were measured on the simulator
+  and the whole run peaked at 334 MB, which is comfortable
+  ([plan section 9](./iphone-client-plan.md#9-memory)) - but that number is the Mac
+  process's resident size, and what iOS kills on is `phys_footprint`. A device run with
+  Instruments is what would settle it.
 
 ## Where to find what
 
@@ -114,7 +118,7 @@ beside it - not this page.
 | [`core_engine/AGENTS.md`](./core_engine/AGENTS.md) | The shape of an engine function: suggest-then-apply, refuse instead of guess, what the public API costs, and the engine's own limits. |
 | [`core_engine/tests/AGENTS.md`](./core_engine/tests/AGENTS.md) | How to add a test: the fixtures that already exist, temp file names, and which assertions must never be relaxed. |
 | [`ffi/AGENTS.md`](./ffi/AGENTS.md) | The C boundary: what may cross it, why every entry point is wrapped against panics, the order of tools a photo goes through, and the check. |
-| [`ios/AGENTS.md`](./ios/AGENTS.md) | The phone side: one scan is one directory, the three rules that carry it, the step derived from the files, and the check that kills the process at ten moments. |
+| [`ios/AGENTS.md`](./ios/AGENTS.md) | The phone side: one scan is one directory, the three rules that carry it, the step derived from the files, the screens and the drain, how the Rust library gets linked, and the two checks. |
 | [`backend-core-runner/AGENTS.md`](./backend-core-runner/AGENTS.md) | The tool order, which is a contract; flags, messages and exit codes; HEIC. |
 | [`iphone-client-plan.md`](./iphone-client-plan.md) | The authority on what is not built yet, in twelve numbered sections: the screens, the camera, the export, memory, and every line of UI text in English and German. A section moves out of it into an AGENTS.md when its code is written. |
 | [`session-logs.md`](./session-logs.md) | What each session actually did, newest first. |

@@ -10,7 +10,10 @@
 import Foundation
 
 /// One scan: a folder of photos, the pages made from them, and the finished PDF.
-struct Scan {
+///
+/// `Hashable` because the list screen pushes a scan onto the navigation stack, and it
+/// costs nothing: the folder is the identity, and there is no second field to compare.
+struct Scan: Hashable {
     /// Where the user is in this scan. Derived, never stored - a stored step is a
     /// second truth, and the kill that matters is the one between writing the file
     /// and writing the step.
@@ -43,6 +46,22 @@ struct Scan {
 
     func pageURL(_ number: Int) -> URL {
         pageDirectory.appendingPathComponent(Self.fileName(number))
+    }
+
+    /// What the user reads on the row: `11 Aug 2026, 20:14`. The folder name is the
+    /// title, which is why there is no title field and nothing to rename - see `create`.
+    ///
+    /// A folder whose name does not parse is shown as it is. That is not a scan this app
+    /// made, and hiding it would be worse than an ugly row.
+    var title: String {
+        // Built here rather than kept as a `static let`, because `DateFormatter` is not
+        // Sendable and one row is far cheaper than making the model thread-unsafe.
+        let reader = DateFormatter()
+        reader.locale = Locale(identifier: "en_US_POSIX")    // Gregorian, like the name
+        reader.dateFormat = "yyyy-MM-dd_HHmmss"
+        let name = url.lastPathComponent
+        guard let date = reader.date(from: String(name.prefix(17))) else { return name }
+        return date.formatted(date: .abbreviated, time: .shortened)
     }
 
     // MARK: - What the disk says
@@ -163,6 +182,16 @@ struct Scan {
         where !["photo", "page", "scan.pdf"].contains(name) {
             try? manager.removeItem(at: url.appendingPathComponent(name))
         }
+    }
+
+    /// Throws the whole scan away - photos, pages and PDF.
+    ///
+    /// Nothing is reported when it fails, because the list is read back from the disk
+    /// straight afterwards: a scan that could not be deleted is simply still on it,
+    /// which is the only honest report there is. There is no trash for a sandbox
+    /// folder, so the screen asks before calling this.
+    func delete() {
+        try? FileManager.default.removeItem(at: url)
     }
 
     // MARK: - Names

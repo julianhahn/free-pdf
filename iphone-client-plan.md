@@ -70,55 +70,11 @@ the table in section 1, and what a kill costs at each moment is section 8.
 
 ## 3. Screens
 
-```
-ScanList ──"New scan"──▶ Scan.create() ──▶ ScanFlow
-   │  tap a scan ──────────────────────────▶ ScanFlow
-   ▼
-ScanFlow — one screen, switches on scan.state
-   ├─ .empty / .shooting ─▶ CameraView   shutter ─▶ photo/0007.jpg   (.atomic)
-   │                        "Scan 7 pages" ──┐
-   ├─ .scanning ◀───────────────────────────-┘   drain: for n in unscanned
-   │                                              photo/000n.jpg ─▶ page/000n.jpg
-   ├─ .ready    carousel over page/*.jpg          "Make PDF" ─▶ scan.pdf
-   └─ .done     Open PDF │ Change pages │ Delete the 40 photos │ (export)
-```
-
-`ScanFlow` holds exactly one piece of view state, `@State var shooting`, initialised to
-`state == .empty || state == .shooting`. The camera is shown while it is true. "Scan N
-pages" sets it false, which starts the drain. "Add pages" in the carousel toolbar sets it
-true again with `slot: nil`; "Retake this page" sets it true with `slot: n`.
-
-"Change pages" on the done screen deletes `scan.pdf`, which drops the scan back to
-`.ready`. That is safe precisely because the PDF is derived — every page file is still
-there and rebuilding costs two seconds. Without it, a bad page spotted in QuickLook after
-Make PDF costs the whole scan.
-
-### The drain (this is the owner's step 5, and it is not a step)
-
-```swift
-.task { await drain() }                    // cancelled when the screen goes away
-
-func drain() async {
-    var failed = Set<Int>()                // dies with the process: a relaunch retries once
-    while !Task.isCancelled,
-          let n = scan.unscanned.first(where: { !failed.contains($0) }) {
-        do {
-            try await Task.detached(priority: .utility) {
-                try Engine.scanPage(scan.photoURL(n), into: scan.pageURL(n))
-            }.value
-        } catch {
-            failed.insert(n)               // one unreadable photo must not wedge the scan
-            message = error.localizedDescription
-        }
-        done = scan.pages.count            // redraw
-    }
-}
-```
-
-One page at a time, and that is the memory guarantee — not a comment, the loop shape.
-`failed` is in memory only, so nothing goes stale. A page that keeps failing shows the
-engine's own sentence in the carousel with **Retake this page** and **Delete page**; Make
-PDF stays hidden until every photo has a page and says which page is the problem.
+Built, and the rules of what happens on them now live next to the code in
+[`ios/AGENTS.md`](./ios/AGENTS.md): the way from the list into a scan, the one piece of
+view state there is, the drain, why a refused page has to land on the pages rather than a
+progress bar, and what makes changing the pages after Make PDF safe. Two screens in this
+section are not built yet, and they are what is left of it.
 
 ### Camera
 
@@ -145,20 +101,6 @@ rotation come out right for free.
 **The write failure must reach the UI.** `try?` here is the product's one unforgivable bug:
 a full disk at page 25 would otherwise keep the shutter clicking and produce a 24-page PDF
 of a 40-page contract.
-
-### Review
-
-`TabView(.page)` over `page/*.jpg`, decoded at 1600 px through
-`CGImageSourceCreateThumbnailAtIndex` (`ThumbnailFromImageIfAbsent`, `WithTransform`).
-Full-size decode is ~34 MB per page and a paging TabView keeps about three alive (104 MB);
-1600 px is ~7 MB each. 400 px would be too soft to see whether small print survived, which
-is the only reason this screen exists.
-
-Per page: **Retake this page** (removes `page/NNNN.jpg`, then the camera overwrites
-`photo/NNNN.jpg` in the same slot) and **Delete page** (removes `page/NNNN.jpg`, then
-`photo/NNNN.jpg`). Page-file-first in both cases: a kill in between leaves the page merely
-unscanned, so the drain rebuilds it — never a fresh photo wearing a stale page, and never a
-page in the PDF he deleted.
 
 ### Export
 
@@ -396,17 +338,9 @@ enum Engine {
 
 `bash /Users/julianhahn/free-pdf/ffi/build-ios.sh` writes both libraries, one per
 platform, and why there are two rather than one `lipo`'d file is in
-[`ffi/AGENTS.md`](./ffi/AGENTS.md). Four build settings on the app target, nothing else:
-
-```
-OTHER_LDFLAGS                              = -lfreepdf
-LIBRARY_SEARCH_PATHS[sdk=iphoneos*]        = $(SRCROOT)/../target/aarch64-apple-ios/release
-LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*] = $(SRCROOT)/../target/aarch64-apple-ios-sim/release
-SWIFT_OBJC_BRIDGING_HEADER                 = $(SRCROOT)/../ffi/include/freepdf.h
-```
-
-No wrapper target, no Swift package, no framework, no XCFramework, no Run Script phase.
-The SDK condition is what replaces the XCFramework people reach for.
+[`ffi/AGENTS.md`](./ffi/AGENTS.md). The four build settings that pick between them, and
+the three things worth knowing about a project file written by hand, are now in
+[`ios/AGENTS.md`](./ios/AGENTS.md).
 
 ---
 
@@ -424,21 +358,27 @@ The SDK condition is what replaces the XCFramework people reach for.
 | `/Users/julianhahn/free-pdf/ffi/bridge_check.sh` | the FFI check (host arch) |
 | `/Users/julianhahn/free-pdf/ffi/build-ios.sh` | the two cargo builds |
 | `/Users/julianhahn/free-pdf/ffi/AGENTS.md` | the rules of the boundary, moved out of section 5 |
-| `/Users/julianhahn/free-pdf/ios/FreePDF.xcodeproj` | one app target, four build settings, iCloud Documents |
+| `/Users/julianhahn/free-pdf/ios/FreePDF.xcodeproj` | one app target, four build settings. Hand-written, never opened in Xcode |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/Scan.swift` | the storage model and the whole state machine. Foundation only |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/Engine.swift` | the two FFI calls (~20 lines) |
-| `/Users/julianhahn/free-pdf/ios/FreePDF/ScanList.swift` | the landing screen: sweep, `Scan.all()`, derived subtitles, New scan, swipe-to-delete |
-| `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift` | the switch on `state`, the drain, and `CheckView` / `DoneView` as private subviews |
+| `/Users/julianhahn/free-pdf/ios/FreePDF/ScanList.swift` | the landing screen: `Scan.all()`, derived subtitles, New scan, swipe-to-delete |
+| `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift` | the switch on `state`, the drain, the pages, Make PDF, Open PDF |
+| `/Users/julianhahn/free-pdf/ios/FreePDF/FakeShoot.swift` | the camera stand-in and the `-autofake` launch argument. Deleted in milestone 5 |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/CameraView.swift` | session, preview, shutter, counter, `PageWriter` |
-| `/Users/julianhahn/free-pdf/ios/FreePDF/FreePDFApp.swift` | `@main`, one `NavigationStack` |
-| `/Users/julianhahn/free-pdf/ios/FreePDF/Info.plist` | `NSCameraUsageDescription`, `NSUbiquitousContainers`, portrait only |
+| `/Users/julianhahn/free-pdf/ios/FreePDF/FreePDFApp.swift` | `@main`, one `NavigationStack`, the launch sweep |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/FreePDF.entitlements` | iCloud Documents only |
-| `/Users/julianhahn/free-pdf/ios/AGENTS.md` | the rules of the storage model, moved out of section 2 |
+| `/Users/julianhahn/free-pdf/ios/AGENTS.md` | the rules of the storage model and the screens, moved out of sections 2 and 3 |
 | `/Users/julianhahn/free-pdf/ios/check/main.swift` | the resume check, ten preconditions |
 | `/Users/julianhahn/free-pdf/ios/check/run.sh` | `swiftc` over `Scan.swift` + the check, then run it |
+| `/Users/julianhahn/free-pdf/ios/check/scan_check.sh` | the end-to-end check: build, shoot, kill, resume, PDF |
 
 Export lives on `Scan` (`exportPDF()`), not in its own file: it is file work, and keeping it
 in the Foundation-only file means the resume check still compiles the whole model.
+
+There is no `Info.plist` file. Xcode 26 generates it from `INFOPLIST_KEY_…` build
+settings, so a key is one line in the project rather than a file to keep in step with it.
+`NSCameraUsageDescription` joins it in milestone 5 and `NSUbiquitousContainers` in
+milestone 6, each as one more setting.
 
 ---
 
@@ -476,31 +416,28 @@ Seventeen mutations of `Scan.swift` were run against it and all seventeen aborte
 the one named here: swap `unscanned.isEmpty` for `pages.count == photos.count`.
 
 **4 — The app, killed mid-scan.** Xcode project, `ScanList`, `ScanFlow`, `Engine`, the
-drain. In place of the camera, one temporary "Fake shoot" button that draws a page-like
-image in a `CGContext` and writes it through the same atomic write (~12 lines, deleted in
-milestone 5, no bundled assets).
-Check, on the "iPhone 17 Pro" simulator:
+drain, and the camera stand-in. **Done**, and what the screens promise is written down in
+[`ios/AGENTS.md`](./ios/AGENTS.md).
+Check: `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` → "scan ok" (~3 min).
 
-```sh
-rustup target add aarch64-apple-ios-sim
-bash /Users/julianhahn/free-pdf/ffi/build-ios.sh
-xcodebuild -project /Users/julianhahn/free-pdf/ios/FreePDF.xcodeproj -scheme FreePDF \
-  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
-# Fake shoot x12, tap "Scan 12 pages", then mid-drain:
-xcrun simctl terminate booted com.julianhahn.freepdf
-xcrun simctl launch    booted com.julianhahn.freepdf
-ls "$(xcrun simctl get_app_container booted com.julianhahn.freepdf data)"/Documents/Scans/*/page
-```
+Two things turned out different. The stand-in is not twelve lines and not just a button:
+nothing can tap a simulator from a script, so it also carries the `-autofake 12` launch
+argument that makes the thirteen taps, and it draws a real 12 MP photo rather than a small
+one, so what the drain is measured against is what the camera will hand it. And byte-
+identical pages turned out to prove nothing on their own - the engine is deterministic, so
+a page scanned twice comes out the same - which is why the check compares the moment each
+page was written as well.
 
-It must come back reading "6 of 12 pages scanned", continue at page 7 by itself, leave the
-already-written page files byte-identical, and finish. Then Make PDF and Open PDF. No
-`.part` file survives the relaunch. That one kill exercises the entire design: derived
-state, temp+rename, the sweep, the FFI boundary and the streamed PDF.
+**5 — The real camera.** `CameraView`, and `FakeShoot.swift` deleted — it reaches out of
+itself in exactly two lines, and the compiler points at both. There is no runnable check
+for a camera; the documented manual one is: shoot 5 pages, force-quit while aiming at 6,
+relaunch — the row says "5 pages - keep shooting" and the counter says "Page 6". Then 3
+more, Scan 8 pages.
 
-**5 — The real camera.** `CameraView`, the stub deleted. There is no runnable check for a
-camera; the documented manual one is: shoot 5 pages, force-quit while aiming at 6, relaunch
-— the row says "5 pages - keep shooting" and the counter says "Page 6". Then 3 more, Scan 8
-pages.
+One thing to decide before deleting the file rather than after: `-autofake` is what makes
+the milestone 4 check run without hands, and it lives in there. Keeping the drawing and
+the argument and deleting only the button and its screen keeps the only end-to-end check
+there is, and milestone 6 needs it too.
 
 **6 — iCloud and the photos.** `Scan.exportPDF()`, the done screen, entitlement and plist.
 Check: with iCloud signed in (`xcrun simctl icloud_sync booted` on the simulator),
@@ -553,6 +490,23 @@ flat in the page count, except the PDF step.
 | review carousel | ~85 MB (three pages at 1600 px) | no |
 | building the PDF, 40 pages | ~140 MB | yes, ~2 MB per page |
 
+**Measured, at last.** Twelve 12 MP pages through the real app on the "iPhone 17 Pro"
+simulator, sampling the process every 200 ms:
+
+| Phase | High-water mark |
+| --- | --- |
+| drawing twelve fake photos (the stand-in's own doing, and it goes with it) | 264 MB |
+| scanning them, one at a time | 311 MB |
+| building the PDF from twelve page files | 334 MB |
+
+Read them as one rising line, not three peaks: resident memory is a high-water mark and
+does not fall back, so scanning added about 47 MB over what the drawing had already
+claimed, and the whole PDF step added about 23 MB — roughly the 2 MB a page this section
+predicted. Nothing here grows with the page count except that last row. Two caveats: this
+is the Mac process's resident size, which carries shared frameworks iOS would not count,
+and iOS kills on `phys_footprint` rather than on this. It is the right order of magnitude
+and nothing like the 3.1 GB the image path would have cost.
+
 The scanning number, honestly: `deskew` is input + `to_rgb8` clone + output = ~110 MB at
 full 12 MP. `sharpen` is the peak, and it is 33 bytes per pixel — `unsharpen` calls
 `blur_advanced`, which allocates **two** f32 planes of `w*h*3*4` bytes (image 0.25.10
@@ -599,6 +553,8 @@ The delete prompt shows the measured size, not this estimate.
 | portrait only | landscape shooting is not supported (a landscape sheet still works) | `AVCaptureDevice.RotationCoordinator`, one property |
 | four-digit page numbers | 9999 pages per scan | five digits |
 | `Scan.all()` is O(scans) | slow launch at a few hundred scans | cache in memory |
+| the end-to-end check drives the app by a launch argument | it reads files, so it cannot see which screen the app is on | none while nothing can tap a simulator; a guard in `autoShoot` covers the one screen rule that matters |
+| the pages are decoded while the carousel is drawn | about 40 ms of main thread per swipe | decode in a `.task` into a `@State` image |
 | the folder name carries local wall-clock time | flying west, or the repeated hour when summer time ends, lists a newer scan below an older one for a few hours | build the name in `.gmt` and convert to local at display time — the name stops being the title as it stands |
 | deleting the photos is final | iOS has no trash for sandbox files | none — the button says the megabytes and asks every time |
 | `NSUbiquitousContainers` read once | wrong on the first install hides the Files folder forever | bump `CFBundleVersion` |
