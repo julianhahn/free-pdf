@@ -43,7 +43,7 @@ struct ScanFlow: View {
     var body: some View {
         Group {
             if shooting {
-                FakeShoot(scan: scan, slot: slot) {
+                CameraView(scan: scan, slot: slot) {
                     slot = nil
                     shooting = false
                     refresh()
@@ -142,8 +142,7 @@ struct ScanFlow: View {
         .navigationTitle("Page \(position) of \(numbers.count)")
         .navigationBarTitleDisplayMode(.inline)
         // The second of the two lines the camera stand-in reaches out of its own file
-        // with: it presses Make PDF for the check. Deleting `FakeShoot.swift` in
-        // milestone 5 makes the compiler point straight at this line.
+        // with: it presses Make PDF for the check ([`FakeShoot.swift`](./FakeShoot.swift)).
         // The same condition the button carries, or a refused page would be left out of
         // a PDF nobody asked for.
         .task { if FakeShoot.pagesWanted != nil, scan.unscanned.isEmpty, !making { await makePDF() } }

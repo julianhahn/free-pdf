@@ -8,6 +8,41 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-12 - milestone 5: the real camera, and the angle the plan got wrong
+
+`ios/FreePDF/CameraView.swift` is the camera: an `AVCaptureSession` on one queue of its
+own, a fresh `AVCapturePhotoSettings` per press, and a `PageWriter` per shot that carries
+its page number and writes the JPEG the camera hands over, untouched. `scan_check.sh` still
+says "scan ok". A simulator has no camera at all, only a microphone (measured), which is why
+`FakeShoot` kept its drawing and lost only its button and screen - and why the app was put
+on an iPhone 13 over the cable at the end of the session. It shot a portrait sheet and the
+PDF came out upright, so `videoRotationAngle = 90` is now measured. The four commands that
+put it there are in [`ios/AGENTS.md`](./ios/AGENTS.md), along with the two things that stop
+the first run: a `DEVELOPMENT_TEAM` only Xcode's editor can write, and a certificate the
+phone has to be told to trust.
+
+**The plan's rotation claim was wrong and would have shipped**: portrait lock does not make
+the EXIF come out right by itself. `videoRotationAngle` defaults to 0, the sensor's own
+landscape, so every page in every PDF would have been on its side. It is now set to 90 on
+the photo output's connection and the preview's - and 90 is triangulated from Apple's
+`RotationCoordinator` wording plus four independent implementations - and then confirmed on
+the phone, above.
+
+The shot is `await`ed rather than reported through a closure: one continuation per press,
+resumed by whichever AVFoundation callback comes first on the camera's queue, which is what
+makes a photo that never arrives release the shutter instead of freezing it. Permission is
+only ever asked for where a camera exists - a simulator's alert cannot be tapped by the
+check, and an unanswered one survives `terminate`, `privacy reset` and even `uninstall`.
+
+Two holes a review found afterwards, both now shut. "Scan 7 pages" was tappable while a
+photo was still in flight: leaving tears the screen down, the session stops, the capture is
+aborted, and the sentence saying so is written into a screen that is already gone - a 7 page
+PDF of an 8 page document, in silence. It carries `busy` now, like the shutter. And nothing
+restarted a session that AVFoundation stopped by itself, so the preview froze on its last
+frame for good; a press now starts it again before it gives up. What is still unwatched: the
+stand-in shutter's own three lines, because `-autofake` writes its pages directly rather
+than through a press.
+
 ## 2026-08-12 - milestone 4: the app, and thirteen taps nobody can make
 
 `ios/FreePDF.xcodeproj` exists and was never opened in Xcode - `project.pbxproj` is hand

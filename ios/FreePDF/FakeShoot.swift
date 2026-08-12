@@ -1,78 +1,84 @@
-//  FakeShoot.swift - the camera stand-in, and everything that props it up.
+//  FakeShoot.swift - the camera stand-in: a drawn page, and the taps no script can make.
 //
-//  Milestone 5 replaces this whole file with the real camera. Nothing outside it knows
-//  what a fake page looks like, and it reaches out of itself in exactly one place -
-//  the `.task` line in `FreePDFApp.swift` - so deleting it is a file and a line.
+//  A simulator has no camera at all - iOS 26.2 on "iPhone 17 Pro" reports zero video
+//  devices, only a microphone - so this is what keeps the app usable there. The shutter
+//  draws a sheet of paper instead of photographing one, and `-autofake N` presses it N
+//  times, which is what lets [`../check/scan_check.sh`](../check/scan_check.sh) drive a
+//  whole scan without hands.
 //
-//  The photo it writes is a real 12 MP JPEG through the same atomic write the camera
-//  will use, because everything after it - the drain, the memory, the resume - has to
-//  meet what the phone will really hand it.
+//  It is not the camera screen and knows nothing about AVFoundation
+//  ([`CameraView.swift`](./CameraView.swift) is that). Deleting it costs the only
+//  end-to-end check there is, so it stays until something can tap a simulator.
 
-import SwiftUI
 import UIKit
 
-struct FakeShoot: View {
-    let scan: Scan
-    /// The page number a shot lands on. `nil` means the next one, which is what
-    /// shooting normally does; a number is a retake of that page.
-    let slot: Int?
-    /// Called when the user is finished shooting and wants the pages scanned.
-    let finished: () -> Void
-
-    @State private var photos: [Int] = []
-    @State private var message: String?
-
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("Page \(slot ?? scan.nextPage)")
-                .font(.headline)
-
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.quaternary)
-                .overlay(Text("No camera yet").foregroundStyle(.secondary))
-
-            if let message {
-                Text(message).font(.footnote).foregroundStyle(.red)
-            }
-
-            Button("Fake shoot", action: shoot)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-            // A retake is one shot, so it takes itself back to the pages afterwards.
-            if slot == nil {
-                Button(photos.isEmpty ? "Photograph at least one page"
-                                      : "Scan \(pageCount(photos.count))") { finished() }
-                    .disabled(photos.isEmpty)
-            }
-        }
-        .padding()
-        .navigationTitle(scan.title)
-        .navigationBarTitleDisplayMode(.inline)
-        .onAppear { photos = scan.photos }
-        .task { await autoShoot() }
+enum FakeShoot {
+    /// How many pages `-autofake` should shoot, or nil on every real launch.
+    ///
+    /// There is no way to tap a simulator from a script: `simctl` has no touch command,
+    /// and AppleScript is not allowed near it without a human granting assistive
+    /// access. So the two taps that drive a scan - shoot, then "Scan 12 pages" - are
+    /// made here instead, and `../check/scan_check.sh` is one command because of it.
+    static var pagesWanted: Int? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-autofake"),
+              arguments.indices.contains(flag + 1)
+        else { return nil }
+        return Int(arguments[flag + 1])
     }
 
-    private func shoot() {
-        let number = slot ?? scan.nextPage
+    /// The scan `-autofake` lands on: the newest unfinished one, or a new one.
+    ///
+    /// Both launches of the check use it. The first finds nothing and makes a scan; the
+    /// one after the kill finds the half-scanned scan and opens it, which is the tap the
+    /// user would make on the row.
+    static func scanToOpen() -> Scan? {
+        guard pagesWanted != nil else { return nil }
+        return Scan.all().first { $0.state != .done } ?? (try? Scan.create())
+    }
+
+    /// Draws one page and writes it exactly the way the camera writes a real one.
+    ///
+    /// - Returns: nil when the file is on disk, or the sentence for the screen.
+    static func write(page number: Int, into scan: Scan) -> String? {
         // A pool per shot: the drawing is a 48 MB bitmap, and twelve of them left to
         // pile up would be the one thing on this screen that could get the app killed.
-        guard let jpeg = autoreleasepool(invoking: { Self.draw(page: number) }) else {
-            message = "Page \(number) could not be drawn."
-            return
+        guard let jpeg = autoreleasepool(invoking: { draw(page: number) }) else {
+            return "Page \(number) could not be drawn."
         }
         do {
             // `.atomic`, so a kill mid-write leaves an aux file the sweep takes, never
             // half a photo wearing a real name. The camera writes the same way.
             try jpeg.write(to: scan.photoURL(number), options: .atomic)
-            photos = scan.photos
-            if slot != nil { finished() }
+            return nil
         } catch {
             // Never swallowed. A full disk at page 25 would otherwise keep the shutter
-            // clicking and produce a 24-page PDF of a 40-page contract.
-            message = "Page \(number) was not saved: \(error.localizedDescription) "
-                + "Nothing already photographed is lost."
+            // clicking and produce a 24 page PDF of a 40 page contract.
+            return pageNotSaved(number, error.localizedDescription)
         }
+    }
+
+    /// Shoots until the wanted number is on disk, then asks for them to be scanned.
+    ///
+    /// It stops on the first failure rather than trying for ever, and hands the sentence
+    /// back for the screen to show.
+    ///
+    /// - Returns: the sentence that stopped it, or nil - which also means "nothing to
+    ///   do here", because on a phone `pagesWanted` is nil.
+    static func autoShoot(_ scan: Scan, finished: () -> Void) -> String? {
+        guard let wanted = pagesWanted else { return nil }
+        // A scan that already has pages belongs on the progress line, not in the
+        // viewfinder. Pressing on from here would hide exactly that bug from the check,
+        // which cannot see which screen the app is on - only the files it writes. So it
+        // does nothing instead, and the check runs out of pages and says so.
+        guard scan.pages.isEmpty else { return nil }
+        var message: String?
+        // Counted off the disk, so shooting one page too many cannot happen.
+        while scan.photos.count < wanted, message == nil {
+            message = write(page: scan.nextPage, into: scan)
+        }
+        if message == nil { finished() }
+        return message
     }
 
     /// A sheet of paper on a table, drawn rather than photographed, at the size a 12 MP
@@ -111,52 +117,5 @@ struct FakeShoot: View {
                                               .foregroundColor: UIColor.black])
         }
         return photo.jpegData(compressionQuality: 0.9)
-    }
-}
-
-// MARK: - The taps the check cannot make
-
-extension FakeShoot {
-    /// How many pages `-autofake` should shoot, or nil on every real launch.
-    ///
-    /// There is no way to tap a simulator from a script: `simctl` has no touch command,
-    /// and AppleScript is not allowed near it without a human granting assistive access.
-    /// So the two taps that drive a scan - shoot, then "Scan 12 pages" - are made here
-    /// instead, and `../check/scan_check.sh` is one command because of it.
-    static var pagesWanted: Int? {
-        let arguments = ProcessInfo.processInfo.arguments
-        guard let flag = arguments.firstIndex(of: "-autofake"),
-              arguments.indices.contains(flag + 1)
-        else { return nil }
-        return Int(arguments[flag + 1])
-    }
-
-    /// The scan `-autofake` lands on: the newest unfinished one, or a new one.
-    ///
-    /// Both launches of the check use it. The first finds nothing and makes a scan; the
-    /// one after the kill finds the half-scanned scan and opens it, which is the tap the
-    /// user would make on the row.
-    static func scanToOpen() -> Scan? {
-        guard pagesWanted != nil else { return nil }
-        return Scan.all().first { $0.state != .done } ?? (try? Scan.create())
-    }
-
-    /// Shoots until the wanted number is on disk, then asks for them to be scanned.
-    ///
-    /// It stops on the first failure rather than trying for ever, because `shoot` writes
-    /// the sentence into `message` instead of throwing.
-    private func autoShoot() async {
-        guard let wanted = Self.pagesWanted, slot == nil else { return }
-        // A scan that already has pages belongs on the progress line, not in the
-        // viewfinder. Pressing on from here would hide exactly that bug from the check,
-        // which cannot see which screen the app is on - only the files it writes. So it
-        // does nothing instead, and the check runs out of pages and says so.
-        guard scan.pages.isEmpty else { return }
-        // Counted off the disk, not off the copy above: this runs before the copy is
-        // first filled in, and shooting one page too many would be the result.
-        while scan.photos.count < wanted, message == nil {
-            shoot()
-        }
-        if message == nil { finished() }
     }
 }

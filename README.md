@@ -62,21 +62,22 @@ Riskiest thing first. Each milestone ends in something that runs, and every chec
 command. Full text: [plan section 7](./iphone-client-plan.md#7-build-order); the
 file-by-file list is [plan section 6](./iphone-client-plan.md#6-files).
 
-**Now: milestone 5.** The real camera: an `AVCaptureSession`, JPEG asked for at the moment
-of capture, portrait locked. [Plan section 3](./iphone-client-plan.md#3-screens) is what is
-left of that section and holds it. Everything the screens already do is next to them in
+**Now: milestone 6.** Export to iCloud Drive and the quiet "delete the photos" action.
+`Scan` still has no `exportPDF()`, and the done screen still has no "Delete the 40 photos".
+[Plan section 3](./iphone-client-plan.md#3-screens) is what is left of that section and
+holds it; everything the screens already do is next to them in
 [`ios/AGENTS.md`](./ios/AGENTS.md).
 
-Three things milestone 4 leaves for you. **Decide about `-autofake` before you delete the
-stand-in**, not after: `ios/FreePDF/FakeShoot.swift` reaches out of itself in exactly two
-lines, so deleting the file makes the compiler point at both - but the launch argument in
-there is what lets `bash ios/check/scan_check.sh` run without hands, and nothing can tap a
-simulator. Keeping the drawing and the argument, and deleting only the button and its
-screen, keeps the only end-to-end check there is; milestone 6 needs it as well. **`Scan`
-still has no `exportPDF()`**, and the done screen has no "Delete the 40 photos" - both are
-milestone 6. And **the engine bug below is still parked**: a page whose writing is crooked
-by 10 degrees or more fails every time. The fake pages dodge it by being drawn dead
-straight. A real camera will not.
+Three things milestone 5 leaves for you. **The camera has now seen a phone, once.** On an
+iPhone 13 on 2026-08-12 it shot a portrait sheet and the PDF came out upright, which settles
+`videoRotationAngle = 90` - the one number in it that was triangulated rather than measured.
+What that run did not walk is the rest of the manual check in
+[plan section 7](./iphone-client-plan.md#7-build-order): five pages, force-quit while aiming
+at six, relaunch. **The 10 degree engine bug below is now reachable**: the drawn pages dodge
+it by being dead straight and real paper will not. And **one line of the plan's text is not
+built**: the corner thumbnail of the last shot, "Retake page 7" / "Seite 7 neu
+fotografieren". Retaking a page already works from the check screen, so it is parked below
+rather than lost.
 
 | # | State | What gets built | Check |
 | --- | --- | --- | --- |
@@ -84,8 +85,8 @@ straight. A real camera will not.
 | 2 | **done** | `ffi/`: one `staticlib` the app links into itself, the hand-written `ffi/include/freepdf.h`, and two C functions, `freepdf_scan_page` and `freepdf_pages_to_pdf`. ([rules](./ffi/AGENTS.md)) | `bash ffi/bridge_check.sh` -> "bridge ok" (~1 s, host architecture) |
 | 3 | **done** | `ios/FreePDF/Scan.swift` plus `ios/check/`: the folder layout, the derived step, the sweep. Foundation only. ([rules](./ios/AGENTS.md)) | `bash ios/check/run.sh` -> "resume ok" (~2 s, no Xcode) |
 | 4 | **done** | The Xcode project and the app: list, flow, the scan loop, the two FFI calls, and the camera stand-in with its `-autofake` launch argument. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` -> "scan ok" (~3 min, "iPhone 17 Pro" simulator) |
-| 5 | **now** | The real camera: JPEG at the moment of capture, locked to portrait. Deletes the "Fake shoot" button. | By hand: shoot 5 pages, force-quit while aiming at 6, relaunch - the row reads "5 pages - keep shooting" and the counter says "Page 6" |
-| 6 | to do | Export to iCloud Drive, and the quiet "delete the photos" action. | With iCloud signed in, find the PDF under `~/Library/Mobile Documents` on the Mac - it only appears there if it really went up |
+| 5 | **done** | `ios/FreePDF/CameraView.swift`: the session, the preview, the shutter and `PageWriter`. The stand-in lost its button and kept its drawing. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` still says "scan ok"; the camera itself is by hand: shoot 5 pages, force-quit while aiming at 6, relaunch - the row reads "5 pages - keep shooting" and the counter says "Page 6" |
+| 6 | **now** | Export to iCloud Drive, and the quiet "delete the photos" action. | With iCloud signed in, find the PDF under `~/Library/Mobile Documents` on the Mac - it only appears there if it really went up |
 
 ### Parked
 
@@ -101,6 +102,13 @@ Things noticed but not scheduled.
   `core_engine/src/deskew.rs:255` - one line, `-tilt.clamp(-MOST_TILT, MOST_TILT)` - plus a test
   at 10.5 degrees. It is engine work, not client work, so it is written down here rather than
   patched over in `ffi/`.
+- **The camera screen has no corner thumbnail.** [Plan section
+  12](./iphone-client-plan.md#12-every-line-of-text-the-app-shows) gives the last shot a
+  thumbnail in the corner whose action reads "Retake page 7" / "Seite 7 neu fotografieren",
+  and it is the one line of that table with no code behind it. Retaking works from the
+  check screen already, so this only shortens four taps to two - worth about fifteen lines:
+  the decoder in `ScanFlow` at a smaller edge, plus one more piece of view state for the
+  page the next shot goes back to.
 - **Forty pages on a real phone is still unweighed.** Twelve were measured on the simulator
   and the whole run peaked at 334 MB, which is comfortable
   ([plan section 9](./iphone-client-plan.md#9-memory)) - but that number is the Mac

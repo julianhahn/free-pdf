@@ -25,8 +25,9 @@ struct FreePDFApp: App {
                 ScanList(open: $open)
                     .navigationDestination(for: Scan.self) { ScanFlow(scan: $0) }
             }
-            // The one line the camera stand-in reaches out of its own file with, and it
-            // goes with it in milestone 5 ([`FakeShoot.swift`](./FakeShoot.swift)).
+            // One of the two lines the camera stand-in reaches out of its own file with.
+            // It opens the scan the check is about to shoot into, because nothing can
+            // tap a row on a simulator ([`FakeShoot.swift`](./FakeShoot.swift)).
             .task { if let scan = FakeShoot.scanToOpen() { open = [scan] } }
         }
     }

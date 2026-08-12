@@ -8,8 +8,8 @@
 #
 # There is no way to tap a simulator from a script: `simctl` has no touch command, and
 # AppleScript is not allowed near it without a human granting assistive access. So the
-# app is driven by `-autofake 12`, which stands in for the taps and goes with the camera
-# stand-in in milestone 5 ([`../FreePDF/FakeShoot.swift`](../FreePDF/FakeShoot.swift)).
+# app is driven by `-autofake 12`, which stands in for the taps and lives with the camera
+# stand-in ([`../FreePDF/FakeShoot.swift`](../FreePDF/FakeShoot.swift)).
 #
 # About three minutes cold, most of it the two builds.
 set -u -o pipefail

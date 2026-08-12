@@ -44,9 +44,10 @@ Change pages                 / Seiten ändern
 Delete the 40 photos (78 MB) / Die 40 Fotos löschen (78 MB)
 The PDF stays. Deleted photos cannot be brought back.
                              / Das PDF bleibt. Gelöschte Fotos kann man nicht zurückholen.
-Page 7 was not saved: the iPhone is out of storage. Pages 1-6 are safe.
+Page 7 was not saved: the iPhone is out of storage. Nothing already photographed is lost.
                              / Seite 7 wurde nicht gespeichert: Auf dem iPhone ist kein
-                               Speicherplatz mehr frei. Seiten 1-6 sind sicher.
+                               Speicherplatz mehr frei. Nichts, was schon fotografiert
+                               ist, geht verloren.
 ```
 
 Row subtitles: `No pages yet` / `8 pages - keep shooting` / `12 of 40 pages scanned` /
@@ -73,34 +74,13 @@ the table in section 1, and what a kill costs at each moment is section 8.
 Built, and the rules of what happens on them now live next to the code in
 [`ios/AGENTS.md`](./ios/AGENTS.md): the way from the list into a scan, the one piece of
 view state there is, the drain, why a refused page has to land on the pages rather than a
-progress bar, and what makes changing the pages after Make PDF safe. Two screens in this
-section are not built yet, and they are what is left of it.
+progress bar, what makes changing the pages after Make PDF safe, and the camera. One screen
+in this section is not built yet, and it is what is left of it.
 
-### Camera
-
-Custom `AVCaptureSession`, `.photo` preset, back wide angle, **video input only** (so no
-microphone usage key), `startRunning()` off the main thread, `stopRunning()` on disappear.
-JPEG asked for at capture:
-
-```swift
-let s = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
-s.photoQualityPrioritization = .speed          // flat paper gains nothing from fusion
-let n = slot ?? scan.nextPage                  // decided NOW, on the main actor
-output.capturePhoto(with: s, delegate: PageWriter(url: scan.photoURL(n)))
-```
-
-A settings object may not be reused (a second capture with the same uniqueID throws), so a
-fresh one per press. `PageWriter` is one object per shot, carries `n` as an immutable field,
-writes `.atomic`, and is retained in an `inFlight` set until `didFinishCaptureFor`. Because
-the number travels with the writer, out-of-order completion cannot swap pages.
-
-Default 12 MP: `maxPhotoDimensions` defaults to the smallest supported, so writing no code
-gives 12 MP rather than the 48 MP capture. Portrait-locked, which is what makes the EXIF
-rotation come out right for free.
-
-**The write failure must reach the UI.** `try?` here is the product's one unforgivable bug:
-a full disk at page 25 would otherwise keep the shutter clicking and produce a 24-page PDF
-of a 40-page contract.
+One thing this section had wrong is worth carrying forward as a warning: portrait lock does
+**not** make the EXIF rotation come out right by itself. `videoRotationAngle` defaults to 0,
+the sensor's own landscape, so every page would have come out on its side; the angle has to
+be set, and on the preview's connection as well as the photo output's.
 
 ### Export
 
@@ -363,7 +343,7 @@ the three things worth knowing about a project file written by hand, are now in
 | `/Users/julianhahn/free-pdf/ios/FreePDF/Engine.swift` | the two FFI calls (~20 lines) |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/ScanList.swift` | the landing screen: `Scan.all()`, derived subtitles, New scan, swipe-to-delete |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift` | the switch on `state`, the drain, the pages, Make PDF, Open PDF |
-| `/Users/julianhahn/free-pdf/ios/FreePDF/FakeShoot.swift` | the camera stand-in and the `-autofake` launch argument. Deleted in milestone 5 |
+| `/Users/julianhahn/free-pdf/ios/FreePDF/FakeShoot.swift` | the camera stand-in: the drawn page and the `-autofake` launch argument. Not a screen any more, and it stays as long as nothing can tap a simulator |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/CameraView.swift` | session, preview, shutter, counter, `PageWriter` |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/FreePDFApp.swift` | `@main`, one `NavigationStack`, the launch sweep |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/FreePDF.entitlements` | iCloud Documents only |
@@ -377,8 +357,8 @@ in the Foundation-only file means the resume check still compiles the whole mode
 
 There is no `Info.plist` file. Xcode 26 generates it from `INFOPLIST_KEY_…` build
 settings, so a key is one line in the project rather than a file to keep in step with it.
-`NSCameraUsageDescription` joins it in milestone 5 and `NSUbiquitousContainers` in
-milestone 6, each as one more setting.
+`NSCameraUsageDescription` is one of them now; `NSUbiquitousContainers` joins it in
+milestone 6, as one more setting.
 
 ---
 
@@ -428,16 +408,22 @@ identical pages turned out to prove nothing on their own - the engine is determi
 a page scanned twice comes out the same - which is why the check compares the moment each
 page was written as well.
 
-**5 — The real camera.** `CameraView`, and `FakeShoot.swift` deleted — it reaches out of
-itself in exactly two lines, and the compiler points at both. There is no runnable check
-for a camera; the documented manual one is: shoot 5 pages, force-quit while aiming at 6,
+**5 — The real camera.** `CameraView`. **Done**, and what the camera promises is written
+down in [`ios/AGENTS.md`](./ios/AGENTS.md). There is no runnable check for a camera, so the
+manual one still has to be walked on a phone: shoot 5 pages, force-quit while aiming at 6,
 relaunch — the row says "5 pages - keep shooting" and the counter says "Page 6". Then 3
-more, Scan 8 pages.
+more, Scan 8 pages. Check that nothing changed under it:
+`bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` → "scan ok".
 
-One thing to decide before deleting the file rather than after: `-autofake` is what makes
-the milestone 4 check run without hands, and it lives in there. Keeping the drawing and
-the argument and deleting only the button and its screen keeps the only end-to-end check
-there is, and milestone 6 needs it too.
+Three things turned out different. **This section's rotation claim was wrong**, and
+believing it would have put every page in the PDF on its side (the warning now sits in
+section 3). **`FakeShoot.swift` was not deleted**: the button and the screen went, the
+drawn page and `-autofake` stayed, exactly as the decision above required — and it turns
+out a simulator has no camera at all, so that drawing is also the only way to work the app
+without a phone. **The camera answers on its own queue**, so the shot is awaited rather
+than reported through a closure: one continuation per press, resumed by whichever
+AVFoundation callback comes first, which is what makes a photo that never arrives release
+the shutter instead of freezing it.
 
 **6 — iCloud and the photos.** `Scan.exportPDF()`, the done screen, entitlement and plist.
 Check: with iCloud signed in (`xcrun simctl icloud_sync booted` on the simulator),
@@ -592,14 +578,7 @@ English is the source of truth in code. German is checked by hand, as always.
 | List row - subtitle, State.done | 40 pages - PDF ready | 40 Seiten - PDF fertig |
 | List row - subtitle, State.done after the photos were deleted | 40 pages - PDF ready, photos deleted | 40 Seiten - PDF fertig, Fotos gelöscht |
 | List row - swipe action | Delete | Löschen |
-| Camera screen - page counter, top centre | Page 7 | Seite 7 |
-| Camera screen - primary button (this is the automatic step, named by its verb) | Scan 8 pages | 8 Seiten scannen |
-| Camera screen - primary button while nothing is photographed yet (disabled) | Photograph at least one page | Mindestens eine Seite fotografieren |
-| Camera screen - back label (there is no Save button, because there is nothing to save) | Scans | Scans |
-| Camera screen - action on the corner thumbnail of the last shot | Retake page 7 | Seite 7 neu fotografieren |
-| Camera screen - a photo could not be written (never swallow this) | Page 7 was not saved: the iPhone is out of storage. Pages 1-6 are safe. | Seite 7 wurde nicht gespeichert: Auf dem iPhone ist kein Speicherplatz mehr frei. Seiten 1-6 sind sicher. |
-| Camera screen - camera access denied | FreePDF needs the camera to photograph the pages. | FreePDF braucht die Kamera, um die Seiten zu fotografieren. |
-| Camera screen - camera access denied, button | Open Settings | Einstellungen öffnen |
+| Camera screen - every line of it, including the ones that only appear when something goes wrong | moved to [`ios/AGENTS.md`](./ios/AGENTS.md), because the screen is built. The one line with no code behind it, the corner thumbnail's "Retake page 7", is parked in the [README](./README.md) with its German | (same) |
 | Check screen - while pages are still being scanned (the automatic step, in progress) | Scanning page 12 of 40 | Seite 12 von 40 wird gescannt |
 | Check screen - line under the progress bar | You can close the app. It carries on from here. | Du kannst die App schließen. Es geht danach weiter. |
 | Check screen - navigation title in the carousel (the review step) | Page 5 of 40 | Seite 5 von 40 |

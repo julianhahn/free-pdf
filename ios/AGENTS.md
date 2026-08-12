@@ -132,6 +132,94 @@ than a comment: sharpening one page peaks near 220 MB on its own
   `Task.detached` does not inherit cancellation, and that is what is wanted: a page
   either lands on disk whole or was never there.
 
+### The camera
+
+`AVCaptureSession`, `.photo` preset, back wide angle, **video input only** - so the app
+never needs a microphone usage key - and every line that touches the session runs on the
+camera's own queue, because `startRunning` blocks the thread it is called on
+(`AVCaptureSession.h:607`). It stops on disappear, and that is a memory rule rather than
+hygiene: the pipeline holds about 200 MB and the drain runs next
+([plan section 9](../iphone-client-plan.md#9-memory)).
+
+- **The picture is turned by one number, and doing nothing is wrong.**
+  `videoRotationAngle` defaults to 0 - the sensor's own landscape - so a page
+  photographed in portrait would end up on its side. Portrait is 90, and it is set on
+  the photo output's connection **and** the preview's, or the preview lies about what
+  gets written. It is fixed rather than read from the phone: a phone held flat over a
+  table has no reliable "up" for `AVCaptureDevice.RotationCoordinator` to find. The
+  photo output writes it as an EXIF tag and never turns the pixels
+  (`AVCaptureSession.h:1106`): the file stays 4032x3024 and says "rotate 90 CW", which is
+  what `load_image` applies with `apply_orientation` before anything else happens to it.
+  Measured on an iPhone 13 on 2026-08-12: a portrait sheet comes out of the PDF upright,
+  so 90 is the right number and not merely the triangulated one.
+- **A fresh `AVCapturePhotoSettings` per press.** A second capture with the same
+  `uniqueID` throws (`AVCapturePhotoOutput.h:71`), so the settings are made inside the
+  press. JPEG is asked for there rather than assumed, because HEIC must never reach the
+  engine; 12 MP comes from writing no code at all, since the settings default to the
+  smallest of the active format's `supportedMaxPhotoDimensions`
+  (`AVCapturePhotoOutput.h:1454`); and the flash stays off, which is its default and what
+  a sheet of paper wants.
+- **The codec is checked before the shutter, because that rule throws.** `capturePhoto`
+  validates the settings and raises an exception rather than failing, and the one rule
+  this app can violate is a codec missing from `availablePhotoCodecTypes` - an array that
+  is empty until the output sits in a session with a video source
+  (`AVCapturePhotoOutput.h:96`). Checking it turns the one crash into a sentence.
+- **The page number is settled at the press and travels with the writer.** One
+  `PageWriter` per shot, all of it immutable, so two shots finishing out of order cannot
+  swap pages. The writer is held in `inFlight` until AVFoundation's last callback,
+  because nothing promises to keep a delegate alive.
+- **The shutter is dead until the photo is on disk.** Two quick presses would otherwise
+  both read the same `nextPage` off the disk and one page would overwrite the other.
+- **AVFoundation answers on its own queue, and the first answer wins.** The callbacks
+  come on a common queue, not the main one (`AVCapturePhotoOutput.h:981`), and only
+  `didFinishCaptureFor` is promised to come last - so it is what answers a capture that
+  never delivered a photo at all. Both answers go through one `land` on the camera queue,
+  which is what makes "resumed exactly once" true without a lock.
+- **Permission is only asked for where there is a camera to permit.** A simulator has
+  none, and its permission alert cannot be answered by the check that drives the app
+  there - an unanswered one survives `terminate`, `privacy reset` and even `uninstall`,
+  and only a SpringBoard restart clears it.
+- **No camera at all means the shutter draws.** iOS 26.2 on "iPhone 17 Pro" reports zero
+  video devices, only a microphone, so on a simulator the shutter writes a drawn 12 MP
+  page through the same atomic write ([`FreePDF/FakeShoot.swift`](./FreePDF/FakeShoot.swift)).
+  That is what keeps the app hand-drivable without a phone, and what `-autofake` presses.
+
+Every line of text it shows while nothing goes wrong, English in the code and German
+checked by hand:
+
+| Where | English | German |
+| --- | --- | --- |
+| Page counter, top centre (the navigation title, which is also why Back reads "Scans") | Page 7 | Seite 7 |
+| The shutter, for VoiceOver | Photograph page 7 | Seite 7 fotografieren |
+| Primary button | Scan 8 pages | 8 Seiten scannen |
+| Primary button, nothing photographed yet (disabled) | Photograph at least one page | Mindestens eine Seite fotografieren |
+| Camera access denied | FreePDF needs the camera to photograph the pages. | FreePDF braucht die Kamera, um die Seiten zu fotografieren. |
+| Camera access denied, button | Open Settings | Einstellungen öffnen |
+| There is no camera (a simulator) | No camera on this iPhone. The shutter draws a page instead. | Keine Kamera auf diesem iPhone. Der Auslöser zeichnet stattdessen eine Seite. |
+| `NSCameraUsageDescription`, the only place the word "document" is allowed | FreePDF uses the camera to photograph the pages of your document. | FreePDF nutzt die Kamera, um die Seiten deines Dokuments zu fotografieren. |
+
+And when something does go wrong. A photo that did not reach the disk always reads
+`Page 7 was not saved: <why> Nothing already photographed is lost.` - one shape, one
+place, four reasons:
+
+| Reason | English | German |
+| --- | --- | --- |
+| the write failed, in the words the system used | the iPhone is out of storage. | Auf dem iPhone ist kein Speicherplatz mehr frei. |
+| the session is not running, and pressing again did not fix it | the camera is not ready. | Die Kamera ist nicht bereit. |
+| the capture came back with nothing in it | the camera handed over no photo. | Die Kamera hat kein Foto geliefert. |
+| the capture ended before a photo arrived | the camera stopped before the photo arrived. | Die Kamera hat gestoppt, bevor das Foto kam. |
+
+Three more, which are the screen rather than a page: "This iPhone has no camera to
+photograph with." / "Dieses iPhone hat keine Kamera, um zu fotografieren.", "The camera
+could not be started." / "Die Kamera konnte nicht gestartet werden." - with the system's
+own reason appended where there is one - and, from the stand-in, "Page 7 could not be
+drawn." / "Seite 7 konnte nicht gezeichnet werden."
+
+The failure sentence says "Nothing already photographed is lost." where
+[plan section 12](../iphone-client-plan.md#12-every-line-of-text-the-app-shows) wrote
+"Pages 1-6 are safe.": a scan with a deleted page in the middle has no such range, and
+page 1 has none at all.
+
 ## How the Rust library gets in
 
 Four settings on the app target and nothing else - no wrapper target, no Swift package,
@@ -176,6 +264,24 @@ swiftc -typecheck -parse-as-library -swift-version 6 -warnings-as-errors \
 
 `-parse-as-library` is not decoration: without it a single file is read as a script, and
 the concurrency diagnostics quietly disappear.
+
+### Onto a real phone, which is the only place the camera exists
+
+```sh
+xcrun devicectl list devices                      # the UDID, and that it is connected
+xcodebuild -project ios/FreePDF.xcodeproj -scheme FreePDF \
+  -destination 'id=<udid>' -allowProvisioningUpdates build
+xcrun devicectl device install app --device <udid> \
+  ~/Library/Developer/Xcode/DerivedData/FreePDF-*/Build/Products/Debug-iphoneos/FreePDF.app
+xcrun devicectl device process launch --device <udid> com.julianhahn.freepdf
+```
+
+Two things stop that the first time, and neither is a bug. `DEVELOPMENT_TEAM` has to be in
+the project - only Xcode's Signing & Capabilities editor can put it there, because a free
+personal team's ID exists nowhere on disk until it does. And the launch is refused with
+"profile has not been explicitly trusted" until the phone's Settings -> General -> VPN &
+Device Management trusts the developer certificate. A personal team's signature expires
+after seven days; installing again is the whole fix.
 
 ### run.sh - the resume rules
 
@@ -230,8 +336,8 @@ file plus rename, the sweep, the C boundary and the streamed PDF.
 
 ## What is not written here
 
-The camera and the export are [plan section 3](../iphone-client-plan.md#3-screens); the
-memory budget is [section 9](../iphone-client-plan.md#9-memory); every line of text the
-app shows, in English and German, is
-[section 12](../iphone-client-plan.md#12-every-line-of-text-the-app-shows). Each of those
-moves into this file when the code it governs is written.
+The export is [plan section 3](../iphone-client-plan.md#3-screens); the memory budget is
+[section 9](../iphone-client-plan.md#9-memory); every line of text the app shows, in English
+and German, is [section 12](../iphone-client-plan.md#12-every-line-of-text-the-app-shows) -
+except the camera's lines, which are in the camera section above. Each of those moves into
+this file when the code it governs is written.
