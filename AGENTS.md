@@ -35,19 +35,18 @@ answer here.
 Every rule sits next to the thing it governs, and this file only carries what has no smaller
 home. The engine keeps its own AGENTS.md in [`core_engine/`](./core_engine/AGENTS.md), the
 tests theirs in [`core_engine/tests/`](./core_engine/tests/AGENTS.md), the C surface theirs
-in [`ffi/`](./ffi/AGENTS.md), and the command line tool theirs in
-[`backend-core-runner/`](./backend-core-runner/AGENTS.md). Before you touch a file, read the
-AGENTS.md beside it.
+in [`ffi/`](./ffi/AGENTS.md), the phone side theirs in [`ios/`](./ios/AGENTS.md), and the
+command line tool theirs in [`backend-core-runner/`](./backend-core-runner/AGENTS.md).
+Before you touch a file, read the AGENTS.md beside it.
 
 [`README.md`](./README.md) is the front door: what the project is, where to find what, and
-what happens next. [`iphone-client-plan.md`](./iphone-client-plan.md) is the authority on the
-phone side in twelve numbered sections. Point at both instead of repeating them - a fact
-written down twice is a fact that will disagree with itself.
+what happens next. [`iphone-client-plan.md`](./iphone-client-plan.md) is the authority on
+everything on the phone that is not built yet. Point at both instead of repeating them - a
+fact written down twice is a fact that will disagree with itself.
 
-`ios/` does not exist yet, and neither does any Swift code that ships, so its rules stay in
-[plan section 6](./iphone-client-plan.md#6-files) until that directory is real. When you
-create it, give it an AGENTS.md and move its rules out of the plan - that is what `ffi/` did
-with section 5.
+A plan section is not a home. When you build what a section describes, move its rules into
+the AGENTS.md beside the code and leave a pointer behind - that is what `ffi/` did with
+section 5 and `ios/` with section 2.
 
 ## Every session ends in these two files
 

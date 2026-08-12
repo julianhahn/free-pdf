@@ -56,74 +56,15 @@ Row subtitles: `No pages yet` / `8 pages - keep shooting` / `12 of 40 pages scan
 
 ## 2. Storage
 
-```
-Documents/Scans/
-  2026-08-11_201403_8F3A/          <- the scan. Folder name = sort key + id + title.
-    photo/0001.jpg 0002.jpg 0004.jpg   <- 0003 was deleted. Gaps stay. Never renumbered.
-    page/ 0001.jpg 0002.jpg            <- 0004 unscanned = the resume point
-    scan.pdf                           <- exists => finished. Arrives only by rename.
-  2026-08-09_093207_1C7D/ ...
-```
+Built, and its rules now live next to the code in [`ios/AGENTS.md`](./ios/AGENTS.md): the
+folder layout, the three rules that carry it (append-only, a real name only by rename,
+debris invisible and swept), the step derived from the files rather than stored, and every
+field a manifest would have held together with what killed it.
 
-Folder name is `<yyyy-MM-dd>_<HHmmss>_<4 hex>`. A reverse lexicographic sort is
-newest-first with zero attribute reads, and the hex suffix survives a double-tap on
-"New scan" inside one second. The formatted date is also the title shown to the user, so
-there is no title field.
-
-Local only, never an iCloud container: a synced folder may evict files to dataless
-`.icloud` placeholders that need network to read back, and this app reads its own input
-offline. iCloud is an export target for the finished PDF.
-
-### Three rules carry the whole thing
-
-1. **Append-only.** No file is ever modified in place, so no torn update exists and
-   `FileManager.replaceItem` is never needed anywhere.
-2. **A file earns its real name only by rename after a complete write.** Swift:
-   `try data.write(to: url, options: .atomic)` (Foundation writes an aux file and renames).
-   Rust: write `<name>.part`, flush, `sync_all`, `rename`. A real name is proof of a
-   complete file — that replaces checksums and validation passes.
-3. **Debris is invisible and swept.** Readers accept only `^\d{4}\.jpg$` inside `photo/`
-   and `page/`, plus `scan.pdf`. `Scan.sweep()` at launch deletes everything else
-   (`.part` files, Foundation's `.dat.nosync…`, anything hand-copied in).
-
-### The step is derived, never stored
-
-```swift
-var state: State {                                  // .empty .shooting .scanning .ready .done
-    if fm.fileExists(atPath: pdf.path) { return .done }
-    if photos.isEmpty                  { return .empty }
-    if pages.isEmpty                   { return .shooting }   // still shooting -> viewfinder
-    return unscanned.isEmpty ? .ready : .scanning             // .scanning -> continue scanning
-}
-var unscanned: [Int] { let done = Set(pages); return photos.filter { !done.contains($0) } }
-var nextPage: Int    { ((photos + pages).max() ?? 0) + 1 }
-```
-
-`unscanned.isEmpty`, not `pages.count == photos.count`: the count form wedges a scan in
-`.scanning` forever if an orphan page file ever exists, with nothing left to scan.
-
-`.shooting` is a separate case from `.scanning` for one reason: it decides where reopening
-lands him. No pages yet means he was still shooting, so he gets the viewfinder. Some pages
-plus leftovers means the scanning was cut off, so he gets the progress line.
-
-`nextPage` counts **both** directories, so a number the disk has ever seen is never handed
-out twice.
-
-### The manifest that isn't
-
-| Field it would hold | What killed it |
-| --- | --- |
-| title | the folder date |
-| pageOrder | zero-padded filenames, lexicographic |
-| step | the five lines above |
-| pageCount | a count of files, which cannot disagree with the disk |
-| keepPhotos | not state — an action taken once |
-| reviewedUpTo | not needed — review is a viewer |
-| exported | not derivable offline (placeholders), and re-export is idempotent |
-
-A manifest is pure addition: it needs its own atomic write, and (photo, manifest) is not
-atomic as a pair, so it can lag the files by one page — forcing exactly the file-derived
-reconciliation it was meant to replace, plus a schema.
+What the rest of this plan leans on is only this: one scan is one directory, the files in
+it are the only state, and `Scan` in
+[`ios/FreePDF/Scan.swift`](./ios/FreePDF/Scan.swift) is the whole of it — the names are in
+the table in section 1, and what a kill costs at each moment is section 8.
 
 ---
 
@@ -492,8 +433,9 @@ The SDK condition is what replaces the XCFramework people reach for.
 | `/Users/julianhahn/free-pdf/ios/FreePDF/FreePDFApp.swift` | `@main`, one `NavigationStack` |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/Info.plist` | `NSCameraUsageDescription`, `NSUbiquitousContainers`, portrait only |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/FreePDF.entitlements` | iCloud Documents only |
-| `/Users/julianhahn/free-pdf/ios/check/main.swift` | the resume check (~10 preconditions) |
-| `/Users/julianhahn/free-pdf/ios/check/run.sh` | `swiftc … && /tmp/resume_check` |
+| `/Users/julianhahn/free-pdf/ios/AGENTS.md` | the rules of the storage model, moved out of section 2 |
+| `/Users/julianhahn/free-pdf/ios/check/main.swift` | the resume check, ten preconditions |
+| `/Users/julianhahn/free-pdf/ios/check/run.sh` | `swiftc` over `Scan.swift` + the check, then run it |
 
 Export lives on `Scan` (`exportPDF()`), not in its own file: it is file work, and keeping it
 in the Foundation-only file means the resume check still compiles the whole model.
@@ -517,17 +459,21 @@ One thing turned out different: no input reaches the panic branch, because the e
 no panic path, so that branch is checked by a Rust unit test that panics on purpose rather
 than through Swift.
 
-**3 — Resume rules.** `Scan.swift` + `check/main.swift`.
-Check: `bash /Users/julianhahn/free-pdf/ios/check/run.sh` (~2 s, no Xcode, no simulator).
-Ten `precondition`s, each a moment the process could die: killed after New scan; mid-shooting
-(`nextPage == 9`); mid-scanning (`unscanned == [7…12]`, pages 1-6 not redone); after the
-last page; with `scan.pdf` present but pages missing (`.done` wins); with debris
-(`0007.part`, `.dat.nosync4f1a`, `IMG_0042.jpg`, `0003.jpeg`) invisible before sweep and
-gone after; an orphan page file (must not wedge); a deleted middle page; an orphan page as
-the highest number (`nextPage == 5` — never reuse a number the disk has seen); list order.
-`precondition`, never `assert` — `assert(1 == 2)` prints nothing and exits 0 under `-O`,
-which would make the check silently fake. Verify it fails: swap `unscanned.isEmpty` for
-`pages.count == photos.count` and it must abort.
+**3 — Resume rules.** `Scan.swift` + `check/main.swift`. **Done**, and what the model
+promises is written down in [`ios/AGENTS.md`](./ios/AGENTS.md).
+Check: `bash /Users/julianhahn/free-pdf/ios/check/run.sh` → "resume ok" (~2 s, no Xcode, no
+simulator). Twelve moments: killed after New scan; mid-shooting (`nextPage == 9`);
+mid-scanning (`unscanned == [7…12]`, pages 1-6 byte-identical after the sweep); after the
+last page; with `scan.pdf` present but pages missing (`.done` wins, and the sweep leaves it
+alone); with debris (`0007.part`, `.dat.nosync4f1a`, `IMG_0042.jpg`, `0003.jpeg`,
+`00071.jpg`, `-123.jpg`, `0009.tmp`, `scan.part`) invisible before the sweep and gone after;
+an orphan page file (must not wedge); a deleted middle page; an orphan page as the highest
+number (`nextPage == 5` — never reuse a number the disk has seen); list order and the shape
+of the name. Then two the user reaches without any kill: the photos deleted and the pages
+kept (`.ready`, not `.empty`), and a scan whose `page/` was never made (the sweep puts it
+back).
+Seventeen mutations of `Scan.swift` were run against it and all seventeen aborted, including
+the one named here: swap `unscanned.isEmpty` for `pages.count == photos.count`.
 
 **4 — The app, killed mid-scan.** Xcode project, `ScanList`, `ScanFlow`, `Engine`, the
 drain. In place of the camera, one temporary "Fake shoot" button that draws a page-like
@@ -570,7 +516,7 @@ a background kill. They are the same event to this design.
 
 | Killed while… | On disk | He sees | Cost |
 | --- | --- | --- | --- |
-| tapping New scan | the folder, or nothing | a row "No pages yet", tap → viewfinder | nothing |
+| tapping New scan | the folder, half of it, or nothing | a row "No pages yet", tap → viewfinder | nothing — `Scan.sweep()` finishes a half-made folder at the next launch |
 | shooting, between shots | photos 1-11 | camera, "Page 12" (read from disk) | nothing |
 | shooting, mid-write | 1-11 plus an aux file the sweep deletes | camera, "Page 12" again | **one photo** — the sheet is still in front of him |
 | scanning page 13 of 40 | pages 1-12, plus `0013.part` | "12 of 40 pages scanned", continues at 13 | ~2 s of CPU |
@@ -653,6 +599,7 @@ The delete prompt shows the measured size, not this estimate.
 | portrait only | landscape shooting is not supported (a landscape sheet still works) | `AVCaptureDevice.RotationCoordinator`, one property |
 | four-digit page numbers | 9999 pages per scan | five digits |
 | `Scan.all()` is O(scans) | slow launch at a few hundred scans | cache in memory |
+| the folder name carries local wall-clock time | flying west, or the repeated hour when summer time ends, lists a newer scan below an older one for a few hours | build the name in `.gmt` and convert to local at display time — the name stops being the title as it stands |
 | deleting the photos is final | iOS has no trash for sandbox files | none — the button says the megabytes and asks every time |
 | `NSUbiquitousContainers` read once | wrong on the first install hides the Files folder forever | bump `CFBundleVersion` |
 

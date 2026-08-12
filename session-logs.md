@@ -8,6 +8,50 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-12 - milestone 3: the resume rules, and seventeen ways to break them
+
+`ios/` exists: `FreePDF/Scan.swift` is the whole storage model in about 190 lines of
+Foundation, and `bash ios/check/run.sh` -> "resume ok" in about two seconds, with no Xcode
+and no simulator. Plan section 2 moved into [`ios/AGENTS.md`](./ios/AGENTS.md) and left a
+pointer, the way section 5 did for `ffi/`.
+
+The twelve moments were the easy half. The half worth the time: seventeen mutations of
+`Scan.swift`, each run against the check, all seventeen aborting with a sentence naming what
+they saw. Writing them is what found the holes - four rules turned out to have nothing
+watching them at all. A sweep that deletes `scan.pdf` passed, because the one moment with a
+PDF never swept and the one that swept had no PDF. And all three guards in `pageNumber`
+passed when deleted one at a time, because every debris name in the check was rejected by
+the length guard alone; `00071.jpg`, `-123.jpg` and `0009.tmp` now reach the other two.
+
+Then a review of the finished thing found two real bugs, both in `state` and both reachable
+without any kill:
+
+- **The photos deleted, then Change pages, read as an empty scan.** Both buttons are on the
+  done screen, in that order, and the plan says in as many words that changing the pages is
+  safe "because every page file is still there". `photos.isEmpty` was tested before the
+  pages were looked at, so forty finished pages became invisible to every screen and the
+  PDF could not be rebuilt. One line: `photos.isEmpty && pages.isEmpty`.
+- **A kill between the two folders `create` makes leaves a scan that can never be scanned.**
+  `photo/` there, `page/` not; the scan reads as healthy, shooting works, and every page
+  write then fails for ever with "No such file or directory", because the engine's
+  `save_page` does not make the folder it writes into. Measured through the real library.
+  `sweep()` is now the launch repair pass and puts the directory back.
+
+Also from the review, one word with real reach: the folder name is built with
+`Calendar(identifier: .gregorian)`, not `Calendar.current`. A phone set to the Buddhist
+calendar - the default in Thailand - writes 2569 for 2026, and the Japanese era year reset
+to 1 in 2019, either of which turns the sort key upside down for good. That one rule is the
+only one no mutation here can catch: this Mac's own calendar is Gregorian. Local wall-clock
+time in the name is kept on purpose and is now in the plan's cut table - it is what lets the
+name also be the title, and it costs the order of two rows for a few hours after a flight.
+
+Two things worth knowing next time. `precondition` needs an unoptimised build to print, as
+in `ffi/`, so `run.sh` passes no `-O`; it does pass `-swift-version 6`, because that is what
+a new Xcode project defaults to and the model has to survive strict concurrency there rather
+than on the day it is dropped into the app. And `Scan.sweep()` exists but nothing calls it -
+milestone 4 owns the launch path, along with `title`, `delete()` and `exportPDF()`, each
+left for the screen that needs it.
+
 ## 2026-08-12 - milestone 2: the C surface, and Swift really calls it
 
 `ffi/` is there: `freepdf_scan_page`, `freepdf_pages_to_pdf`, the hand-written header, and
