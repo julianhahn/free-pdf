@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="kit/doc.css">
+<script src="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/_ds_bundle.js"></script>
+</helmet>
+<div class="pg">
+
+<div class="sec" style="border-top:0;padding-top:0">
+<h1 style="margin:0;font:600 32px/1.12 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em">Flows 1 and 2 — first launch, and the list of scans</h1>
+<p class="note">S1, S2, S4, S5. S3 is the delivered ScansScreen and is reviewed on the foundation sheet, not redrawn; where a list appears below it is only the ground the swipe and the dialog sit on. Light and dark are the same markup rendered twice.</p>
+<p class="docnav"><a href="FreePDF Foundation.dc.html">Foundation — disabled fix, new components, review</a></p>
+</div>
+
+<div class="sec" id="S1">
+<div class="shd"><a class="sid" href="#S1">S1</a><h2 class="stitle">Scans, empty</h2><span class="note" style="max-width:40ch">First launch, and after the last scan is deleted.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Scans" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" hint-size="auto,44px">New scan</x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <div style="display:grid;align-content:center;justify-items:center;min-height:520px">
+      <x-import component-from-global-scope="FPKit.EmptyStateA" from="./kit/chrome.jsx" icon="files" title="No scans yet" body="Tap New scan and photograph the pages, one after another. You can stop whenever you like." hint-size="100%,240px">
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" hint-size="auto,44px">New scan</x-import>
+      </x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S1 — spec</h4>
+<p><strong>Order, top to bottom</strong> app bar (title <em>Scans</em>, 52 px min height, hairline under, trailing <code>Button</code> ghost “New scan”) · scrolling area, screen padding space-4 · <code>EmptyState</code> centred in it with <code>icon</code>, <code>title</code>, <code>body</code> and <code>action</code> = <code>Button</code> primary “New scan”. No footer, no tab bar, no settings.</p>
+<p><strong>Spacing</strong> EmptyState’s own steps: icon to title space-3, title to body space-2, body to action space-4. The block is centred vertically in the scroll area, so it stays centred at large text sizes instead of being pinned.</p>
+<p><strong>Why the action appears twice</strong> the bar action is the one that is always in the same place across the whole app; the one in the empty state is the instruction the sentence just gave. Both are the same words, both go to the camera on Page 1.</p>
+<p><strong>VoiceOver</strong> bar: “New scan. Photograph the pages of a new scan.” · empty state: title and body are read as text, not as controls · action: “New scan. Photograph the pages of a new scan.”</p>
+<p><strong>Large text and German</strong> nothing is fixed height; the body wraps and the block grows downward, the bar action wraps to two lines before it truncates. “Neuer Scan” is shorter; “Noch keine Scans” fits.</p>
+</div>
+</div>
+
+<div class="sec" id="S2">
+<div class="shd"><a class="sid" href="#S2">S2</a><h2 class="stitle">Scans, empty, with an error line</h2><span class="note" style="max-width:44ch">“New scan” could not make the folder — the phone is out of storage.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Scans" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" hint-size="auto,44px">New scan</x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ErrorLine" hint-size="100%,60px">The scan could not be created: the iPhone is out of storage.</x-import>
+    <div style="display:grid;align-content:center;justify-items:center;min-height:440px">
+      <x-import component-from-global-scope="FPKit.EmptyStateA" from="./kit/chrome.jsx" icon="files" title="No scans yet" body="Tap New scan and photograph the pages, one after another. You can stop whenever you like." hint-size="100%,240px">
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" hint-size="auto,44px">New scan</x-import>
+      </x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S2 — spec</h4>
+<p><strong>Order</strong> app bar · <code>ErrorLine</code> as the first thing in the scroll area · space-4 · the S1 empty state, which does not change. The error line pushes the block down; it never overlays it and never becomes a dialog.</p>
+<p><strong>Copy</strong> the engine’s own sentence, printed unchanged. Shown here with the storage one. Cleared on the next reload — there is no dismiss control, because a control would imply the app decided something.</p>
+<p><strong>VoiceOver</strong> the line is announced once as an alert when it appears, then sits in the reading order above the empty state. The empty state’s action keeps its label — the failure does not disable it, tapping again is the retry.</p>
+</div>
+</div>
+
+<div class="sec" id="S4">
+<div class="shd"><a class="sid" href="#S4">S4</a><h2 class="stitle">A row swiped left</h2><span class="note" style="max-width:40ch">Nothing is deleted yet.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Scans" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" hint-size="auto,44px">New scan</x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" pad="{{ false }}" hint-size="100%,100%">
+    <div style="display:grid">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ScanRow" title="11 Aug 2026, 20:14" subtitle="40 pages — PDF ready" thumb="{{ true }}" swiped="{{ true }}" delete-label="Delete" hint-size="100%,84px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ScanRow" title="10 Aug 2026, 09:02" subtitle="12 of 40 pages scanned" thumb="{{ true }}" hint-size="100%,84px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ScanRow" title="08 Aug 2026, 17:41" subtitle="8 pages — keep shooting" thumb="{{ true }}" hint-size="100%,84px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ScanRow" title="03 Aug 2026, 11:20" subtitle="No pages yet" thumb="{{ true }}" hint-size="100%,84px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S4 — spec</h4>
+<p><strong>Built from</strong> <code>ScanRow</code> with <code>swiped</code> — the 96 px Delete action (<code>--swipe-action-w</code>) is already part of the component; the rest of the list is untouched <code>ScanRow</code>s. No screen padding on the list: rows are full bleed so the hairline and the swipe action run to both edges.</p>
+<p><strong>Order</strong> app bar · rows, newest first, one hairline between each. The swiped row keeps its title and subtitle readable — the action slides in, the row does not shrink its type.</p>
+<p><strong>Behaviour</strong> the swipe reveals; the tap on Delete opens S5. Nothing is deleted from the swipe alone, and a swipe on another row closes this one.</p>
+<p><strong>VoiceOver</strong> row: “11 Aug 2026, 20:14. 40 pages, PDF ready.” with the actions rotor carrying “Delete this scan”. The swipe state itself is not announced — the action is, which is what a screen-reader user needs.</p>
+</div>
+</div>
+
+<div class="sec" id="S5">
+<div class="shd"><a class="sid" href="#S5">S5</a><h2 class="stitle">Delete-a-scan confirmation</h2><span class="note" style="max-width:40ch">Never skipped, never remembered.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Scans" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" hint-size="auto,44px">New scan</x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" pad="{{ false }}" hint-size="100%,100%">
+    <div style="display:grid">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ScanRow" title="11 Aug 2026, 20:14" subtitle="40 pages — PDF ready" thumb="{{ true }}" hint-size="100%,84px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ScanRow" title="10 Aug 2026, 09:02" subtitle="12 of 40 pages scanned" thumb="{{ true }}" hint-size="100%,84px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ScanRow" title="08 Aug 2026, 17:41" subtitle="8 pages — keep shooting" thumb="{{ true }}" hint-size="100%,84px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ScanRow" title="03 Aug 2026, 11:20" subtitle="No pages yet" thumb="{{ true }}" hint-size="100%,84px"></x-import>
+    </div>
+  </x-import>
+  <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ConfirmDialog" title="Delete this scan?" body="40 pages, the PDF and 40 photos go. This cannot be undone." confirm-label="Delete scan" cancel-label="Cancel" hint-size="100%,100%"></x-import>
+</x-import>
+<div class="spec">
+<h4>S5 — spec</h4>
+<p><strong>Built from</strong> <code>ConfirmDialog</code> (the one raised surface: surface, radius-lg, shadow-lg) over the list, on the scrim of neutral-900 at 38%. The list stays legible behind it, so it is clear which screen you are on.</p>
+<p><strong>Order inside the dialog</strong> title (h4, Cormorant 600) · space-2 · body · space-4 · the two actions right-aligned in one row, space-2 apart: <code>Button</code> destructive “Delete scan”, then <code>Button</code> secondary “Cancel” — the delivered component’s own order, unchanged. The row wraps before either label truncates, which is what German needs.</p>
+<p><strong>No red</strong> the destructive button is accent-700 in light, accent-300 in dark, and carries the double rule — border plus inset ring — so it is a different shape from the Cancel below it. The body names what goes: pages, the PDF, the photos.</p>
+<p><strong>VoiceOver</strong> dialog: “Delete this scan? 40 pages, the PDF and 40 photos go. This cannot be undone.” · confirm: “Delete scan. Deletes the scan, its PDF and its 40 photos.” · cancel: “Cancel. Keeps the scan.” Focus lands on the title; Cancel is the escape.</p>
+<p><strong>Counts are real</strong> both numbers come from the row that was swiped — a 1-page scan reads “1 page, the PDF and 1 photo go.” <em>Confirm the singular German wording exists in the copy tables; I did not invent one.</em></p>
+</div>
+</div>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="kit/doc.css">
+<script src="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/_ds_bundle.js"></script>
+</helmet>
+<div class="pg">
+
+<div class="sec" style="border-top:0;padding-top:0">
+<h1 style="margin:0;font:600 32px/1.12 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em">Flow 5 — checking and retaking the pages</h1>
+<p class="note">S16 to S22, plus the rail at 40 pages. S15 is the delivered PagesScreen and is reviewed on the foundation sheet; its one real gap is navigation, which is why <a href="FreePDF Foundation.dc.html#F2">PageStrip</a> is proposed. Grey is per scan and lives on this screen, not inside Adjust. “Make PDF” appears only once every photo has a page.</p>
+<p class="docnav"><a href="FreePDF Foundation.dc.html">Foundation</a><a href="FreePDF Flow 4 Scanning.dc.html">Flow 4</a><a href="FreePDF Flow 6 Adjust.dc.html">Flow 6</a></p>
+</div>
+
+<div class="sec" id="S16">
+<div class="shd"><a class="sid" href="#S16">S16</a><h2 class="stitle">Pages, Grey switched on</h2><span class="note" style="max-width:40ch">Grey is set for the whole scan, so every tile in the rail turns with the page.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 3 of 12" back="{{ true }}" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="ellipsis" label="Page menu" hint-size="44px,44px"></x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" grey="{{ true }}" alt="Page 3 of 12" hint-size="100%,470px"></x-import>
+    <x-import component-from-global-scope="FPNew.PageStrip" from="./kit/proposed.jsx" pages="{{ pages12 }}" selected="{{ 3 }}" total="{{ 12 }}" grey="{{ true }}" hint-size="100%,64px"></x-import>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Grey" checked="{{ true }}" hint-size="100%,44px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Make PDF</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S16 — spec</h4>
+<p><strong>Order</strong> app bar (back, title “Page 3 of 12” in tabular figures, trailing <code>IconButton</code> <code>ellipsis</code>) · space-4 · <code>PageImage</code> large with <code>grey</code> · space-4 · <code>PageStrip</code> with <code>grey</code> · footer above a hairline: <code>Switch</code> “Grey” <code>checked</code>, space-2, <code>Button</code> primary “Make PDF” full width.</p>
+<p><strong>Grey</strong> one switch for the whole scan. Turning it on regrades the large page and every tile at once, which is the visible proof that it is per scan and not per page. It never appears in Adjust.</p>
+<p><strong>Carousel</strong> one page per swipe, pinch to zoom on the large page — this screen exists to read small print. The rail follows the swipe and keeps the selected tile in view.</p>
+<p><strong>VoiceOver</strong> title is read as the screen name · page: “Page 3 of 12, grey” · switch: “Grey. Scans every page of this scan in grey.” · rail: see <a href="FreePDF Foundation.dc.html#F2">F2</a> · menu button: “Page menu” · footer: “Make PDF. Makes one PDF from the 12 pages.”</p>
+</div>
+</div>
+
+<div class="sec" id="S16b">
+<div class="shd"><a class="sid" href="#S16b">S16b</a><h2 class="stitle">The rail at 40 pages</h2><span class="note" style="max-width:44ch">The case the rail exists for. Jump open on the right-hand phone.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 12 of 40" back="{{ true }}" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="ellipsis" label="Page menu" hint-size="44px,44px"></x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" alt="Page 12 of 40" hint-size="100%,470px"></x-import>
+    <x-import component-from-global-scope="FPNew.PageStrip" from="./kit/proposed.jsx" pages="{{ pages40 }}" selected="{{ 12 }}" total="{{ 40 }}" jump="open" jump-value="37" hint-size="100%,140px"></x-import>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Grey" hint-size="100%,44px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Make PDF</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S16b — spec</h4>
+<p><strong>What changes at 40 pages</strong> nothing in the layout: the rail scrolls and the jump control — a secondary “Go to page”, words not a glyph — sits after a hairline at its right end, always in the same place. Page 5 is refused, and in the rail that is carried by the destructive double rule around the tile plus its spoken label — the refusal sentence does not fit on a 40 px tile and is not shortened to fit.</p>
+<p><strong>Jump</strong> tapping the jump control opens one field and a “Go”. It closes on Go or on the next swipe. Nothing is remembered.</p>
+</div>
+</div>
+
+<div class="sec" id="S17">
+<div class="shd"><a class="sid" href="#S17">S17</a><h2 class="stitle">Pages, a refused page</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 5 of 12" back="{{ true }}" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="ellipsis" label="Page menu" hint-size="44px,44px"></x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" state="refused" refused-text="This page could not be scanned." alt="Page 5 of 12, could not be scanned" hint-size="100%,470px"></x-import>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="secondary" full-width="{{ true }}" hint-size="100%,44px">Scan this page again</x-import>
+    <x-import component-from-global-scope="FPNew.PageStrip" from="./kit/proposed.jsx" pages="{{ pages12r }}" selected="{{ 5 }}" total="{{ 12 }}" hint-size="100%,64px"></x-import>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Grey" hint-size="100%,44px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Make PDF</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S17 — spec</h4>
+<p><strong>Built from</strong> <code>PageImage</code> with <code>state="refused"</code> and its own <code>refusedText</code> (“This page could not be scanned.”), then <code>Button</code> secondary “Scan this page again”, then the rail. No new component.</p>
+<p><strong>Order and spacing</strong> refused card · space-4 · the action · space-4 · rail. The action is secondary, not primary: the screen’s action is still “Make PDF” in the footer, and it is still there — a refused page does not block the PDF, it just will not be in it as a scanned page.</p>
+<p><strong>Not colour alone</strong> the refused card says what happened in words, and the tile in the rail carries the double rule. Accent-700 / accent-300 is the only colour used and never the only signal.</p>
+<p><strong>VoiceOver</strong> page: “Page 5 of 12. This page could not be scanned.” · action: “Scan this page again. Cleans up this page’s photo again.” The Page menu still offers Retake and Delete for this page.</p>
+</div>
+</div>
+
+<div class="sec" id="S18">
+<div class="shd"><a class="sid" href="#S18">S18</a><h2 class="stitle">The Page menu, while checking</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 3 of 12" back="{{ true }}" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="ellipsis" label="Page menu" hint-size="44px,44px"></x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" alt="Page 3 of 12" hint-size="100%,470px"></x-import>
+    <x-import component-from-global-scope="FPNew.PageStrip" from="./kit/proposed.jsx" pages="{{ pages12 }}" selected="{{ 3 }}" total="{{ 12 }}" hint-size="100%,64px"></x-import>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Grey" hint-size="100%,44px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Make PDF</x-import>
+    </div>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Overlay" from="./kit/chrome.jsx" align="start" justify="end" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.MenuList" style="margin-top:52px" title="Page" items="{{ menu3 }}" hint-size="240px,200px"></x-import>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S18 — spec</h4>
+<p><strong>Built from</strong> <code>MenuList</code> with <code>title</code> “Page” and three items: Retake this page · Adjust page · Delete page (<code>destructive</code>). Presented the platform’s way — anchored under the bar button it came from, on the dialog scrim, so it is obvious what it belongs to.</p>
+<p><strong>Order</strong> the two page actions first, the deletion last and separated by its own hairline; the destructive item carries accent-700 / accent-300 and the word “Delete”, never colour alone.</p>
+<p><strong>Behaviour</strong> “Retake this page” opens the camera on that one slot, takes one shot, and comes straight back. “Adjust page” goes to <a href="FreePDF Flow 6 Adjust.dc.html">flow 6</a>. “Delete page” asks first (S20).</p>
+<p><strong>VoiceOver</strong> “Page menu, three items” · “Retake this page. Photographs page 3 again.” · “Adjust page. Change the edges, straightness, brightness or sharpness of page 3.” · “Delete page. Deletes page 3 and its photo.” Tapping outside closes with no change.</p>
+</div>
+</div>
+
+<div class="sec" id="S19">
+<div class="shd"><a class="sid" href="#S19">S19</a><h2 class="stitle">The Page menu, on a finished scan</h2><span class="note" style="max-width:44ch">The same menu, with a fourth item.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 3 of 40" back="{{ true }}" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="ellipsis" label="Page menu" hint-size="44px,44px"></x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" alt="Page 3 of 40" hint-size="100%,470px"></x-import>
+    <x-import component-from-global-scope="FPNew.PageStrip" from="./kit/proposed.jsx" pages="{{ pages40 }}" selected="{{ 3 }}" total="{{ 40 }}" hint-size="100%,64px"></x-import>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Grey" hint-size="100%,44px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Make PDF</x-import>
+    </div>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Overlay" from="./kit/chrome.jsx" align="start" justify="end" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.MenuList" style="margin-top:52px" title="Page" items="{{ menu4 }}" hint-size="240px,240px"></x-import>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S19 — spec</h4>
+<p><strong>Built from</strong> the S18 <code>MenuList</code> with a fourth item, “Shoot another page”, placed after the two page actions and before the deletion. It is not destructive, but it does throw the PDF away — see <a href="FreePDF Flow 8-9.dc.html">flow 8</a> for how that is said.</p>
+<p><strong>VoiceOver</strong> “Shoot another page. Photographs one more page at the end of this scan. The PDF is made again afterwards.”</p>
+</div>
+</div>
+
+<div class="sec" id="S20">
+<div class="shd"><a class="sid" href="#S20">S20</a><h2 class="stitle">Delete-a-page confirmation</h2><span class="note" style="max-width:44ch">Page numbers keep their gaps afterwards and are never renumbered.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 3 of 12" back="{{ true }}" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="ellipsis" label="Page menu" hint-size="44px,44px"></x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" alt="Page 3 of 12" hint-size="100%,470px"></x-import>
+    <x-import component-from-global-scope="FPNew.PageStrip" from="./kit/proposed.jsx" pages="{{ pages12 }}" selected="{{ 3 }}" total="{{ 12 }}" hint-size="100%,64px"></x-import>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Grey" hint-size="100%,44px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Make PDF</x-import>
+    </div>
+  </x-import>
+  <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ConfirmDialog" title="Delete this page?" body="The photo goes too. This cannot be undone." confirm-label="Delete page" cancel-label="Cancel" hint-size="100%,100%"></x-import>
+</x-import>
+<div class="spec">
+<h4>S20 — spec</h4>
+<p><strong>Built from</strong> <code>ConfirmDialog</code> over the pages screen. Title, body, then the actions right-aligned: <code>Button</code> destructive “Delete page”, <code>Button</code> secondary “Cancel”.</p>
+<p><strong>After confirming</strong> the page and its photo go; the numbers keep their gaps, so the next page is still Page 4 and the title reads “Page 4 of 11”. There is no reorder and no insert-in-the-middle, on purpose — a number always means the same sheet.</p>
+<p><strong>VoiceOver</strong> “Delete this page? The photo goes too. This cannot be undone.” · confirm: “Delete page. Deletes page 3 and its photo.” · cancel: “Cancel. Keeps the page.”</p>
+</div>
+</div>
+
+<div class="sec" id="S21">
+<div class="shd"><a class="sid" href="#S21">S21</a><h2 class="stitle">Pages, making the PDF</h2><span class="note" style="max-width:44ch">The pages stay visible and readable behind it.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 3 of 12" back="{{ true }}" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="ellipsis" label="Page menu" hint-size="44px,44px"></x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" alt="Page 3 of 12" hint-size="100%,470px"></x-import>
+    <x-import component-from-global-scope="FPNew.PageStrip" from="./kit/proposed.jsx" pages="{{ pages12 }}" selected="{{ 3 }}" total="{{ 12 }}" hint-size="100%,64px"></x-import>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Grey" hint-size="100%,44px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" busy="{{ true }}" hint-size="100%,44px">Making the PDF…</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S21 — spec</h4>
+<p><strong>Built from</strong> <code>Button</code> with <code>busy</code> and the running label “Making the PDF…”. No overlay, no spinner, no takeover: the pages stay where they are and stay readable, because the wait is about a second and the screen has nothing to hide.</p>
+<p><strong>Busy is not disabled</strong> the button keeps its accent stroke and its label changes; presses are blocked while it runs. That is why the disabled fix does not touch it: nothing here is dead, something is happening.</p>
+<p><strong>The switch stays live</strong> Grey can still be flipped — it just makes the PDF again afterwards. <em>If the engine forbids that mid-write, say so and the switch becomes disabled for the second it takes, using the F1 treatment.</em></p>
+<p><strong>VoiceOver</strong> “Making the PDF…” announced with the busy trait; when it finishes, the done screen is announced by its title.</p>
+</div>
+</div>
+
+<div class="sec" id="S22">
+<div class="shd"><a class="sid" href="#S22">S22</a><h2 class="stitle">Pages, making the PDF failed</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 3 of 12" back="{{ true }}" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="ellipsis" label="Page menu" hint-size="44px,44px"></x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ErrorLine" hint-size="100%,80px">The PDF could not be written: the iPhone is out of storage.</x-import>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" alt="Page 3 of 12" hint-size="100%,410px"></x-import>
+    <x-import component-from-global-scope="FPNew.PageStrip" from="./kit/proposed.jsx" pages="{{ pages12 }}" selected="{{ 3 }}" total="{{ 12 }}" hint-size="100%,64px"></x-import>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Grey" hint-size="100%,44px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Make PDF</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S22 — spec</h4>
+<p><strong>Order</strong> app bar · <code>ErrorLine</code> with the engine’s own sentence · the page · the rail · the unchanged footer. The pages stay, the button goes back to “Make PDF” and can be tapped again — the failure removes nothing.</p>
+<p><strong>VoiceOver</strong> the sentence is announced once as an alert, then sits above the page in the reading order. The footer button keeps its ordinary label; there is no “retry” wording, because the button already says what it does.</p>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const P = (n, refused) => Array.from({ length: n }, (_, i) => ({ n: i + 1, state: refused && refused.includes(i + 1) ? "refused" : "page" }));
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      pages12: P(12),
+      pages12r: P(12, [5]),
+      pages40: P(40, [5]),
+      menu3: [
+        { label: "Retake this page", icon: "camera" },
+        { label: "Adjust page", icon: "sliders-horizontal" },
+        { label: "Delete page", icon: "trash-2", destructive: true },
+      ],
+      menu4: [
+        { label: "Retake this page", icon: "camera" },
+        { label: "Adjust page", icon: "sliders-horizontal" },
+        { label: "Shoot another page", icon: "plus" },
+        { label: "Delete page", icon: "trash-2", destructive: true },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

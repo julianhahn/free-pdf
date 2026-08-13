@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="kit/doc.css">
+<script src="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/_ds_bundle.js"></script>
+</helmet>
+<div class="pg">
+
+<div class="sec" style="border-top:0;padding-top:0">
+<h1 style="margin:0;font:600 32px/1.12 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em">Flow 7 — the done screen, sharing, deleting the photos</h1>
+<p class="note">S34 to S38. S33 is the delivered DoneScreen and is reviewed on the foundation sheet. The name is used only for the copy that leaves through Share; nothing is stored, and the scan keeps its date name.</p>
+<p class="docnav"><a href="FreePDF Foundation.dc.html">Foundation</a><a href="FreePDF Flow 6 Adjust.dc.html">Flow 6</a><a href="FreePDF Flow 8-9.dc.html">Flows 8–9</a></p>
+</div>
+
+<div class="sec" id="S34">
+<div class="shd"><a class="sid" href="#S34">S34</a><h2 class="stitle">Done, the name field in use</h2><span class="note" style="max-width:46ch">The keyboard must not cover the two buttons.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="PDF ready" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:150px;justify-self:center" alt="First page of the PDF" hint-size="150px,200px"></x-import>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.TextField" label="Name for the shared copy" value="Rental contract" placeholder="scan" suffix=".pdf" hint-size="100%,64px"></x-import>
+    <div style="display:grid;gap:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Open PDF</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Share PDF</x-import>
+    </div>
+    <div data-slot="footer">
+      <div style="height:210px;border-radius:var(--radius-md);border:1px solid var(--divider);background:var(--surface);display:grid;place-items:center;color:var(--text-muted);font:400 11px/1.4 var(--font-body);letter-spacing:.1em;text-transform:uppercase">The iPhone keyboard, drawn as a block</div>
+    </div>
+  </x-import>
+</x-import>
+<x-import component-from-global-scope="FPKit.ThemePair" from="./kit/chrome.jsx" w="{{ 393 }}" hint-size="840px,300px">
+  <div style="display:grid;gap:var(--space-4)">
+    <span class="fp-kicker">Empty, with the placeholder</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.TextField" label="Name for the shared copy" value="" placeholder="scan" suffix=".pdf" hint-size="100%,64px"></x-import>
+    <span class="fp-kicker">Focused</span>
+    <div style="outline:2px solid var(--focus-ring);outline-offset:2px;border-radius:var(--radius-md)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.TextField" label="Name for the shared copy" value="" placeholder="scan" suffix=".pdf" hint-size="100%,64px"></x-import>
+    </div>
+    <span class="fp-kicker">Typed in</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.TextField" label="Name for the shared copy" value="Rental contract" placeholder="scan" suffix=".pdf" hint-size="100%,64px"></x-import>
+  </div>
+</x-import>
+<div class="spec">
+<h4>S34 — spec</h4>
+<p><strong>Order</strong> app bar “PDF ready” · <code>PageImage</code> (the PDF’s first page, 150 px wide so the field and both buttons are above the keyboard) · space-4 · <code>TextField</code> · space-4 · <code>Button</code> primary “Open PDF”, space-2, <code>Button</code> primary “Share PDF” · then, when the keyboard is down, the quiet destructive block (see S35 for the shorter screen).</p>
+<p><strong>The keyboard</strong> while the field is focused the content above it scrolls, the two buttons stay on screen, and the destructive block is scrolled out rather than resized. What must never happen is Share sitting under the keyboard — the field is only useful because of the button under it.</p>
+<p><strong>Three field states</strong> empty shows the placeholder “scan” in text-muted, focused adds the 2 px accent ring 2 px outside the control, typed-in prints the name in text with the suffix “.pdf” trailing in text-muted. The suffix is not editable and not part of the value.</p>
+<p><strong>Nothing is stored</strong> reopen the scan and the field is empty again. There is no “saved” state and no confirmation of the name.</p>
+<p><strong>VoiceOver</strong> field: “Name for the shared copy. Text field. The shared copy is named scan dot pdf unless you type a name.” · buttons: “Open PDF. Shows the PDF in FreePDF.” / “Share PDF. Choose where a copy of the PDF goes.”</p>
+</div>
+</div>
+
+<div class="sec" id="S35">
+<div class="shd"><a class="sid" href="#S35">S35</a><h2 class="stitle">Done, photos already deleted</h2><span class="note" style="max-width:46ch">The destructive block and its footnote are gone. Nothing greyed out, nothing left behind.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="PDF ready" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:230px;justify-self:center" alt="First page of the PDF" hint-size="230px,306px"></x-import>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.TextField" label="Name for the shared copy" value="" placeholder="scan" suffix=".pdf" hint-size="100%,64px"></x-import>
+    <div style="display:grid;gap:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Open PDF</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Share PDF</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" full-width="{{ true }}" hint-size="100%,44px">Change pages</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S35 — spec</h4>
+<p><strong>Order</strong> app bar · <code>PageImage</code>, now 230 px wide because there is room for it — the page is the thing worth looking at, so the shorter screen gives its space to the picture rather than leaving a hole where the block was · <code>TextField</code> · the three actions: Open, Share, then “Change pages” as a ghost.</p>
+<p><strong>Why it looks finished, not truncated</strong> the block is removed, not disabled, and no <code>SectionLabel</code>, hairline or footnote is left standing on its own. The screen ends on “Change pages”, which still works — the pages can be changed even with no photos, they just cannot be adjusted.</p>
+<p><strong>What is not said</strong> there is no “photos deleted” badge and no line about it here. The list already says it: “40 pages — PDF ready, photos deleted”.</p>
+<p><strong>VoiceOver</strong> as S34, minus the destructive control. Nothing announces the absence.</p>
+</div>
+</div>
+
+<div class="sec" id="S36">
+<div class="shd"><a class="sid" href="#S36">S36</a><h2 class="stitle">Open PDF — the reader sheet</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="PDF ready" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:230px;justify-self:center" alt="First page of the PDF" hint-size="230px,306px"></x-import>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.TextField" label="Name for the shared copy" value="" placeholder="scan" suffix=".pdf" hint-size="100%,64px"></x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Overlay" from="./kit/chrome.jsx" align="end" hint-size="100%,100%">
+    <x-import component-from-global-scope="FPNew.Sheet" from="./kit/proposed.jsx" title="11 Aug 2026, 20:14" close-label="Close the PDF" style="height:620px" hint-size="100%,620px">
+      <div style="display:grid;gap:var(--space-4);justify-items:center">
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:220px" alt="Page 1 of the PDF" hint-size="220px,293px"></x-import>
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:220px" alt="Page 2 of the PDF" hint-size="220px,293px"></x-import>
+      </div>
+    </x-import>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S36 — spec</h4>
+<p><strong>Built from</strong> the proposed <a href="FreePDF Foundation.dc.html#F5">Sheet</a>: surface, radius-lg, shadow-lg, on the dialog scrim, rising from the bottom edge. Header: the scan’s date and a close <code>IconButton</code>. Content: the PDF’s pages, scrolling continuously, pinch to zoom.</p>
+<p><strong>Nothing else on it</strong> no share button, no page count, no print, no “save to Files”. Nothing is copied and nothing leaves the phone by opening it.</p>
+<p><strong>Order and spacing</strong> header space-2 vertical / space-4 horizontal above a hairline · content space-4 padding, space-4 between pages · the sheet stops short of the top edge so the screen behind is still visible, which is what says “this closes”.</p>
+<p><strong>VoiceOver</strong> announced as a dialog named by the scan’s date; close: “Close the PDF”. The pages are read as images with their labels: “Page 1 of 40”.</p>
+</div>
+</div>
+
+<div class="sec" id="S37">
+<div class="shd"><a class="sid" href="#S37">S37</a><h2 class="stitle">Share PDF — the moment before the phone’s own sheet</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="PDF ready" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:200px;justify-self:center" alt="First page of the PDF" hint-size="200px,266px"></x-import>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.TextField" label="Name for the shared copy" value="Rental contract" placeholder="scan" suffix=".pdf" hint-size="100%,64px"></x-import>
+    <div style="display:grid;gap:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Open PDF</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Share PDF</x-import>
+      <p style="margin:0;font:400 13px/1.55 var(--font-body);color:var(--text-muted);text-wrap:pretty">Nothing leaves the phone until you choose where the copy goes.</p>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" full-width="{{ true }}" hint-size="100%,44px">Change pages</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S37 — spec</h4>
+<p><strong>Built from</strong> <code>Button</code> primary “Share PDF”. The sheet that follows is the phone’s own and is not designed here.</p>
+<p><strong>The one line</strong> a 13 px body line in text-muted directly under the button — not a dialog, not an alert, not an icon. It is the only place the app says anything about the network, and what it says is a fact: the copy is made when a destination is chosen, and until then nothing has moved. It sits under Share rather than at the top of the screen so it is read in the second before the tap.</p>
+<p><strong>The name</strong> what is shared is a copy named from the field (“Rental contract.pdf”); the scan itself keeps its date. An empty field shares “scan.pdf”.</p>
+<p><strong>VoiceOver</strong> “Share PDF. Choose where a copy of the PDF goes. Nothing leaves the phone until you choose.” The line is also read as text after the button, for someone reading rather than tapping.</p>
+<p><em>The sentence is a placeholder — no wording for it exists in the copy tables.</em></p>
+</div>
+</div>
+
+<div class="sec" id="S38">
+<div class="shd"><a class="sid" href="#S38">S38</a><h2 class="stitle">Delete-the-photos confirmation</h2><span class="note" style="max-width:46ch">Asked every time, never remembered. “Keep the photos” needs no button.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="PDF ready" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:200px;justify-self:center" alt="First page of the PDF" hint-size="200px,266px"></x-import>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.TextField" label="Name for the shared copy" value="" placeholder="scan" suffix=".pdf" hint-size="100%,64px"></x-import>
+    <div style="display:grid;gap:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Open PDF</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Share PDF</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" full-width="{{ true }}" hint-size="100%,44px">Change pages</x-import>
+    </div>
+    <div style="display:grid;gap:var(--space-2);border-top:1px solid var(--divider);padding-top:var(--space-4)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.SectionLabel" hint-size="auto,20px">The photos</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="destructive" full-width="{{ true }}" hint-size="100%,44px">Delete the 40 photos (78 MB)</x-import>
+      <p style="margin:0;font:400 13px/1.55 var(--font-body);color:var(--text-muted);text-wrap:pretty">The PDF stays. Deleted photos cannot be brought back.</p>
+    </div>
+  </x-import>
+  <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ConfirmDialog" title="Delete the 40 photos?" body="The PDF stays. Without the photos the pages can no longer be adjusted." confirm-label="Delete photos" cancel-label="Cancel" hint-size="100%,100%"></x-import>
+</x-import>
+<div class="spec">
+<h4>S38 — spec</h4>
+<p><strong>The block behind it</strong> (this is S33’s lower half, shown because the dialog belongs to it) hairline, space-4, <code>SectionLabel</code> “The photos”, space-2, <code>Button</code> destructive with the count and the size, space-2, the footnote in 13 px text-muted. The footnote belongs to the block, not to the button, so removing the block (S35) removes the footnote with it.</p>
+<p><strong>The dialog</strong> <code>ConfirmDialog</code>: “Delete the 40 photos?” · “The PDF stays. Without the photos the pages can no longer be adjusted.” · “Delete photos” / “Cancel”. Asked every time; there is no settings screen to turn it off and no “don’t ask again”.</p>
+<p><strong>No red, and not colour alone</strong> the button names what goes and how much space it frees; it is accent-700 / accent-300; and it carries the double rule, so it is a different shape from the two primaries above it even before the colour is read.</p>
+<p><strong>VoiceOver</strong> destructive button: “Delete the 40 photos, 78 megabytes. The PDF stays. The pages can no longer be adjusted afterwards.” · dialog confirm: “Delete photos. Deletes the 40 photos and keeps the PDF.” · cancel: “Cancel. Keeps the photos.”</p>
+</div>
+</div>
+
+</div>
+</x-dc>
+</body>
+</html>

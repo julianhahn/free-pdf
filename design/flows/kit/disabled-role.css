@@ -1,0 +1,28 @@
+/* Proposed replacement for --disabled-opacity: .45 (tokens/colors.css).
+   Disabled becomes a colour role, not a blanket opacity: the label stays readable at
+   arm's length, the accent is gone, and the border drops to a plain hairline. */
+:root{
+  --disabled-text:#605d5d;                 /* neutral-700 on --bg: 5.6:1 */
+  --disabled-border:rgba(32,31,29,.16);    /* = divider: hairline, never accent */
+  --disabled-surface:transparent;          /* nothing is filled */
+  --disabled-opacity:1;                    /* retired: opacity is no longer the mechanism */
+}
+[data-theme="dark"]{
+  --disabled-text:#bab6b6;                 /* neutral-400 on neutral-900: 6.4:1 */
+  --disabled-border:rgba(248,244,244,.22);
+}
+/* On the viewfinder ground (#1b1a19 / #131211) a disabled label needs its own value. */
+.fp-on-dark{--disabled-text:#d7d3d3;--disabled-border:rgba(248,244,244,.28)}
+
+/* Applied to the delivered components without touching their shape.
+   The accent role is withdrawn inside the wrapper, so every accent fill a component
+   draws (switch knob, slider thumb, shutter ring) goes dead with the label. */
+.fp-disabled-demo{--accent:var(--disabled-text);--divider-strong:var(--disabled-border)}
+.fp-disabled-demo [disabled],
+.fp-disabled-demo [aria-disabled="true"]{
+  opacity:1 !important;
+  color:var(--disabled-text) !important;
+  border-color:var(--disabled-border) !important;
+}
+.fp-disabled-demo [disabled] *,
+.fp-disabled-demo [aria-disabled="true"] *{color:var(--disabled-text) !important}

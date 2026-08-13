@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="kit/doc.css">
+<script src="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/_ds_bundle.js"></script>
+</helmet>
+<div class="pg">
+
+<div class="sec" style="border-top:0;padding-top:0">
+<h1 style="margin:0;font:600 32px/1.12 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em">Flow 6 — adjusting a page</h1>
+<p class="note">S24 to S32. Suggest-then-apply: every control opens on the value the app suggested, which is what <code>Slider</code>’s tick is for, and the user moves it or leaves it. There is no live preview anywhere — the picture is the page as it stands now. S23 is the delivered AdjustScreen and is reviewed on the foundation sheet; the strip it draws inline becomes <a href="FreePDF Foundation.dc.html#F3">ToolStrip</a>, and the corner dragging it lacks becomes <a href="FreePDF Foundation.dc.html#F4">PageHandles</a>.</p>
+<p class="docnav"><a href="FreePDF Foundation.dc.html">Foundation</a><a href="FreePDF Flow 5 Pages.dc.html">Flow 5</a><a href="FreePDF Flow 7 Done.dc.html">Flow 7</a></p>
+</div>
+
+<div class="sec" id="S24">
+<div class="shd"><a class="sid" href="#S24">S24</a><h2 class="stitle">Adjust → Edges</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <div style="display:flex;align-items:center;gap:var(--space-3);min-height:52px;padding:0 var(--screen-padding);border-bottom:1px solid var(--divider)">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" hint-size="auto,44px">Cancel</x-import>
+    <span style="flex:1;text-align:center;font:600 20px/1.12 var(--font-heading);letter-spacing:-.015em;font-variant-numeric:tabular-nums">Adjust page 3</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" hint-size="auto,44px">Apply</x-import>
+  </div>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FPNew.PageHandles" from="./kit/proposed.jsx" count="{{ 4 }}" inset="{{ 7 }}" style="width:230px;justify-self:center" hint-size="230px,306px"></x-import>
+    <x-import component-from-global-scope="FPNew.ToolStrip" from="./kit/proposed.jsx" items="{{ tools }}" active="Edges" hint-size="100%,46px"></x-import>
+    <div style="display:grid;gap:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.SectionLabel" hint-size="auto,20px">Edges</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Pull the sheet flat" checked="{{ true }}" hint-size="100%,44px"></x-import>
+      <p style="margin:0;font:400 13px/1.55 var(--font-body);color:var(--text-muted);text-wrap:pretty">The sheet fills the whole photo, so there is nothing to cut away.</p>
+    </div>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Apply to all pages" hint-size="100%,44px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<x-import component-from-global-scope="FPKit.ThemePair" from="./kit/chrome.jsx" w="{{ 393 }}" hint-size="840px,200px">
+  <div style="display:grid;gap:var(--space-3)">
+    <span class="fp-kicker">The note line, three states</span>
+    <p style="margin:0;font:400 13px/1.55 var(--font-body);color:var(--text-muted)">Nothing to say — the line is not drawn, and the space closes.</p>
+    <p style="margin:0;font:400 13px/1.55 var(--font-body);color:var(--text-muted)">The sheet fills the whole photo, so there is nothing to cut away.</p>
+    <p style="margin:0;font:400 13px/1.55 var(--font-body);color:var(--destructive)">The page runs off the frame. Move back and photograph it again.</p>
+  </div>
+</x-import>
+<div class="spec">
+<h4>S24 — spec</h4>
+<p><strong>Order</strong> top bar (<code>Button</code> ghost “Cancel” · title “Adjust page 3” · <code>Button</code> primary “Apply”) · space-4 · <code>PageHandles</code> with four handles over the page, centred and no wider than 230 px so the tools and controls are on the same screen · space-4 · <code>ToolStrip</code> with Edges active · space-4 · <code>SectionLabel</code> “Edges”, space-2, <code>Switch</code> “Pull the sheet flat”, space-2, the note line · footer above a hairline: <code>Switch</code> “Apply to all pages”.</p>
+<p><strong>The note line</strong> three states, same position, same 13 px body: not drawn at all · “nothing to cut” in text-muted · the warning in accent-700 / accent-300. The warning is a sentence, so it does not depend on the colour being noticed.</p>
+<p><strong>No preview</strong> the picture is the page as it stands. Dragging a handle moves the handle, not the picture; the result is seen after Apply, about a second later.</p>
+<p><strong>VoiceOver</strong> handles: “Top left corner of the sheet. Swipe up or down to move it.” · switch: “Pull the sheet flat. Straightens the sheet as if it were lying flat.” · Apply: “Apply. Rewrites this page from its photo.” · Cancel: “Cancel. Leaves the page as it is.” · the note is read as text after the controls.</p>
+</div>
+</div>
+
+<div class="sec" id="S25">
+<div class="shd"><a class="sid" href="#S25">S25</a><h2 class="stitle">Adjust → Straighten</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <div style="display:flex;align-items:center;gap:var(--space-3);min-height:52px;padding:0 var(--screen-padding);border-bottom:1px solid var(--divider)">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" hint-size="auto,44px">Cancel</x-import>
+    <span style="flex:1;text-align:center;font:600 20px/1.12 var(--font-heading);letter-spacing:-.015em;font-variant-numeric:tabular-nums">Adjust page 3</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" hint-size="auto,44px">Apply</x-import>
+  </div>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:230px;justify-self:center" alt="Page 3" hint-size="230px,306px"></x-import>
+    <x-import component-from-global-scope="FPNew.ToolStrip" from="./kit/proposed.jsx" items="{{ tools }}" active="Straighten" hint-size="100%,46px"></x-import>
+    <div style="display:grid;gap:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.SectionLabel" hint-size="auto,20px">Straighten</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Slider" label="Angle" value="{{ n1_4 }}" min="{{ nMinus10 }}" max="{{ n10 }}" step="{{ n0_1 }}" unit="°" min-label="−10°" max-label="+10°" suggested="{{ n1_4 }}" hint-size="100%,80px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" style="justify-self:start" hint-size="auto,44px">Back to the suggestion</x-import>
+    </div>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Apply to all pages" hint-size="100%,44px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S25 — spec</h4>
+<p><strong>Built from</strong> one <code>Slider</code>: −10 to +10 degrees, step 0.1, one decimal, <code>unit</code> “°”, both ends labelled, <code>suggested</code> drawn as the tick — the slider opens sitting on it. Then <code>Button</code> ghost “Back to the suggestion”, which is the way back to the tick and is present on every tool that has one.</p>
+<p><strong>Order</strong> page · <code>ToolStrip</code> (Straighten active) · <code>SectionLabel</code> “Straighten” · slider · reset. Spacing space-4 between groups, space-2 inside the group.</p>
+<p><strong>Figures</strong> the printed value is tabular, so it does not shuffle between “−1.4°” and “+10.0°”; the tick stays put while the thumb moves, which is how the suggestion stays visible as a reference.</p>
+<p><strong>VoiceOver</strong> slider: “Angle, minus 1.4 degrees. Adjustable. Swipe up or down to change. The app suggests minus 1.4 degrees.” · reset: “Back to the suggestion. Sets the angle back to minus 1.4 degrees.”</p>
+</div>
+</div>
+
+<div class="sec" id="S26">
+<div class="shd"><a class="sid" href="#S26">S26</a><h2 class="stitle">Adjust → Brightness</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <div style="display:flex;align-items:center;gap:var(--space-3);min-height:52px;padding:0 var(--screen-padding);border-bottom:1px solid var(--divider)">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" hint-size="auto,44px">Cancel</x-import>
+    <span style="flex:1;text-align:center;font:600 20px/1.12 var(--font-heading);letter-spacing:-.015em;font-variant-numeric:tabular-nums">Adjust page 3</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" hint-size="auto,44px">Apply</x-import>
+  </div>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:200px;justify-self:center" alt="Page 3" hint-size="200px,266px"></x-import>
+    <x-import component-from-global-scope="FPNew.ToolStrip" from="./kit/proposed.jsx" items="{{ tools }}" active="Brightness" hint-size="100%,46px"></x-import>
+    <div style="display:grid;gap:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.SectionLabel" hint-size="auto,20px">Brightness</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Slider" label="Black point" value="{{ n12 }}" min="{{ n0 }}" max="{{ n100 }}" unit="%" min-label="Darkest part stays dark" max-label="Darkest part goes black" suggested="{{ n12 }}" hint-size="100%,80px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Slider" label="White point" value="{{ n92 }}" min="{{ n0 }}" max="{{ n100 }}" unit="%" min-label="Paper stays grey" max-label="Paper goes white" suggested="{{ n92 }}" hint-size="100%,80px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Even out the lighting" sub="For a page shot under one lamp" hint-size="100%,44px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" style="justify-self:start" hint-size="auto,44px">Back to the suggestion</x-import>
+    </div>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Apply to all pages" hint-size="100%,44px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S26 — spec</h4>
+<p><strong>Built from</strong> two <code>Slider</code> and one <code>Switch</code>, in this order: Black point (how dark the darkest part becomes), White point (how bright the paper becomes), then the switch. Both sliders open where the app suggested, both keep their tick, one “Back to the suggestion” resets the group.</p>
+<p><strong>Why the min and max labels are sentences</strong> the numbers mean nothing on their own and there is no preview to check them against, so each end says what happens there. This is the one place the labels are long — they wrap to two lines and the layout is not pinned, which is also what German needs.</p>
+<p><strong>Scrolling</strong> at large text sizes this group is taller than the screen: the page shrinks first (down to a readable minimum), then the content scrolls under a fixed top bar and footer. Nothing is truncated.</p>
+<p><strong>VoiceOver</strong> “Black point, 12 per cent. The app suggests 12 per cent.” · “White point, 92 per cent…” · switch: “Even out the lighting. Evens out a page that is brighter on one side.” <em>The switch label and its sub-line are not in the copy tables — confirm or replace.</em></p>
+</div>
+</div>
+
+<div class="sec" id="S27">
+<div class="shd"><a class="sid" href="#S27">S27</a><h2 class="stitle">Adjust → Sharpen, and Sharpen at zero</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <div style="display:flex;align-items:center;gap:var(--space-3);min-height:52px;padding:0 var(--screen-padding);border-bottom:1px solid var(--divider)">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" hint-size="auto,44px">Cancel</x-import>
+    <span style="flex:1;text-align:center;font:600 20px/1.12 var(--font-heading);letter-spacing:-.015em;font-variant-numeric:tabular-nums">Adjust page 3</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" hint-size="auto,44px">Apply</x-import>
+  </div>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:230px;justify-self:center" alt="Page 3" hint-size="230px,306px"></x-import>
+    <x-import component-from-global-scope="FPNew.ToolStrip" from="./kit/proposed.jsx" items="{{ tools }}" active="Sharpen" hint-size="100%,46px"></x-import>
+    <div style="display:grid;gap:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.SectionLabel" hint-size="auto,20px">Sharpen</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Slider" label="Sharpen" value="{{ n0_6 }}" min="{{ n0 }}" max="{{ n20 }}" step="{{ n0_1 }}" min-label="None" max-label="Most" suggested="{{ n0_6 }}" hint-size="100%,80px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" style="justify-self:start" hint-size="auto,44px">Back to the suggestion</x-import>
+    </div>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Apply to all pages" hint-size="100%,44px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<x-import component-from-global-scope="FPKit.ThemePair" from="./kit/chrome.jsx" w="{{ 393 }}" hint-size="840px,180px">
+  <div style="display:grid;gap:var(--space-2)">
+    <span class="fp-kicker">At zero — no sharpening at all</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Slider" label="Sharpen" value="{{ n0 }}" min="{{ n0 }}" max="{{ n20 }}" step="{{ n0_1 }}" min-label="None" max-label="Most" suggested="{{ n0_6 }}" hint-size="100%,80px"></x-import>
+  </div>
+</x-import>
+<div class="spec">
+<h4>S27 — spec</h4>
+<p><strong>Built from</strong> one <code>Slider</code>, 0 to 20, step 0.1, opening at 0.6 with the tick at 0.6.</p>
+<p><strong>Zero</strong> at 0 the thumb sits on the track’s start, the printed value reads 0, and the minimum label already says what that means: “None”. The tick stays visible just to the right of the thumb, so it is clear the user moved below the suggestion deliberately.</p>
+<p><strong>VoiceOver</strong> “Sharpen, 0. No sharpening. The app suggests 0.6.”</p>
+</div>
+</div>
+
+<div class="sec" id="S28">
+<div class="shd"><a class="sid" href="#S28">S28</a><h2 class="stitle">Adjust → Crop, and a refused box</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <div style="display:flex;align-items:center;gap:var(--space-3);min-height:52px;padding:0 var(--screen-padding);border-bottom:1px solid var(--divider)">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" hint-size="auto,44px">Cancel</x-import>
+    <span style="flex:1;text-align:center;font:600 20px/1.12 var(--font-heading);letter-spacing:-.015em;font-variant-numeric:tabular-nums">Adjust page 3</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" hint-size="auto,44px">Apply</x-import>
+  </div>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FPNew.PageHandles" from="./kit/proposed.jsx" count="{{ 8 }}" inset="{{ 16 }}" refused="{{ true }}" refused-text="This crop falls outside the page. Move a corner back in." style="width:230px;justify-self:center" hint-size="230px,340px"></x-import>
+    <x-import component-from-global-scope="FPNew.ToolStrip" from="./kit/proposed.jsx" items="{{ tools }}" active="Crop" hint-size="100%,46px"></x-import>
+    <div style="display:grid;gap:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.SectionLabel" hint-size="auto,20px">Crop</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" style="justify-self:start" hint-size="auto,44px">Back to the suggestion</x-import>
+    </div>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Apply to all pages" hint-size="100%,44px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S28 — spec</h4>
+<p><strong>Built from</strong> <code>PageHandles</code> with eight handles (corners and edge middles), in its <code>refused</code> state. A box that does not fit is refused, not silently shrunk: the edge and handles go to <code>--destructive</code>, the edge gains the inset ring so the box is a different shape, and the sentence prints under the picture. Apply stays live — moving a corner back in clears the refusal.</p>
+<p><strong>Order</strong> page with handles · the refusal sentence directly under it, so it is next to what it is about · <code>ToolStrip</code> · <code>SectionLabel</code> “Crop” and the reset · footer switch.</p>
+<p><strong>VoiceOver</strong> handles as in S24, with the edge middles: “Right edge of the crop. Swipe up or down to move it.” The refusal is announced once as an alert, not on every drag. <em>The refusal sentence is a placeholder — see the foundation sheet’s missing-words list.</em></p>
+</div>
+</div>
+
+<div class="sec" id="S29">
+<div class="shd"><a class="sid" href="#S29">S29</a><h2 class="stitle">Adjust → Turn, after one tap</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <div style="display:flex;align-items:center;gap:var(--space-3);min-height:52px;padding:0 var(--screen-padding);border-bottom:1px solid var(--divider)">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" hint-size="auto,44px">Cancel</x-import>
+    <span style="flex:1;text-align:center;font:600 20px/1.12 var(--font-heading);letter-spacing:-.015em;font-variant-numeric:tabular-nums">Adjust page 3</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" hint-size="auto,44px">Apply</x-import>
+  </div>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <div style="height:250px;display:grid;place-items:center">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:185px;transform:rotate(90deg)" alt="Page 3, turned a quarter turn clockwise" hint-size="185px,246px"></x-import>
+    </div>
+    <x-import component-from-global-scope="FPNew.ToolStrip" from="./kit/proposed.jsx" items="{{ tools }}" active="Turn" hint-size="100%,46px"></x-import>
+    <div style="display:grid;gap:var(--space-2);justify-items:start">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.SectionLabel" hint-size="auto,20px">Turn</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="rotate-cw" label="Turn the page a quarter turn clockwise" outlined="{{ true }}" hint-size="44px,44px"></x-import>
+    </div>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Apply to all pages" hint-size="100%,44px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S29 — spec</h4>
+<p><strong>Built from</strong> one <code>IconButton</code> (outlined, <code>rotate-cw</code>), one quarter turn clockwise per tap. Shown after one tap: the page is landscape in its frame, centred in the same block the portrait page used, so nothing else on the screen moves.</p>
+<p><strong>No second control</strong> there is no anticlockwise button and no 180° button — four taps come back to the start, and one control cannot be mistaken for two. <em>If a counter-clockwise turn is wanted, that is a copy and layout decision, not a component one; say so and it becomes a second <code>IconButton</code>.</em></p>
+<p><strong>VoiceOver</strong> “Turn the page a quarter turn clockwise.” After each tap the page’s own label is re-announced: “Page 3, turned a quarter turn clockwise.”</p>
+</div>
+</div>
+
+<div class="sec" id="S30">
+<div class="shd"><a class="sid" href="#S30">S30</a><h2 class="stitle">Applying to one page</h2><span class="note" style="max-width:40ch">Switch off. About a second. Only this page is rewritten.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <div style="display:flex;align-items:center;gap:var(--space-3);min-height:52px;padding:0 var(--screen-padding);border-bottom:1px solid var(--divider)">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="ghost" hint-size="auto,44px">Cancel</x-import>
+    <span style="flex:1;text-align:center;font:600 20px/1.12 var(--font-heading);letter-spacing:-.015em;font-variant-numeric:tabular-nums">Adjust page 3</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" busy="{{ true }}" hint-size="auto,44px">Applying…</x-import>
+  </div>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" style="width:230px;justify-self:center" alt="Page 3" hint-size="230px,306px"></x-import>
+    <x-import component-from-global-scope="FPNew.ToolStrip" from="./kit/proposed.jsx" items="{{ tools }}" active="Straighten" hint-size="100%,46px"></x-import>
+    <div style="display:grid;gap:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.SectionLabel" hint-size="auto,20px">Straighten</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Slider" label="Angle" value="{{ n1_4 }}" min="{{ nMinus10 }}" max="{{ n10 }}" step="{{ n0_1 }}" unit="°" min-label="−10°" max-label="+10°" suggested="{{ n1_4 }}" hint-size="100%,80px"></x-import>
+    </div>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Apply to all pages" hint-size="100%,44px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S30 — spec</h4>
+<p><strong>Built from</strong> <code>Switch</code> “Apply to all pages” off, and the top bar’s Apply <code>Button</code> with <code>busy</code>, reading “Applying…”. Nothing else changes: the controls stay on screen at the values that are being applied, so it is clear what is being written.</p>
+<p><strong>Cancel while it runs</strong> Cancel is not offered during the second it takes — the bar keeps it, but it is disabled with the F1 treatment, because stopping halfway would leave a half-written page.</p>
+<p><strong>VoiceOver</strong> “Applying…” with the busy trait; when it finishes the page’s label is re-announced, which is the only signal that the picture changed.</p>
+</div>
+</div>
+
+<div class="sec" id="S31">
+<div class="shd"><a class="sid" href="#S31">S31</a><h2 class="stitle">Applying to all pages</h2><span class="note" style="max-width:46ch">A full-screen takeover. Every page is rewritten from its own photo, one at a time.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <div style="display:grid;align-content:center;justify-items:start;min-height:640px;gap:var(--space-4)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" hint-size="auto,28px">Page 12 of 40</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ProgressLine" line="Applying to 40 pages…" note="Keep the app open." value="{{ n12 }}" max="{{ n40 }}" hint-size="100%,80px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S31 — spec</h4>
+<p><strong>Order</strong> no app bar and no back arrow — that is the takeover · the block centred: <code>PageCounter</code> “Page 12 of 40”, space-4, <code>ProgressLine</code> with the line, the bar and the note “Keep the app open.”</p>
+<p><strong>How it is distinct from the drain (S13) without a colour</strong> three ways, all structural: the drain keeps the app bar and its back arrow, this has neither, so leaving is visibly not on offer; the drain has one line, this has two — a <code>PageCounter</code> above the line, which the drain never shows; and the notes say opposite things in the same position. Nothing is thickened, nothing is tinted, no second accent appears.</p>
+<p><strong>Why the counter is a second line</strong> “Applying to 40 pages…” is the job and does not change; “Page 12 of 40” is the position and changes every second or so. Splitting them keeps the sentence still while the number counts, and the figures are tabular so the line does not shuffle.</p>
+<p><strong>VoiceOver</strong> the screen is announced on entry: “Applying to 40 pages. Keep the app open.” The counter updates as a progress announcement, at most once a page. There are no controls, and the platform’s back gesture is refused for the seconds it runs.</p>
+</div>
+</div>
+
+<div class="sec" id="S32">
+<div class="shd"><a class="sid" href="#S32">S32</a><h2 class="stitle">Applying to all pages, some pages skipped</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 3 of 40" back="{{ true }}" hint-size="100%,52px">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="ellipsis" label="Page menu" hint-size="44px,44px"></x-import>
+  </x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ErrorLine" hint-size="100%,80px">Pages 4, 9 and 18 were not changed: their photos are gone.</x-import>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" alt="Page 3 of 40" hint-size="100%,410px"></x-import>
+    <x-import component-from-global-scope="FPNew.PageStrip" from="./kit/proposed.jsx" pages="{{ pages40 }}" selected="{{ 3 }}" total="{{ 40 }}" hint-size="100%,64px"></x-import>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Grey" hint-size="100%,44px"></x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Make PDF</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S32 — spec</h4>
+<p><strong>Built from</strong> <code>ErrorLine</code> on the pages screen the user lands back on — not on the takeover, which is gone by then. One plain sentence naming the pages that could not be rewritten because their photos were deleted.</p>
+<p><strong>Why naming them matters</strong> a page whose photo is gone cannot be adjusted at all, and after an apply-to-all there is otherwise no way to tell which pages changed. The sentence is the only record, so it names numbers rather than counting them.</p>
+<p><strong>Also silent</strong> adjusting deletes the existing PDF, because the PDF is derived from the pages. There is no dialog for that and no line about it; the footer simply reads “Make PDF” again.</p>
+<p><strong>VoiceOver</strong> announced once as an alert on arrival, then read above the page. <em>The sentence is a placeholder — the engine’s wording is not in the copy tables.</em></p>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const P = (n, refused) => Array.from({ length: n }, (_, i) => ({ n: i + 1, state: refused && refused.includes(i + 1) ? "refused" : "page" }));
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      pages40: P(40, [5]),
+      tools: [
+        { label: "Edges", icon: "scan" },
+        { label: "Straighten", icon: "ruler" },
+        { label: "Brightness", icon: "sun" },
+        { label: "Sharpen", icon: "focus" },
+        { label: "Crop", icon: "crop" },
+        { label: "Turn", icon: "rotate-cw" },
+      ],
+      n0: 0, n0_1: 0.1, n0_6: 0.6, n1_4: -1.4, n10: 10, nMinus10: -10,
+      n12: 12, n20: 20, n40: 40, n92: 92, n100: 100,
+    };
+  }
+}
+</script>
+</body>
+</html>

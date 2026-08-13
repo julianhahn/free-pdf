@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="kit/doc.css">
+<script src="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/_ds_bundle.js"></script>
+</helmet>
+<div class="pg">
+
+<div class="sec" style="border-top:0;padding-top:0">
+<h1 style="margin:0;font:600 32px/1.12 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em">Flow 3 — shooting the pages</h1>
+<p class="note">S7 to S12. S6 is the delivered CameraScreen and is reviewed on the foundation sheet. The camera screen is the same frame every time: the title is the number the next shot lands on, the viewfinder is 3:4, the shutter sits where a thumb reaches, and the screen’s action is pinned in the footer.</p>
+<p class="docnav"><a href="FreePDF Foundation.dc.html">Foundation</a><a href="FreePDF Flows 1-2 Scans.dc.html">Flows 1–2</a></p>
+</div>
+
+<div class="sec" id="S7">
+<div class="shd"><a class="sid" href="#S7">S7</a><h2 class="stitle">Camera, shutter disabled while the photo is written</h2><span class="note" style="max-width:40ch">A fraction of a second after each press. One press, one page.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 7" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <div style="position:relative">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Viewfinder" hint-size="100%,470px"></x-import>
+      <div style="position:absolute;left:var(--space-3);top:var(--space-3);white-space:nowrap">
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" on-dark="{{ true }}" hint-size="auto,28px">Page 7</x-import>
+      </div>
+    </div>
+    <div class="fp-disabled-demo" style="display:grid;justify-items:center;padding-top:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Shutter" label="Photographing page 7, wait" disabled="{{ true }}" hint-size="72px,72px"></x-import>
+    </div>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Scan 6 pages</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S7 — spec</h4>
+<p><strong>Order</strong> app bar (back arrow, title “Page 7”) · space-4 · <code>Viewfinder</code> with <code>PageCounter onDark</code> inset space-3 from its top-left corner · space-4 · <code>Shutter disabled</code>, centred · footer above a hairline: <code>Button</code> primary full width.</p>
+<p><strong>The disabled shutter</strong> uses the new colour role, not opacity (foundation F1): the paper disc stays at full <code>--paper</code> — the mass a thumb aims at does not fade — and the accent ring goes to <code>--disabled-border</code>. The press does nothing until the photo is on disk, which is what makes one press exactly one page.</p>
+<p><strong>Spacing</strong> space-4 between viewfinder and shutter, space-2 above the shutter row so the 44 pt target never touches the frame; footer padding space-4.</p>
+<p><strong>VoiceOver</strong> shutter, live: “Photograph page 7.” · shutter, writing: “Photographing page 7, wait” with the dimmed trait · footer: “Scan 6 pages. Cleans up the 6 photos and makes pages from them.” · counter: “Page 7. The next photo becomes page 7.”</p>
+</div>
+</div>
+
+<div class="sec" id="S8">
+<div class="shd"><a class="sid" href="#S8">S8</a><h2 class="stitle">Camera, before the first shot — and the counter at 1, 7, 40</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 1" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <div style="position:relative">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Viewfinder" hint-size="100%,470px"></x-import>
+      <div style="position:absolute;left:var(--space-3);top:var(--space-3);white-space:nowrap">
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" on-dark="{{ true }}" hint-size="auto,28px">Page 1</x-import>
+      </div>
+    </div>
+    <div style="display:grid;justify-items:center;padding-top:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Shutter" label="Photograph page 1" hint-size="72px,72px"></x-import>
+    </div>
+    <div data-slot="footer" class="fp-disabled-demo">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" disabled="{{ true }}" hint-size="100%,44px">Photograph at least one page</x-import>
+    </div>
+  </x-import>
+</x-import>
+<x-import component-from-global-scope="FPKit.ThemePair" from="./kit/chrome.jsx" w="{{ 393 }}" hint-size="840px,200px">
+  <div style="display:grid;gap:var(--space-2)">
+    <span class="fp-kicker">The counter, on paper and over the viewfinder</span>
+    <div style="display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" hint-size="auto,28px">Page 1</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" hint-size="auto,28px">Page 7</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" hint-size="auto,28px">Page 40</x-import>
+    </div>
+    <div style="background:var(--viewfinder);border-radius:var(--radius-md);padding:var(--space-3);display:flex;gap:var(--space-3);flex-wrap:wrap">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" on-dark="{{ true }}" hint-size="auto,28px">Page 1</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" on-dark="{{ true }}" hint-size="auto,28px">Page 7</x-import>
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" on-dark="{{ true }}" hint-size="auto,28px">Page 40</x-import>
+    </div>
+  </div>
+</x-import>
+<div class="spec">
+<h4>S8 — spec</h4>
+<p><strong>Built from</strong> the S7 frame with <code>Shutter</code> live and the footer <code>Button</code> <code>disabled</code>, reading “Photograph at least one page”. That label is an instruction, so it is set in the new disabled text colour, not at 45% opacity — the whole reason F1 exists.</p>
+<p><strong>The counter</strong> tabular figures at every value, so nothing shuffles between “Page 1” and “Page 40”; the ground changes, the type does not (<code>onDark</code> = viewfinder at 66% with a 6 px blur, the system’s one blur).</p>
+<p><strong>VoiceOver</strong> footer, disabled: “Photograph at least one page. Dimmed. Photograph a page before scanning.” · shutter: “Photograph page 1.”</p>
+</div>
+</div>
+
+<div class="sec" id="S9">
+<div class="shd"><a class="sid" href="#S9">S9</a><h2 class="stitle">Camera, a photo missed the disk</h2><span class="note" style="max-width:44ch">One sentence shape, the reason swapped in.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 7" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ErrorLine" hint-size="100%,80px">Page 7 was not saved: the iPhone is out of storage. Nothing already photographed is lost.</x-import>
+    <div style="position:relative">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Viewfinder" hint-size="100%,420px"></x-import>
+      <div style="position:absolute;left:var(--space-3);top:var(--space-3);white-space:nowrap">
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" on-dark="{{ true }}" hint-size="auto,28px">Page 7</x-import>
+      </div>
+    </div>
+    <div style="display:grid;justify-items:center;padding-top:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Shutter" label="Photograph page 7" hint-size="72px,72px"></x-import>
+    </div>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Scan 6 pages</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S9 — spec</h4>
+<p><strong>Order</strong> app bar · <code>ErrorLine</code> above the viewfinder, inside the scroll area · viewfinder (shorter, because the line took its space — the frame keeps 3:4 and shrinks, it is never cropped) · shutter · footer.</p>
+<p><strong>The line</strong> the engine’s sentence, printed unchanged: <em>Page 7 was not saved: &lt;why&gt; Nothing already photographed is lost.</em> The four reasons — out of storage, camera not ready, no photo handed over, camera stopped early — are swapped into the same shape and never rewritten. Shown here with the storage one.</p>
+<p><strong>The shutter stays live.</strong> The failure is about the last press, not the camera; pressing again is the retry, and the title still says Page 7 because the number was not used up.</p>
+<p><strong>VoiceOver</strong> announced once as an alert when it appears, then read in order above the viewfinder. No dismiss control.</p>
+</div>
+</div>
+
+<div class="sec" id="S10">
+<div class="shd"><a class="sid" href="#S10">S10</a><h2 class="stitle">Camera, permission denied</h2><span class="note" style="max-width:40ch">The whole screen becomes the sentence and one button. No preview behind it.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 7" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <div style="display:grid;align-content:center;justify-items:center;min-height:560px">
+      <x-import component-from-global-scope="FPKit.EmptyStateA" from="./kit/chrome.jsx" icon="camera-off" title="FreePDF needs the camera to photograph the pages." body="" hint-size="100%,240px">
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" hint-size="auto,44px">Open Settings</x-import>
+      </x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S10 — spec</h4>
+<p><strong>Built from</strong> <code>EmptyState</code> as the full-screen takeover shape — icon, the sentence as its <code>title</code>, and <code>action</code> = <code>Button</code> primary “Open Settings”. No <code>body</code>: there is one sentence and repeating it in smaller type would be padding.</p>
+<p><strong>Why the sentence is the title</strong> it is the only thing on the screen; setting it in the h4 serif is what makes it the screen rather than a warning attached to something else. It is also the one place the word “document” could appear — it does not here, because the copy table gives “the pages”.</p>
+<p><strong>Order and spacing</strong> app bar keeps the page number and the back arrow, so leaving is always possible · block centred in the scroll area · icon 26 px to title space-3, title to action space-4.</p>
+<p><strong>VoiceOver</strong> the sentence is read on entry; button: “Open Settings. Opens the iPhone’s settings for FreePDF, where the camera can be allowed.”</p>
+</div>
+</div>
+
+<div class="sec" id="S11">
+<div class="shd"><a class="sid" href="#S11">S11</a><h2 class="stitle">Camera, the screen cannot work</h2><span class="note" style="max-width:44ch">Same shape as S10, with no action. Three sentences use it.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 7" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <div style="display:grid;align-content:center;justify-items:center;min-height:560px">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.EmptyState" icon="camera-off" title="This iPhone has no camera to photograph with." body="" hint-size="100%,200px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<x-import component-from-global-scope="FPKit.ThemePair" from="./kit/chrome.jsx" w="{{ 393 }}" hint-size="840px,260px">
+  <div style="display:grid;gap:var(--space-4)">
+    <span class="fp-kicker">The other two sentences, same shape</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.EmptyState" icon="camera-off" title="The camera could not be started." body="" hint-size="100%,160px"></x-import>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.EmptyState" icon="camera-off" title="Page 7 could not be drawn." body="" hint-size="100%,160px"></x-import>
+  </div>
+</x-import>
+<div class="spec">
+<h4>S11 — spec</h4>
+<p><strong>Built from</strong> <code>EmptyState</code>, no <code>action</code>. Identical layout to S10, which is the point: the user does not have to work out whether this one is fixable — if there is a button, there is something to do; if there is none, there is not.</p>
+<p><strong>Three sentences</strong> no camera hardware · the session failed to start · the stand-in failed (“Page 7 could not be drawn.”). Same icon, same position, no colour and no icon change between them — the sentence is the difference.</p>
+<p><strong>VoiceOver</strong> the sentence, read on entry. The back arrow is the only control, labelled “Back to the scan”.</p>
+</div>
+</div>
+
+<div class="sec" id="S12">
+<div class="shd"><a class="sid" href="#S12">S12</a><h2 class="stitle">Camera, simulator stand-in</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 7" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <div style="position:relative">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Viewfinder" note="No camera on this iPhone. The shutter draws a page instead." hint-size="100%,470px"></x-import>
+      <div style="position:absolute;left:var(--space-3);top:var(--space-3);white-space:nowrap">
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" on-dark="{{ true }}" hint-size="auto,28px">Page 7</x-import>
+      </div>
+    </div>
+    <div style="display:grid;justify-items:center;padding-top:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Shutter" label="Draw page 7" hint-size="72px,72px"></x-import>
+    </div>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Scan 6 pages</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S12 — spec</h4>
+<p><strong>Built from</strong> <code>Viewfinder</code> with its <code>note</code>, nothing new. The note is the quiet line inside the frame, and it is the only thing that differs from S6 — the frame, the counter, the shutter and the footer are unchanged.</p>
+<p><strong>VoiceOver</strong> the note is read after the counter; the shutter says what it actually does here: “Draw page 7.”</p>
+<p><strong>Leaving and coming back</strong> (flow 9) every camera state above is a landing screen: the title is read off the files, so returning to an unfinished scan lands on the viewfinder at the next free number with no state carried in.</p>
+</div>
+</div>
+
+</div>
+</x-dc>
+</body>
+</html>

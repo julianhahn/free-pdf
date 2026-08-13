@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="kit/doc.css">
+<script src="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/_ds_bundle.js"></script>
+</helmet>
+<div class="pg">
+
+<div class="sec" style="border-top:0;padding-top:0">
+<h1 style="margin:0;font:600 32px/1.12 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em">Flows 8 and 9 — one more page, and coming back after a force-quit</h1>
+<p class="note">S39, then the landing check. Flow 9 adds no screens: nothing is stored, so the step the app shows is read off the files every time.</p>
+<p class="docnav"><a href="FreePDF Foundation.dc.html">Foundation</a><a href="FreePDF Flow 7 Done.dc.html">Flow 7</a></p>
+</div>
+
+<div class="sec" id="S39">
+<div class="shd"><a class="sid" href="#S39">S39</a><h2 class="stitle">Shoot another page</h2><span class="note" style="max-width:46ch">From the Page menu on a finished scan. Tapping it throws the PDF away and opens the camera at the next free number.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="Page 41" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <div style="position:relative">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Viewfinder" note="The PDF was removed. It is made again after this page." hint-size="100%,470px"></x-import>
+      <div style="position:absolute;left:var(--space-3);top:var(--space-3);white-space:nowrap">
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageCounter" on-dark="{{ true }}" hint-size="auto,28px">Page 41</x-import>
+      </div>
+    </div>
+    <div style="display:grid;justify-items:center;padding-top:var(--space-2)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Shutter" label="Photograph page 41" hint-size="72px,72px"></x-import>
+    </div>
+    <div data-slot="footer">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Scan 1 page</x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S39 — spec</h4>
+<p><strong>Built from</strong> the <code>MenuList</code> item on <a href="FreePDF Flow 5 Pages.dc.html#S19">S19</a>, then the S6 camera screen unchanged: <code>Viewfinder</code>, <code>PageCounter onDark</code>, <code>Shutter</code>, footer <code>Button</code>. The title is 41 because numbers keep their gaps and are never reused.</p>
+<p><strong>My call on the line</strong> a <code>Viewfinder</code> <code>note</code>, not an <code>ErrorLine</code>: “The PDF was removed. It is made again after this page.” Nothing failed, so the sentence does not belong in the shape reserved for the engine’s failures — an <code>ErrorLine</code> here would teach people to distrust the error line. Inside the frame it is read once, in the calm register the stand-in note already uses, and it disappears with the first shot.</p>
+<p><strong>Footer</strong> “Scan 1 page” — one photo waiting, so the count is 1, singular. Before the shot the footer is disabled and reads “Photograph at least one page”, exactly as <a href="FreePDF Flow 3 Camera.dc.html#S8">S8</a>.</p>
+<p><strong>VoiceOver</strong> the note is read after the counter on entry; shutter: “Photograph page 41.” The menu item that got here says what it costs: “Shoot another page. Photographs one more page at the end of this scan. The PDF is made again afterwards.”</p>
+</div>
+</div>
+
+<div class="sec" id="S40">
+<div class="shd"><a class="sid" href="#S40">F9</a><h2 class="stitle">Flow 9 — every screen as a landing screen</h2></div>
+<p class="note">No new screens. What this checks is that no screen above needs anything handed to it by the screen before it. Each one reads its own state off the files.</p>
+<table>
+<tr><th>Killed when</th><th>Where the user lands</th><th>Stands on its own because</th></tr>
+<tr><td>before the first shot</td><td>the list, row reads “No pages yet”</td><td>the subtitle is derived from the folder’s contents, not from a session</td></tr>
+<tr><td>mid-shooting</td><td>the camera, at “Page 12” again</td><td>the title is the next free number, counted from the photos on disk</td></tr>
+<tr><td>mid-scan</td><td>the progress line, carrying on at the first unscanned page</td><td><code>ProgressLine</code>’s value is photos-done over photos-total; nothing is held in memory</td></tr>
+<tr><td>all pages scanned</td><td>the pages</td><td>“Make PDF” appears because every photo has a page — a file test, not a flag</td></tr>
+<tr><td>after Make PDF</td><td>the done screen</td><td>the PDF exists; the name field is empty again, which is correct — it was never stored</td></tr>
+<tr><td>after deleting the photos</td><td>the done screen, destructive block gone</td><td>the block is drawn only when photos exist, so nothing has to be remembered</td></tr>
+<tr><td>mid apply-to-all</td><td>the pages, some adjusted and some not, with no way to tell which</td><td>the takeover is not resumable and does not pretend to be; there is no half-finished state on screen</td></tr>
+</table>
+<div class="spec">
+<h4>The two consequences worth naming</h4>
+<p><strong>The apply-to-all row.</strong> A kill mid-apply leaves a scan that is partly rewritten and, by design, unlabelled. That is why S31 says “Keep the app open.” and why it has no back arrow — the note is doing the work that a resume would otherwise have to do.</p>
+<p><strong>No screen shows a spinner on entry.</strong> Every landing screen has its content on the first frame, because the state is read from files rather than fetched. That is also what keeps the app free of skeletons, which the system forbids.</p>
+</div>
+</div>
+
+</div>
+</x-dc>
+</body>
+</html>

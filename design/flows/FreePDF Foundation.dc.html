@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/tokens/colors.css">
+<link rel="stylesheet" href="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/tokens/typography.css">
+<link rel="stylesheet" href="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/tokens/radius.css">
+<link rel="stylesheet" href="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/tokens/controls.css">
+<link rel="stylesheet" href="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/tokens/base.css">
+<link rel="stylesheet" href="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/styles.css">
+<link rel="stylesheet" href="kit/disabled-role.css">
+<script src="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#dedbd6;color:#201f1d;font-family:Lora,Georgia,serif}
+a{color:#7d5411}a:hover{color:#b68235}
+.pg{padding:44px 48px 80px;display:grid;gap:34px;justify-items:start}
+.sec{display:grid;gap:18px;justify-items:start;width:100%;border-top:1px solid rgba(32,31,29,.2);padding-top:24px;scroll-margin-top:16px}
+.shd{display:flex;align-items:baseline;gap:10px}
+.sid{font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;background:#201f1d;color:#f8f4f4;padding:4px 7px;border-radius:3px;text-decoration:none}
+.stitle{margin:0;font:600 25px/1.12 "Cormorant Garamond",Garamond,serif;letter-spacing:-.015em}
+.note{margin:0;max-width:64ch;font:400 14px/1.6 Lora,Georgia,serif;color:rgba(32,31,29,.74);text-wrap:pretty}
+.spec{background:#f8f4f4;border:1px solid rgba(32,31,29,.14);border-radius:4px;padding:16px 18px;max-width:80ch;display:grid;gap:9px}
+.spec h4{margin:0;font:600 13px/1.12 "Cormorant Garamond",Garamond,serif;letter-spacing:.08em;text-transform:uppercase}
+.spec p{margin:0;font:400 13.5px/1.62 Lora,Georgia,serif}
+.spec ol,.spec ul{margin:0;padding-left:19px;font:400 13.5px/1.62 Lora,Georgia,serif;display:grid;gap:4px}
+.spec code{font:400 12.5px ui-monospace,Menlo,monospace;background:rgba(32,31,29,.07);padding:1px 4px;border-radius:2px}
+.docnav{display:flex;gap:14px;flex-wrap:wrap;font:400 13px/1.5 Lora,Georgia,serif}
+table{border-collapse:collapse;font:400 13px/1.5 Lora,Georgia,serif;max-width:88ch}
+th{font:600 11px/1.4 Lora,Georgia,serif;letter-spacing:.06em;text-transform:uppercase;color:rgba(32,31,29,.6)}
+th,td{text-align:left;padding:5px 16px 5px 0;border-bottom:1px solid rgba(32,31,29,.12);vertical-align:top}
+</style>
+</helmet>
+<div class="pg">
+
+<div class="sec" style="border-top:0;padding-top:0">
+<h1 style="margin:0;font:600 42px/1.12 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em">FreePDF — round 2</h1>
+<p class="note">The foundation sheet: the disabled fix asked for, the four components the flows need that the kit does not have, and the review of the five delivered screens. The screens themselves are in the flow sheets. Nothing here changes a colour, a face, a size step, a spacing step, a radius or a shadow, except the one place the brief reopens: disabled.</p>
+<p class="note">Every specimen below is the delivered component, mounted from the system bundle — not a redrawing. Light and dark are the same markup rendered twice.</p>
+<p class="docnav"><a href="FreePDF Flows 1-2 Scans.dc.html">Flows 1–2 · scans</a><a href="FreePDF Flow 3 Camera.dc.html">Flow 3 · camera</a><a href="FreePDF Flow 4 Scanning.dc.html">Flow 4 · the scan runs</a><a href="FreePDF Flow 5 Pages.dc.html">Flow 5 · pages</a><a href="FreePDF Flow 6 Adjust.dc.html">Flow 6 · adjust</a><a href="FreePDF Flow 7 Done.dc.html">Flow 7 · done</a><a href="FreePDF Flow 8-9.dc.html">Flows 8–9</a></p>
+</div>
+
+<div class="sec" id="F1">
+<div class="shd"><a class="sid" href="#F1">F1</a><h2 class="stitle">The disabled fix — a colour role, not an opacity</h2></div>
+<p class="note">A flat 45% opacity drops a real instruction — “Photograph at least one page” — below comfortable reading contrast, and it fades the border and the shape along with the label. The proposal keeps the shape and the hairline at full strength, removes the accent, and prints the label in a defined disabled text colour.</p>
+<table>
+<tr><th>Token</th><th>Light</th><th>Dark</th><th>Contrast on its ground</th></tr>
+<tr><td><code>--disabled-text</code></td><td>#605d5d (neutral-700)</td><td>#bab6b6 (neutral-400)</td><td>5.6:1 on #f3f2f2 · 6.4:1 on #2d2b2b</td></tr>
+<tr><td><code>--disabled-border</code></td><td>rgba(32,31,29,.16)</td><td>rgba(248,244,244,.22)</td><td>= divider, unfaded hairline</td></tr>
+<tr><td><code>--disabled-text</code> on the viewfinder</td><td colspan="2">#d7d3d3 (neutral-300), border rgba(248,244,244,.28)</td><td>9.1:1 on #1b1a19</td></tr>
+<tr><td><code>--disabled-opacity</code></td><td colspan="3">retired — set to 1; opacity is no longer the mechanism</td></tr>
+</table>
+<p class="note">What still says “dead”: the accent is gone (a live primary is accent-stroked, a dead one is a grey hairline), the destructive double rule is gone with it, the switch track stays at divider-strong with the knob unmoved, and the slider thumb loses its accent fill. Shape and stroke carry the state; faintness no longer has to.</p>
+<x-import component-from-global-scope="FPKit.ThemePair" from="./kit/chrome.jsx" w="{{ 600 }}" hint-size="1240px,560px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-3) var(--space-3);align-items:center">
+    <span class="fp-kicker">Live</span><span class="fp-kicker">Disabled today</span><span class="fp-kicker">Disabled proposed</span>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" hint-size="100%,44px">Photograph at least one page</x-import>
+    <div style="--disabled-opacity:.45"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" disabled="{{ true }}" hint-size="100%,44px">Photograph at least one page</x-import></div>
+    <div class="fp-disabled-demo"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" full-width="{{ true }}" disabled="{{ true }}" hint-size="100%,44px">Photograph at least one page</x-import></div>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="destructive" full-width="{{ true }}" hint-size="100%,44px">Delete the 40 photos (78 MB)</x-import>
+    <div style="--disabled-opacity:.45"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="destructive" full-width="{{ true }}" disabled="{{ true }}" hint-size="100%,44px">Delete the 40 photos (78 MB)</x-import></div>
+    <div class="fp-disabled-demo"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="destructive" full-width="{{ true }}" disabled="{{ true }}" hint-size="100%,44px">Delete the 40 photos (78 MB)</x-import></div>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Apply to all pages" hint-size="100%,44px"></x-import>
+    <div style="--disabled-opacity:.45"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Apply to all pages" disabled="{{ true }}" hint-size="100%,44px"></x-import></div>
+    <div class="fp-disabled-demo"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Switch" label="Apply to all pages" disabled="{{ true }}" hint-size="100%,44px"></x-import></div>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Slider" label="Sharpen" value="{{ 6 }}" min="{{ 0 }}" max="{{ 20 }}" suggested="{{ 6 }}" min-label="None" max-label="Most" hint-size="100%,80px"></x-import>
+    <div style="--disabled-opacity:.45"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Slider" label="Sharpen" value="{{ 6 }}" min="{{ 0 }}" max="{{ 20 }}" suggested="{{ 6 }}" min-label="None" max-label="Most" disabled="{{ true }}" hint-size="100%,80px"></x-import></div>
+    <div class="fp-disabled-demo"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Slider" label="Sharpen" value="{{ 6 }}" min="{{ 0 }}" max="{{ 20 }}" suggested="{{ 6 }}" min-label="None" max-label="Most" disabled="{{ true }}" hint-size="100%,80px"></x-import></div>
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.TextField" label="Name for the shared copy" value="" placeholder="scan" suffix=".pdf" hint-size="100%,64px"></x-import>
+    <div style="--disabled-opacity:.45"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.TextField" label="Name for the shared copy" value="" placeholder="scan" suffix=".pdf" disabled="{{ true }}" hint-size="100%,64px"></x-import></div>
+    <div class="fp-disabled-demo"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.TextField" label="Name for the shared copy" value="" placeholder="scan" suffix=".pdf" disabled="{{ true }}" hint-size="100%,64px"></x-import></div>
+    <div style="display:flex;gap:var(--space-3)"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="rotate-cw" label="Turn the page a quarter turn clockwise" outlined="{{ true }}" hint-size="44px,44px"></x-import></div>
+    <div style="--disabled-opacity:.45;display:flex;gap:var(--space-3)"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="rotate-cw" label="Turn the page a quarter turn clockwise" outlined="{{ true }}" disabled="{{ true }}" hint-size="44px,44px"></x-import></div>
+    <div class="fp-disabled-demo" style="display:flex;gap:var(--space-3)"><x-import component-from-global-scope="FreePDFDesignSystem_43ff31.IconButton" icon="rotate-cw" label="Turn the page a quarter turn clockwise" outlined="{{ true }}" disabled="{{ true }}" hint-size="44px,44px"></x-import></div>
+  </div>
+  <div style="display:grid;gap:var(--space-2)">
+    <span class="fp-kicker">On the viewfinder — live shutter, dead shutter, dead instruction</span>
+    <div class="fp-on-dark" style="background:var(--viewfinder);border-radius:var(--radius-md);padding:var(--space-4);display:flex;gap:var(--space-4);align-items:center;justify-content:center">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Shutter" label="Photograph page 7" hint-size="72px,72px"></x-import>
+      <div class="fp-disabled-demo" style="display:flex;gap:var(--space-4);align-items:center">
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Shutter" label="Photographing page 7, wait" disabled="{{ true }}" hint-size="72px,72px"></x-import>
+        <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.Button" variant="primary" disabled="{{ true }}" hint-size="auto,44px">Photograph at least one page</x-import>
+      </div>
+    </div>
+  </div>
+</x-import>
+<div class="spec">
+<h4>Spec</h4>
+<ul>
+<li>Add <code>--disabled-text</code>, <code>--disabled-border</code>, <code>--disabled-surface</code> to <code>tokens/colors.css</code> in both themes; add the viewfinder overrides under a <code>.fp-on-dark</code> ground class.</li>
+<li>In every component, replace <code>opacity: disabled ? var(--disabled-opacity) : 1</code> with <code>color: var(--disabled-text)</code>, <code>borderColor: var(--disabled-border)</code>, and — where a variant carries the accent (Button primary/ghost/destructive, Switch on, Slider thumb, Shutter ring) — drop the accent to <code>--disabled-border</code> too. Destructive drops its inset ring when disabled.</li>
+<li><code>--disabled-opacity</code> stays defined at 1 so nothing breaks while clients migrate, then is deleted.</li>
+<li>VoiceOver: a disabled control keeps its spoken label and adds the platform’s own “dimmed” trait — the Shutter’s label changes to say why: “Photographing page 7, wait”.</li>
+</ul>
+</div>
+</div>
+
+<div class="sec" id="F2">
+<div class="shd"><a class="sid" href="#F2">F2</a><h2 class="stitle">New · PageStrip</h2></div>
+<p class="note">Asked for in S15. 40 pages are not 40 swipes: the rail is how a page is reached, and the jump is how page 37 is reached without dragging. <code>PageImage</code> is the tile; nothing in the kit scrolls them or jumps to a number.</p>
+<x-import component-from-global-scope="FPKit.ThemePair" from="./kit/chrome.jsx" w="{{ 393 }}" hint-size="840px,420px">
+  <div style="display:grid;gap:var(--space-2)">
+    <span class="fp-kicker">Rail, page 3 of 12 selected</span>
+    <x-import component-from-global-scope="FPNew.PageStrip" from="./kit/proposed.jsx" pages="{{ pages12 }}" selected="{{ 3 }}" total="{{ 12 }}" hint-size="100%,64px"></x-import>
+  </div>
+  <div style="display:grid;gap:var(--space-2)">
+    <span class="fp-kicker">Rail of 40, page 5 refused, jump open</span>
+    <x-import component-from-global-scope="FPNew.PageStrip" from="./kit/proposed.jsx" pages="{{ pages40 }}" selected="{{ 12 }}" total="{{ 40 }}" jump="open" jump-value="37" hint-size="100%,140px"></x-import>
+  </div>
+</x-import>
+<div class="spec">
+<h4>PageStrip — spec</h4>
+<p>Built from: <code>PageImage</code> (40 px wide tiles, <code>label</code> = page number, <code>selected</code>, <code>state</code>, <code>grey</code>), <code>Button</code> secondary “Go to page” for the jump, <code>Button</code> secondary for “Go”. No new colour, no new size: the tile is the existing tile, the divider before the jump control is the existing hairline.</p>
+<p><strong>Props</strong> <code>pages[{n,state,src}]</code>, <code>selected</code>, <code>onSelect</code>, <code>total</code>, <code>grey</code>, <code>jump: "closed" | "open"</code>, <code>jumpValue</code>, <code>onJumpChange</code>, <code>onJumpSubmit</code>.</p>
+<p><strong>States</strong> selected tile · refused tile (inherited from <code>PageImage</code>) · grey on · jump closed · jump open · rail scrolled (selected tile is kept in view when the page changes from a swipe).</p>
+<p><strong>Order and spacing</strong> rail and jump control in one row, space-2 between tiles, space-2 padding and a 1 px divider left of the jump control; space-2 between the row and the open jump field.</p>
+<p><strong>VoiceOver</strong> rail: “Pages, 3 of 12 shown”; each tile: “Page 3, shown” / “Page 5, could not be scanned”; jump button: “Go to page. Go to a page number. Page 3 of 12 shown”; field: “Page number, 1 to 40”; Go: “Go to page 37”.</p>
+</div>
+</div>
+
+<div class="sec" id="F3">
+<div class="shd"><a class="sid" href="#F3">F3</a><h2 class="stitle">New · ToolStrip</h2></div>
+<p class="note">Asked for in S23. Six tools, one active, always visible. <code>Tag</code> is a state chip and cannot be selected; <code>MenuList</code> opens and closes.</p>
+<x-import component-from-global-scope="FPKit.ThemePair" from="./kit/chrome.jsx" w="{{ 393 }}" hint-size="840px,240px">
+  <div style="display:grid;gap:var(--space-2)">
+    <span class="fp-kicker">Edges active</span>
+    <x-import component-from-global-scope="FPNew.ToolStrip" from="./kit/proposed.jsx" items="{{ tools }}" active="Edges" hint-size="100%,44px"></x-import>
+    <span class="fp-kicker">Brightness active</span>
+    <x-import component-from-global-scope="FPNew.ToolStrip" from="./kit/proposed.jsx" items="{{ tools }}" active="Brightness" hint-size="100%,44px"></x-import>
+  </div>
+</x-import>
+<div class="spec">
+<h4>ToolStrip — spec</h4>
+<p>Built from: <code>Icon</code> (17 px) plus the control type step. Active = accent glyph, accent label and the 2 px accent underline — 2 px is already the system’s functional weight (focus ring, shutter ring, viewfinder corners). Passive = text-muted, no rule.</p>
+<p><strong>Props</strong> <code>items[{label,icon}]</code>, <code>active</code>, <code>onSelect</code>. <strong>States</strong> active · passive · pressed (press-neutral) · focused (2 px accent ring, 2 px outside) · scrolled (six tools do not fit at large text sizes, so the row scrolls horizontally and never wraps or shrinks).</p>
+<p><strong>Order and spacing</strong> one row, space-2 between tools, space-2 horizontal padding inside each tool, min height 44 pt, a hairline above and below the strip.</p>
+<p><strong>VoiceOver</strong> strip: “Adjustment tools”; each: “Edges” / “Edges, shown”. Never “tab”, never “selected chip”.</p>
+</div>
+</div>
+
+<div class="sec" id="F4">
+<div class="shd"><a class="sid" href="#F4">F4</a><h2 class="stitle">New · PageHandles</h2></div>
+<p class="note">Asked for in S24. Edges and Crop both drag corners over a page, and Crop refuses a box that does not fit. Drawn once, with the refusal as a state.</p>
+<x-import component-from-global-scope="FPKit.ThemePair" from="./kit/chrome.jsx" w="{{ 393 }}" hint-size="840px,760px">
+  <div style="display:grid;gap:var(--space-2)">
+    <span class="fp-kicker">Four handles — Edges</span>
+    <x-import component-from-global-scope="FPNew.PageHandles" from="./kit/proposed.jsx" count="{{ 4 }}" inset="{{ 8 }}" hint-size="100%,420px"></x-import>
+  </div>
+  <div style="display:grid;gap:var(--space-2)">
+    <span class="fp-kicker">Eight handles, refused — Crop</span>
+    <x-import component-from-global-scope="FPNew.PageHandles" from="./kit/proposed.jsx" count="{{ 8 }}" inset="{{ 18 }}" refused="{{ true }}" refused-text="This crop falls outside the page. Move a corner back in." hint-size="100%,420px"></x-import>
+  </div>
+</x-import>
+<div class="spec">
+<h4>PageHandles — spec</h4>
+<p>Built from: <code>PageImage</code> underneath (unchanged), plus an overlay of 1 px accent edge and 11 px drawn handles in 44 pt targets, each seated on a 2 px <code>--paper</code> ring so a handle stays visible on a dark page. Refused: the edge and handles go to <code>--destructive</code> and the edge gains the inset ring — the same double rule that makes a destructive button a different shape — with the sentence under the picture. Never colour alone.</p>
+<p><strong>Props</strong> <code>src</code>, <code>grey</code>, <code>count: 4 | 8</code>, <code>inset</code>, <code>refused</code>, <code>refusedText</code>. <strong>States</strong> resting · handle held (handle grows to 13 px, no colour change) · refused.</p>
+<p><strong>VoiceOver</strong> each handle: “Top left corner of the sheet. Swipe up or down to move it.” Refused: the sentence is announced as an alert once, not per drag.</p>
+<p><strong>Open question</strong> is the refusal sentence above the engine’s, or does the engine own it? If the engine has a string for it, send it and this one goes.</p>
+</div>
+</div>
+
+<div class="sec" id="F5">
+<div class="shd"><a class="sid" href="#F5">F5</a><h2 class="stitle">New · Sheet</h2></div>
+<p class="note">Asked for in S36. <code>ConfirmDialog</code> is the only raised surface and it is a dialog: title, body, two actions. The reader needs a raised surface that is a close control and content, nothing else.</p>
+<x-import component-from-global-scope="FPKit.ThemePair" from="./kit/chrome.jsx" w="{{ 393 }}" hint-size="840px,480px">
+  <div style="height:400px;display:grid">
+    <x-import component-from-global-scope="FPNew.Sheet" from="./kit/proposed.jsx" title="11 Aug 2026, 20:14" hint-size="100%,400px">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.PageImage" hint-size="100%,300px"></x-import>
+    </x-import>
+  </div>
+</x-import>
+<div class="spec">
+<h4>Sheet — spec</h4>
+<p>Surface, radius-lg, shadow-lg, over the dialog scrim (neutral-900 at 38%) — the dialog’s own values, so the system still has one raised look. Header: title in the h4 face, <code>IconButton</code> (<code>x</code>) trailing, hairline under. Content area scrolls, space-4 padding.</p>
+<p><strong>Props</strong> <code>title</code>, <code>onClose</code>, <code>closeLabel</code>, <code>children</code>. <strong>States</strong> content scrolled (the hairline is the only thing under the header) · long title (wraps to two lines; nothing is pinned to a fixed header height, so German fits).</p>
+<p><strong>VoiceOver</strong> sheet: the scan’s date, announced as a dialog; close: “Close the PDF”.</p>
+</div>
+</div>
+
+<div class="sec" id="F6">
+<div class="shd"><a class="sid" href="#F6">F6</a><h2 class="stitle">The five delivered screens — what the flows show that the kit does not</h2></div>
+<p class="note">Not redrawn. This is the change list.</p>
+<div class="spec" style="max-width:96ch">
+<h4>ScansScreen (S3)</h4>
+<ul>
+<li>Carries three subtitles; the flow has seven. Add “No pages yet”, “1 page — keep shooting”, “12 of 40 pages scanned”, “40 pages — PDF ready, photos deleted”.</li>
+<li>No pressed row state is shown. The token exists (press-row, accent at 14% full bleed) but the screen never demonstrates it.</li>
+<li>No <code>ErrorLine</code> slot above the list (S2’s storage sentence lands here too).</li>
+<li>Row order is not stated as newest first.</li>
+</ul>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>CameraScreen (S6)</h4>
+<ul>
+<li>The shutter never goes <code>disabled</code> — the write moment (S7) is the rule that makes one press one page, and it is invisible in the kit.</li>
+<li>Counter is shown at one value only; needs Page 1, Page 7, Page 40, plus the before-the-first-shot state where the footer button is disabled and reads “Photograph at least one page”.</li>
+<li>No <code>ErrorLine</code> over the viewfinder (S9), and the four reasons are not wired to the one sentence shape.</li>
+<li>The simulator stand-in note (S12) is not set on <code>Viewfinder</code>.</li>
+<li>Shutter label is static; it must name the page: “Photograph page 7”.</li>
+</ul>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>PagesScreen (S15)</h4>
+<ul>
+<li>The thumbnail rail is drawn inline on the screen. It becomes <code>PageStrip</code> (F2) and gains the jump; at 40 pages the current rail is unusable.</li>
+<li>“Adjust page” sits on the screen as a ghost button and also in the menu. The flows put it in the menu only — drop the duplicate.</li>
+<li>Refused page (S17) shows the card but not the secondary action “Scan this page again” in the flow’s position.</li>
+<li>The menu is one fixed list of four items; it is three while checking (S18) and four on a finished scan (S19).</li>
+<li>“Make PDF” must be hidden, not disabled, until every photo has a page. Busy label “Making the PDF…” exists; the failure line (S22) does not.</li>
+<li>The counter is drawn as “3 / 12” on the page and as “Page 3 of 12” in the bar. The flow’s copy is “Page 3 of 12” in both.</li>
+</ul>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>AdjustScreen (S23)</h4>
+<ul>
+<li>The six-tool strip is drawn on the screen. It becomes <code>ToolStrip</code> (F3).</li>
+<li>Corner dragging for Edges and Crop is missing entirely; it becomes <code>PageHandles</code> (F4).</li>
+<li>“Back to the suggestion” (ghost) is not present on the tools that have a suggestion.</li>
+<li>The Edges note line has one state; it needs three (nothing to say, nothing to cut, the warning).</li>
+<li>Neither apply path is shown: one page (S30, busy “Applying…”) or all pages (S31, full-screen <code>ProgressLine</code>), nor the skipped-pages line afterwards (S32).</li>
+<li>Sharpen must be able to sit at 0, and 0 must read as no sharpening.</li>
+</ul>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>DoneScreen (S33)</h4>
+<ul>
+<li><code>TextField</code> is shown empty only; needs focused and typed-in, and the two buttons must stay clear of the keyboard.</li>
+<li>The photos-already-deleted state (S35) is not there: the destructive block and its footnote are removed, not greyed, and the shorter screen has to look finished.</li>
+<li>“Open PDF” leads nowhere; it opens the <code>Sheet</code> (F5).</li>
+<li>The footnote is attached to the button, not to the block; it belongs under the <code>SectionLabel</code> group so it survives the block being removed.</li>
+</ul>
+</div>
+</div>
+
+<div class="sec" id="F7">
+<div class="shd"><a class="sid" href="#F7">F7</a><h2 class="stitle">Words I do not have</h2></div>
+<div class="spec">
+<ul>
+<li>S28 Crop refusal — no sentence exists in the copy tables. Placeholder used: “This crop falls outside the page. Move a corner back in.”</li>
+<li>S32 skipped pages — one plain sentence naming them is asked for; the engine’s wording is not in the tables. Placeholder used: “Pages 4, 9 and 18 were not changed: their photos are gone.”</li>
+<li>S37 Share — the moment before the phone’s own sheet needs one line saying nothing has left the phone. Placeholder used: “Nothing leaves the phone until you choose where the copy goes.”</li>
+<li>S39 — the calm line saying the PDF was thrown away. Placeholder used, as a <code>Viewfinder</code> note: “The PDF was removed. It is made again after this page.”</li>
+<li>PageStrip jump — “Go to page” and “Go”. New words; confirm or replace.</li>
+</ul>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const P = (n, refused) => Array.from({ length: n }, (_, i) => ({ n: i + 1, state: refused && refused.includes(i + 1) ? "refused" : "page" }));
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      pages12: P(12),
+      pages40: P(40, [5]),
+      tools: [
+        { label: "Edges", icon: "scan" },
+        { label: "Straighten", icon: "ruler" },
+        { label: "Brightness", icon: "sun" },
+        { label: "Sharpen", icon: "focus" },
+        { label: "Crop", icon: "crop" },
+        { label: "Turn", icon: "rotate-cw" },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

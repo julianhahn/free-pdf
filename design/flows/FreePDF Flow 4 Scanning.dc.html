@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="kit/doc.css">
+<script src="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/_ds_bundle.js"></script>
+</helmet>
+<div class="pg">
+
+<div class="sec" style="border-top:0;padding-top:0">
+<h1 style="margin:0;font:600 32px/1.12 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em">Flow 4 — the scan runs</h1>
+<p class="note">S13 and S14. One page is cleaned at a time and the line counts photos done, not page numbers. The screen is a landing screen: killed mid-scan, the app comes back here and carries on at the first unscanned page.</p>
+<p class="docnav"><a href="FreePDF Foundation.dc.html">Foundation</a><a href="FreePDF Flow 3 Camera.dc.html">Flow 3</a><a href="FreePDF Flow 5 Pages.dc.html">Flow 5</a></p>
+</div>
+
+<div class="sec" id="S13">
+<div class="shd"><a class="sid" href="#S13">S13</a><h2 class="stitle">Scanning progress — early and late</h2></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="11 Aug 2026, 20:14" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <div style="display:grid;align-content:center;min-height:560px;gap:var(--space-6)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ProgressLine" line="Scanning page 1 of 12" note="You can close the app. It carries on from here." value="{{ 1 }}" max="{{ 12 }}" hint-size="100%,80px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="11 Aug 2026, 20:14" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <div style="display:grid;align-content:center;min-height:560px;gap:var(--space-6)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ProgressLine" line="Scanning page 11 of 12" note="You can close the app. It carries on from here." value="{{ 11 }}" max="{{ 12 }}" hint-size="100%,80px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S13 — spec</h4>
+<p><strong>Order</strong> app bar (the scan’s date, back arrow — leaving is safe) · the block centred in the scroll area: <code>ProgressLine</code> with <code>line</code>, a 3 px bar, and <code>note</code>. Nothing else on the screen: no thumbnails appearing one by one, no page being previewed, no cancel — the run finishes or the app is closed.</p>
+<p><strong>Spacing</strong> the line to the bar and the bar to the note are <code>ProgressLine</code>’s own steps (space-2 / space-2); the block is centred vertically so it does not move as the sentence grows from “1 of 12” to “11 of 12”. Tabular figures keep the line the same width at both ends.</p>
+<p><strong>Both ends shown</strong> at 1 of 12 the bar is a short accent stub on a divider-strong track — it is visibly a bar, not an empty line; at 11 of 12 it stops short of the end, because the last page is not done yet.</p>
+<p><strong>The note is a fact</strong> “You can close the app. It carries on from here.” — the drain resumes after a kill. Distinguishing it from S31’s opposite note is done in S31, not here.</p>
+<p><strong>VoiceOver</strong> the region is a progress indicator: “Scanning page 11 of 12” updated as it counts, announced at most once a page; the note is read after it. The back arrow: “Back to the scan. The scan carries on.”</p>
+</div>
+</div>
+
+<div class="sec" id="S14">
+<div class="shd"><a class="sid" href="#S14">S14</a><h2 class="stitle">Scanning, a page was refused</h2><span class="note" style="max-width:44ch">The run carries on. The bar never gets stuck.</span></div>
+<x-import component-from-global-scope="FPKit.PhonePair" from="./kit/chrome.jsx" hint-size="840px,900px">
+  <x-import component-from-global-scope="FPKit.AppBar" from="./kit/chrome.jsx" title="11 Aug 2026, 20:14" back="{{ true }}" hint-size="100%,52px"></x-import>
+  <x-import component-from-global-scope="FPKit.Screen" from="./kit/chrome.jsx" hint-size="100%,100%">
+    <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ErrorLine" hint-size="100%,80px">Page 5 could not be scanned: the sheet could not be found in the photo.</x-import>
+    <div style="display:grid;align-content:center;min-height:460px;gap:var(--space-6)">
+      <x-import component-from-global-scope="FreePDFDesignSystem_43ff31.ProgressLine" line="Scanning page 6 of 12" note="You can close the app. It carries on from here." value="{{ 6 }}" max="{{ 12 }}" hint-size="100%,80px"></x-import>
+    </div>
+  </x-import>
+</x-import>
+<div class="spec">
+<h4>S14 — spec</h4>
+<p><strong>Order</strong> app bar · <code>ErrorLine</code> at the top of the scroll area, with the cleanup’s own sentence · the <code>ProgressLine</code> block, still centred in what is left, still counting.</p>
+<p><strong>Why the bar keeps moving</strong> a refusal is one page’s outcome, not the run’s. The line stays on the page being worked on now (6 of 12), so the count never sits still while work is happening. The refused page is dealt with on the pages screen (S17), which is where it can be retried, retaken or deleted — nothing to decide here.</p>
+<p><strong>Several refusals</strong> the line is replaced, not stacked: one <code>ErrorLine</code> holds the most recent sentence, and the pages screen is where all of them are visible as refused tiles. <em>Confirm the engine’s wording for a refusal during the run; the sentence shown is a plausible stand-in.</em></p>
+<p><strong>VoiceOver</strong> the refusal is announced once as an alert; the progress region keeps its own announcements. No control appears — there is nothing to tap.</p>
+</div>
+</div>
+
+</div>
+</x-dc>
+</body>
+</html>
