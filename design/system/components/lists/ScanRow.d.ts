@@ -13,6 +13,8 @@ export interface ScanRowProps {
   thumbSrc?: string;
   /** Swiped left, revealing the 96 px Delete action. */
   swiped?: boolean;
+  /** Held in the pressed treatment at rest, so the state can be shown in a story. */
+  pressed?: boolean;
   deleteLabel?: string;
   onPress?: () => void;
   onDelete?: () => void;

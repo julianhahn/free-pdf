@@ -1,35 +1,58 @@
-const { Viewfinder, PageCounter, Shutter, Button, PageImage, ErrorLine } = window.FreePDFDesignSystem_43ff31;
+const { Viewfinder, Shutter, Button, EmptyState, ErrorLine } = window.FreePDFDesignSystem_43ff31;
 
-function CameraScreen({ onFinish, onBack }) {
-  const [pages, setPages] = React.useState(6);
-  const [writing, setWriting] = React.useState(false);
-  const shoot = () => {
-    setWriting(true);
-    setTimeout(() => { setPages((p) => p + 1); setWriting(false); }, 550);
-  };
+// The four <why> variants of the failure sentence, verbatim from ios/AGENTS.md.
+const SHOT_ERRORS = {
+  storage: "the iPhone is out of storage.",
+  notReady: "the camera is not ready.",
+  noPhoto: "the camera handed over no photo.",
+  stopped: "the camera stopped before the photo arrived.",
+};
+
+// The two screen-level states, verbatim from user-flows.md 4a/4b.
+const BLOCKED = {
+  noCamera: "This iPhone has no camera to photograph with.",
+  startFailed: "The camera could not be started.",
+  permission: "FreePDF needs the camera to photograph the pages.",
+};
+
+// pages / writing / error / blocked / simulator are the story states; pages also grows by shooting.
+function CameraScreen({ onFinish, onBack, onOpenSettings, pages: startPages = 6, writing = false, error = null, blocked = null, simulator = false }) {
+  const [pages, setPages] = React.useState(startPages);
+  const page = pages + 1;
+
+  if (blocked) {
+    return (
+      <>
+        <AppBar title={`Page ${page}`} back onBack={onBack} />
+        <Screen>
+          <EmptyState
+            icon="camera-off"
+            title={BLOCKED[blocked]}
+            action={blocked === "permission" ? <Button variant="primary" onClick={onOpenSettings}>Open Settings</Button> : null}
+          />
+        </Screen>
+      </>
+    );
+  }
+
   return (
     <>
-      <AppBar title={`Page ${pages + 1}`} back onBack={onBack} />
+      <AppBar title={`Page ${page}`} back onBack={onBack} />
       <Screen
         footer={
           <Button variant="primary" fullWidth disabled={pages === 0} onClick={() => onFinish(pages)}>
+            {/* TASK 4: no copy table has the singular — "Scan 1 pages" reads wrong and the
+                singular wording must come from ios/AGENTS.md, not from here. */}
             {pages === 0 ? "Photograph at least one page" : `Scan ${pages} pages`}
           </Button>
         }
       >
-        <Viewfinder note={writing ? "Writing the photo…" : null}>
+        {error ? <ErrorLine>{`Page ${page} was not saved: ${SHOT_ERRORS[error]} Nothing already photographed is lost.`}</ErrorLine> : null}
+        <Viewfinder note={simulator ? "No camera on this iPhone. The shutter draws a page instead." : null}>
           <div style={{ position: "absolute", inset: "14% 16%", background: "#38352f", boxShadow: "0 0 40px rgba(0,0,0,.5) inset" }} />
-          <div style={{ position: "absolute", top: "var(--space-2)", left: "var(--space-2)" }}>
-            <PageCounter onDark>{`Page ${pages + 1}`}</PageCounter>
-          </div>
         </Viewfinder>
         <div style={{ display: "grid", placeItems: "center" }}>
-          <Shutter label={writing ? `Photographing page ${pages + 1}, wait` : `Photograph page ${pages + 1}`} disabled={writing} onPress={shoot} />
-        </div>
-        <div style={{ display: "flex", gap: "var(--space-2)", overflow: "auto", paddingBottom: 2 }}>
-          {Array.from({ length: pages }, (_, i) => (
-            <PageImage key={i} label={String(i + 1)} style={{ width: 44, flex: "0 0 auto" }} />
-          ))}
+          <Shutter label={`Photograph page ${page}`} disabled={writing} onPress={() => setPages((p) => p + 1)} />
         </div>
       </Screen>
     </>

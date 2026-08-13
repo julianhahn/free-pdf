@@ -7,3 +7,5 @@ One scan in the Scans list. The title is the folder date; the subtitle is derive
 ```
 
 `swiped` reveals the 96 px Delete action; the swipe itself is the platform's swipe.
+
+`pressed` holds the row in the pressed treatment at rest — for showing that state; a real touch does it on its own.

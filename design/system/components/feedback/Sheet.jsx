@@ -6,7 +6,7 @@ import { IconButton } from "../core/IconButton.jsx";
    own values (surface, radius-lg, shadow-lg, the same scrim) so the system
    keeps one raised look. Nothing is pinned to a fixed header height, so a
    long German title can wrap to two lines. */
-export function Sheet({ title, onClose, closeLabel = "Close the PDF", children, style, ...rest }) {
+export function Sheet({ title, onClose, closeLabel, children, style, ...rest }) {
   return (
     <div
       style={{

@@ -15,3 +15,4 @@ export const DonePhotosDeleted = { args: { subtitle: "40 pages — PDF ready, ph
 
 export const WithThumb = { args: { subtitle: "40 pages — PDF ready", thumb: true } };
 export const Swiped = { args: { subtitle: "40 pages — PDF ready", swiped: true, deleteLabel: "Delete" } };
+export const Pressed = { args: { subtitle: "40 pages — PDF ready", pressed: true } };

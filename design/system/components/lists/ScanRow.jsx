@@ -13,13 +13,17 @@ export function ScanRow({
   thumb = true,
   thumbSrc,
   swiped = false,
+  pressed = false,
   deleteLabel = "Delete",
   onPress,
   onDelete,
   style,
   ...rest
 }) {
-  const [pressed, setPressed] = React.useState(false);
+  /* `pressed` holds the row in the --press-row treatment at rest so the state is
+     demonstrable in a story; the pointer keeps its own transient press. */
+  const [pressing, setPressing] = React.useState(false);
+  const isPressed = pressed || pressing;
   return (
     <div style={{ position: "relative", overflow: "hidden", borderBottom: "1px solid var(--divider)", ...style }} {...rest}>
       <button
@@ -45,9 +49,9 @@ export function ScanRow({
       <button
         type="button"
         onClick={onPress}
-        onPointerDown={() => setPressed(true)}
-        onPointerUp={() => setPressed(false)}
-        onPointerLeave={() => setPressed(false)}
+        onPointerDown={() => setPressing(true)}
+        onPointerUp={() => setPressing(false)}
+        onPointerLeave={() => setPressing(false)}
         style={{
           position: "relative",
           display: "flex",
@@ -56,7 +60,7 @@ export function ScanRow({
           width: "100%",
           minHeight: "var(--touch-min)",
           padding: "var(--space-3) 0",
-          background: pressed ? "var(--press-row)" : "var(--bg)",
+          background: isPressed ? "var(--press-row)" : "var(--bg)",
           border: "none",
           textAlign: "left",
           cursor: "pointer",
