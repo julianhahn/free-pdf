@@ -1,0 +1,4 @@
+/* Cormorant Garamond (headings) + Lora (body). No binaries were supplied with the
+   client guide, so these are loaded from Google Fonts. See readme.md > Fonts. */
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap");
+:root{--font-heading:"Cormorant Garamond",Garamond,"Times New Roman",serif;--font-body:"Lora",Georgia,"Times New Roman",serif;--font-serif-display:var(--font-heading);--font-serif-text:var(--font-body)}

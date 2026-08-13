@@ -1,0 +1,43 @@
+/* One accent. No red, no green. Roles first: a client sets six values, the rest follow. */
+:root{
+--neutral-100:#f8f4f4;--neutral-200:#eae7e7;--neutral-300:#d7d3d3;--neutral-400:#bab6b6;--neutral-500:#9b9797;--neutral-600:#7d7979;--neutral-700:#605d5d;--neutral-800:#444141;--neutral-900:#2d2b2b;
+--accent-100:#fff3e4;--accent-200:#ffe3bf;--accent-300:#facb8d;--accent-400:#e1ad66;--accent-500:#c28d41;--accent-600:#a06f24;--accent-700:#7d5411;--accent-800:#5a3b0a;--accent-900:#3a270d;
+
+/* six roles — light */
+--bg:#f3f2f2;
+--surface:#eae9e9;
+--text:#201f1d;
+--accent:#b68235;
+--divider:rgba(32,31,29,.16);
+--text-muted:rgba(32,31,29,.58);
+
+/* derived roles */
+--divider-strong:rgba(32,31,29,.32);
+--destructive:var(--accent-700);
+--on-accent:var(--neutral-100);
+--paper:#fdfcfa;            /* a page image's ground; the one near-white in the system */
+--viewfinder:#1b1a19;       /* the dark ground behind a live preview */
+
+/* interaction tints */
+--hover-accent:color-mix(in srgb,var(--accent) 12%,transparent);
+--press-accent:color-mix(in srgb,var(--accent) 22%,transparent);
+--hover-neutral:color-mix(in srgb,var(--text) 7%,transparent);
+--press-neutral:color-mix(in srgb,var(--text) 14%,transparent);
+--press-row:color-mix(in srgb,var(--accent) 14%,transparent);
+--focus-ring:var(--accent);
+--disabled-opacity:.45; /* @kind other */
+}
+[data-theme="dark"]{
+--bg:var(--neutral-900);
+--surface:var(--neutral-800);
+--text:var(--neutral-100);
+--accent:var(--accent-400);
+--divider:rgba(248,244,244,.22);
+--text-muted:rgba(248,244,244,.58);
+--divider-strong:rgba(248,244,244,.38);
+--destructive:var(--accent-300);
+--on-accent:var(--neutral-900);
+--paper:#e9e5e0;
+--viewfinder:#131211;
+--press-accent:color-mix(in srgb,var(--accent-400) 26%,transparent);
+}

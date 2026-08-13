@@ -1,0 +1,13 @@
+/* Only the dialog is raised. Rows, buttons and cards are flat and outlined:
+   in this theme colour is a stroke, not a fill. */
+:root{
+--shadow-sm:0 1px 2px rgba(45,43,43,.14);
+--shadow-md:0 3px 10px rgba(45,43,43,.16);
+--shadow-lg:0 12px 32px rgba(45,43,43,.22);
+--hairline:1px solid var(--divider);
+}
+[data-theme="dark"]{
+--shadow-sm:0 1px 2px rgba(0,0,0,.5);
+--shadow-md:0 3px 10px rgba(0,0,0,.55);
+--shadow-lg:0 12px 32px rgba(0,0,0,.6);
+}

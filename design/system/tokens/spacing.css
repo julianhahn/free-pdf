@@ -1,0 +1,5 @@
+/* One step is 4.6px. Use the steps, not free numbers. */
+:root{--space-1:4.6px;--space-2:9.2px;--space-3:13.8px;--space-4:18.4px;--space-6:27.6px;--space-8:36.8px;
+--screen-padding:var(--space-4);
+--button-padding-y:var(--space-2);--button-padding-x:16.56px; /* space-3 x 1.2 */
+--touch-min:44px /* @kind spacing */}

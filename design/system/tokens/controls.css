@@ -1,0 +1,8 @@
+/* Drawn sizes that are decided. The touch target is always --touch-min regardless. */
+:root{
+--shutter-size:72px;--shutter-ring:2px;--shutter-gap:4px;
+--switch-w:42px;--switch-h:24px;--switch-knob:16px;--switch-travel-start:3px;--switch-travel-end:21px;
+--slider-track:1px;--slider-thumb:17px;
+--icon-button:36px;--input-min-h:36px;--swipe-action-w:96px;
+--page-ratio:3/4; /* @kind other */
+}

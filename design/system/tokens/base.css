@@ -1,0 +1,4 @@
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:var(--text-body);line-height:var(--leading-body);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--divider)}
+a:hover{color:var(--accent-600);border-bottom-color:currentColor}
+[data-theme="dark"] a:hover{color:var(--accent-300)}

@@ -1,0 +1,18 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Scan rows & menu" subtitle="Seven subtitles, swipe action, page menu" -->
+<!doctype html><html data-theme="light"><head><meta charset="utf-8"><title>Rows</title><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{padding:var(--space-4);font-family:var(--font-body)}.grid{display:flex;flex-wrap:wrap;gap:var(--space-4);align-items:flex-end}.col{display:grid;gap:var(--space-2);justify-items:start}.cap{font:var(--weight-body) var(--text-meta)/1.4 var(--font-body);color:var(--text-muted)}</style></head><body><div id="root"></div>
+<script type="text/babel">
+const { ScanRow, MenuList } = window.FreePDFDesignSystem_43ff31;
+
+const rows=[["11 Aug 2026, 20:14","40 pages — PDF ready"],["11 Aug 2026, 09:02","12 of 40 pages scanned"],["10 Aug 2026, 18:47","8 pages — keep shooting"],["09 Aug 2026, 11:20","No pages yet"]];
+function Demo(){return (<div style={{display:"grid",gridTemplateColumns:"1.15fr .85fr",gap:"var(--space-8)",alignItems:"start"}}>
+<div>{rows.map(([t,s],i)=><ScanRow key={t} title={t} subtitle={s} swiped={i===2}/>)}</div>
+<MenuList title="Page" items={[{label:"Retake this page",icon:"camera"},{label:"Adjust page",icon:"sun"},{label:"Shoot another page",icon:"plus"},{label:"Delete page",icon:"trash-2",destructive:true}]}/>
+</div>);}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Demo />);
+</script></body></html>
