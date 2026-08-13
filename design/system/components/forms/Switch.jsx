@@ -16,7 +16,7 @@ export function Switch({ checked = false, onChange, label, sub, disabled = false
     padding: 0,
     textAlign: "left",
     cursor: disabled ? "default" : "pointer",
-    opacity: disabled ? "var(--disabled-opacity)" : 1,
+    color: disabled ? "var(--disabled-text)" : undefined,
     ...style,
   };
   const trackStyle = {
@@ -25,8 +25,8 @@ export function Switch({ checked = false, onChange, label, sub, disabled = false
     height: "var(--switch-h)",
     flex: "0 0 auto",
     borderRadius: 999,
-    border: `1px solid ${checked ? "var(--accent)" : "var(--divider-strong)"}`,
-    background: checked ? "var(--hover-accent)" : "transparent",
+    border: `1px solid ${checked ? (disabled ? "var(--disabled-border)" : "var(--accent)") : disabled ? "var(--disabled-border)" : "var(--divider-strong)"}`,
+    background: disabled ? "var(--disabled-surface)" : checked ? "var(--hover-accent)" : "transparent",
     outline: focused ? "2px solid var(--focus-ring)" : "none",
     outlineOffset: 2,
     transition: "border-color 140ms linear, background 140ms linear",
@@ -39,7 +39,7 @@ export function Switch({ checked = false, onChange, label, sub, disabled = false
     width: "var(--switch-knob)",
     height: "var(--switch-knob)",
     borderRadius: "var(--radius-round)",
-    background: checked ? "var(--accent)" : "color-mix(in srgb, var(--text) 45%, transparent)",
+    background: checked ? (disabled ? "var(--disabled-border)" : "var(--accent)") : "color-mix(in srgb, var(--text) 45%, transparent)",
     transition: "left 140ms ease-out, background 140ms linear",
   };
   return (
@@ -57,7 +57,7 @@ export function Switch({ checked = false, onChange, label, sub, disabled = false
     >
       <span>
         <span style={{ font: `var(--weight-heading) var(--text-control)/1.2 var(--font-heading)`, letterSpacing: "var(--tracking-heading)", display: "block" }}>{label}</span>
-        {sub ? <span style={{ font: `var(--weight-body) var(--text-meta)/1.4 var(--font-body)`, color: "var(--text-muted)" }}>{sub}</span> : null}
+        {sub ? <span style={{ font: `var(--weight-body) var(--text-meta)/1.4 var(--font-body)`, color: disabled ? "var(--disabled-text)" : "var(--text-muted)" }}>{sub}</span> : null}
       </span>
       <span style={trackStyle}><span style={knobStyle} /></span>
     </button>

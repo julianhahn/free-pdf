@@ -6,7 +6,7 @@ export function TextField({ label, value, placeholder, onChange, suffix, disable
   return (
     <label style={{ display: "block", ...style }}>
       {label ? (
-        <span style={{ display: "block", font: `var(--weight-body) var(--text-meta)/1.4 var(--font-body)`, color: "var(--text-muted)", marginBottom: "var(--space-1)" }}>{label}</span>
+        <span style={{ display: "block", font: `var(--weight-body) var(--text-meta)/1.4 var(--font-body)`, color: disabled ? "var(--disabled-text)" : "var(--text-muted)", marginBottom: "var(--space-1)" }}>{label}</span>
       ) : null}
       <span
         style={{
@@ -15,11 +15,11 @@ export function TextField({ label, value, placeholder, onChange, suffix, disable
           gap: "var(--space-1)",
           minHeight: "var(--input-min-h)",
           padding: "0 var(--space-2)",
-          border: `1px solid ${focused ? "var(--accent)" : "var(--divider)"}`,
+          border: `1px solid ${disabled ? "var(--disabled-border)" : focused ? "var(--accent)" : "var(--divider)"}`,
           borderRadius: "var(--radius-md)",
           outline: focused ? "2px solid var(--focus-ring)" : "none",
           outlineOffset: 2,
-          opacity: disabled ? "var(--disabled-opacity)" : 1,
+          color: disabled ? "var(--disabled-text)" : undefined,
         }}
       >
         <input
@@ -34,14 +34,14 @@ export function TextField({ label, value, placeholder, onChange, suffix, disable
             minWidth: 0,
             border: "none",
             background: "transparent",
-            color: "var(--text)",
+            color: disabled ? "var(--disabled-text)" : "var(--text)",
             font: `var(--weight-body) var(--text-control)/1.4 var(--font-body)`,
             padding: "var(--space-2) 0",
             outline: "none",
           }}
           {...rest}
         />
-        {suffix ? <span style={{ font: `var(--weight-body) var(--text-control)/1.4 var(--font-body)`, color: "var(--text-muted)" }}>{suffix}</span> : null}
+        {suffix ? <span style={{ font: `var(--weight-body) var(--text-control)/1.4 var(--font-body)`, color: disabled ? "var(--disabled-text)" : "var(--text-muted)" }}>{suffix}</span> : null}
       </span>
     </label>
   );

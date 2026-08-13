@@ -26,15 +26,15 @@ export function Slider({
     alignItems: "center",
   };
   return (
-    <div style={{ opacity: disabled ? "var(--disabled-opacity)" : 1, ...style }} {...rest}>
+    <div style={{ color: disabled ? "var(--disabled-text)" : undefined, ...style }} {...rest}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "var(--space-2)" }}>
         <span style={{ font: `var(--weight-heading) var(--text-control)/1.2 var(--font-heading)`, letterSpacing: "var(--tracking-heading)" }}>{label}</span>
-        <span style={{ font: `var(--weight-body) var(--text-control)/1.2 var(--font-body)`, color: "var(--destructive)", fontVariantNumeric: "tabular-nums" }}>
+        <span style={{ font: `var(--weight-body) var(--text-control)/1.2 var(--font-body)`, color: disabled ? "var(--disabled-text)" : "var(--destructive)", fontVariantNumeric: "tabular-nums" }}>
           {value}{unit}
         </span>
       </div>
       <div style={trackWrapStyle}>
-        <div style={{ position: "absolute", left: 0, right: 0, height: "var(--slider-track)", background: "var(--divider-strong)" }} />
+        <div style={{ position: "absolute", left: 0, right: 0, height: "var(--slider-track)", background: disabled ? "var(--disabled-border)" : "var(--divider-strong)" }} />
         {typeof suggested === "number" ? (
           <div
             title="the engine's suggestion"
@@ -43,7 +43,7 @@ export function Slider({
               left: `${((suggested - min) / (max - min)) * 100}%`,
               width: 1,
               height: 9,
-              background: "var(--divider-strong)",
+              background: disabled ? "var(--disabled-border)" : "var(--divider-strong)",
               transform: "translateX(-50%)",
             }}
           />
@@ -57,7 +57,7 @@ export function Slider({
             height: "var(--slider-thumb)",
             borderRadius: "var(--radius-round)",
             background: "var(--bg)",
-            border: "1px solid var(--accent)",
+            border: `1px solid ${disabled ? "var(--disabled-border)" : "var(--accent)"}`,
             boxShadow: "var(--shadow-sm)",
             pointerEvents: "none",
           }}
@@ -74,7 +74,7 @@ export function Slider({
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", margin: 0, opacity: 0, cursor: disabled ? "default" : "pointer" }}
         />
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", font: `var(--weight-body) var(--text-meta)/1.4 var(--font-body)`, color: "var(--text-muted)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", font: `var(--weight-body) var(--text-meta)/1.4 var(--font-body)`, color: disabled ? "var(--disabled-text)" : "var(--text-muted)" }}>
         <span>{minLabel}</span>
         <span>{maxLabel}</span>
       </div>

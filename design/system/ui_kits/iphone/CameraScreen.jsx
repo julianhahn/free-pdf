@@ -24,7 +24,7 @@ function CameraScreen({ onFinish, onBack }) {
           </div>
         </Viewfinder>
         <div style={{ display: "grid", placeItems: "center" }}>
-          <Shutter label={`Photograph page ${pages + 1}`} disabled={writing} onPress={shoot} />
+          <Shutter label={writing ? `Photographing page ${pages + 1}, wait` : `Photograph page ${pages + 1}`} disabled={writing} onPress={shoot} />
         </div>
         <div style={{ display: "flex", gap: "var(--space-2)", overflow: "auto", paddingBottom: 2 }}>
           {Array.from({ length: pages }, (_, i) => (

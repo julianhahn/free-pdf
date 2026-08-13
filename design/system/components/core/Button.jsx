@@ -40,13 +40,15 @@ export function Button({
     background: tint,
     border: "1px solid",
     borderRadius: "var(--radius-md)",
-    boxShadow: variant === "destructive" ? "inset 0 0 0 3px var(--bg), inset 0 0 0 4px currentColor" : "none",
-    opacity: disabled ? "var(--disabled-opacity)" : 1,
+    boxShadow: variant === "destructive" && !disabled ? "inset 0 0 0 3px var(--bg), inset 0 0 0 4px currentColor" : "none",
     cursor: disabled ? "default" : "pointer",
     outline: state === "focus" ? "2px solid var(--focus-ring)" : "none",
     outlineOffset: 2,
     transition: "background 120ms linear",
     ...v,
+    ...(disabled
+      ? { color: "var(--disabled-text)", borderColor: variant === "ghost" ? "transparent" : "var(--disabled-border)" }
+      : null),
     ...style,
   };
   return (

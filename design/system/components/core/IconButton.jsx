@@ -13,7 +13,7 @@ export function IconButton({ icon, label, outlined = false, disabled = false, on
     background: "transparent",
     border: "none",
     cursor: disabled ? "default" : "pointer",
-    opacity: disabled ? "var(--disabled-opacity)" : 1,
+    color: disabled ? "var(--disabled-text)" : undefined,
     outline: state === "focus" ? "2px solid var(--focus-ring)" : "none",
     outlineOffset: 2,
     ...style,
@@ -24,7 +24,7 @@ export function IconButton({ icon, label, outlined = false, disabled = false, on
     display: "grid",
     placeItems: "center",
     borderRadius: "var(--radius-md)",
-    border: outlined ? "1px solid var(--divider)" : "1px solid transparent",
+    border: outlined ? `1px solid ${disabled ? "var(--disabled-border)" : "var(--divider)"}` : "1px solid transparent",
     background: state === "press" ? "var(--press-neutral)" : state === "hover" ? "var(--hover-neutral)" : "transparent",
     transition: "background 120ms linear",
   };

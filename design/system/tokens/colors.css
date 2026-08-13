@@ -25,7 +25,10 @@
 --press-neutral:color-mix(in srgb,var(--text) 14%,transparent);
 --press-row:color-mix(in srgb,var(--accent) 14%,transparent);
 --focus-ring:var(--accent);
---disabled-opacity:.45; /* @kind other */
+--disabled-text:#605d5d;              /* neutral-700 on --bg: 5.6:1 */
+--disabled-border:rgba(32,31,29,.16); /* = divider: hairline, never accent */
+--disabled-surface:transparent;       /* nothing is filled */
+--disabled-opacity:1;                 /* retired: opacity is no longer the mechanism */
 }
 [data-theme="dark"]{
 --bg:var(--neutral-900);
@@ -40,4 +43,8 @@
 --paper:#e9e5e0;
 --viewfinder:#131211;
 --press-accent:color-mix(in srgb,var(--accent-400) 26%,transparent);
+--disabled-text:#bab6b6;              /* neutral-400 on neutral-900: 6.4:1 */
+--disabled-border:rgba(248,244,244,.22);
 }
+/* On the viewfinder ground (#1b1a19 / #131211) a disabled label needs its own value. */
+.fp-on-dark{--disabled-text:#d7d3d3;--disabled-border:rgba(248,244,244,.28)}

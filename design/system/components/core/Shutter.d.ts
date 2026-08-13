@@ -7,7 +7,7 @@ export interface ShutterProps {
   /** Disabled while the photo is being written — one press, one page. */
   disabled?: boolean;
   onPress?: () => void;
-  /** VoiceOver label, e.g. "Photograph page 7". */
+  /** VoiceOver label, e.g. "Photograph page 7" — while writing, "Photographing page 7, wait". */
   label?: string;
   style?: React.CSSProperties;
 }

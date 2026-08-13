@@ -38,14 +38,13 @@ export function MenuList({ title, items = [], onSelect, style, ...rest }) {
             background: "transparent",
             border: "none",
             borderTop: i === 0 ? "none" : "1px solid var(--divider)",
-            color: item.destructive ? "var(--destructive)" : "var(--text)",
+            color: item.disabled ? "var(--disabled-text)" : item.destructive ? "var(--destructive)" : "var(--text)",
             font: `var(--weight-body) var(--text-control)/1.3 var(--font-body)`,
             textAlign: "left",
-            opacity: item.disabled ? "var(--disabled-opacity)" : 1,
             cursor: item.disabled ? "default" : "pointer",
           }}
         >
-          {item.icon ? <Icon name={item.icon} size={17} color={item.destructive ? "var(--destructive)" : "var(--accent)"} /> : null}
+          {item.icon ? <Icon name={item.icon} size={17} color={item.disabled ? "var(--disabled-text)" : item.destructive ? "var(--destructive)" : "var(--accent)"} /> : null}
           {item.label}
         </button>
       ))}
