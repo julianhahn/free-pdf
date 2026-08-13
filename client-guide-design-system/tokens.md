@@ -1,11 +1,21 @@
 # Tokens
 
+> **Provisional. Do not treat any number here as approved.** These values were read off a
+> stylesheet that the delivered component gallery never used - the gallery was drawn in the
+> platform system font and in none of that stylesheet's classes. So the pictures and this table
+> have never agreed, and nobody has looked at a component built from these numbers and said
+> yes. A fresh design round is redrawing every component and will state its own token set; see
+> [`vision.md`](./vision.md) and
+> [`../design/claude-design-components-prompt.md`](../design/claude-design-components-prompt.md).
+> Until that lands, use this table to keep the interim consistent, not to settle an argument.
+
 Every number a client is allowed to use. Taken from
 `../design/gallery/_ds/classical-fee6c86c-b348-4033-b8e7-e8f35de9f737/styles.css` (light) and
 `../storybook/styles.css` (the dark override and the app-only pieces). Do not
 re-derive them from either file - copy from this table, so all clients read one list.
 
-These are the **decided** values, see [AGENTS.md](./AGENTS.md).
+The **direction** is decided - paper and archive, serif titles, hairlines, one accent, see
+[`vision.md`](./vision.md). The numbers below are not.
 
 ## Colours
 

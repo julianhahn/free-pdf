@@ -8,20 +8,29 @@ Julian's decision, 2026-08-12: a little drift between platforms is fine, guessin
 not. If a client agent has to invent a colour or a word, this folder failed and needs the
 missing line added.
 
-**The tokens are decided.** Julian's decision, 2026-08-13: the editorial theme (Cormorant
-Garamond over Lora, one gold accent, outlined buttons, colour as stroke) is the style. His
-reason: one style is defined once and rebuilt natively per client, and a platform-native
-system look is by definition not recognizable across platforms. It is a reading aesthetic -
-serif faces, hairline gold - and this app is mostly camera, thumb and sliders in bad light.
-The shutter and the destructive button are where that shows: a 1 px gold ring on a dark
-viewfinder is hard to find with a thumb, and "delete the photos" carries no red. Watch those
-two while building, and fix them inside this style - they are not a reason to reopen it.
+**The direction is decided, the numbers are not.** Julian's decision, 2026-08-13: paper and
+archive - a light ground, serif titles, hairlines, one accent, a lot of quiet; identical on
+every client except gestures and control mechanics. That is written down in
+[`vision.md`](./vision.md), and every design round is measured against it.
+
+What is **not** settled: the token values in `tokens.md` and the three components in
+`../storybook/`. Both were built here, in this repository, as an interim - not delivered by the
+designer. The gallery that did come back was drawn in the platform system font and used none
+of the stylesheet that shipped beside it, so the numbers were read off a stylesheet no picture
+ever used. A fresh round is redrawing every component and will state its own tokens; the brief
+is [`../design/claude-design-components-prompt.md`](../design/claude-design-components-prompt.md).
+Until it lands, use the interim to stay consistent, and do not quote it as approved.
+
+The tension the round has to solve, in `vision.md` and repeated here because it is where the
+style breaks: a hairline ring on a dark viewfinder is hard to find with a thumb, and "delete
+the photos" carries no red. Fix both inside the style - they are not a reason to reopen it.
 
 ## What is in here
 
 | File | What it decides |
 | --- | --- |
-| `tokens.md` | Every colour, font, size, spacing step, radius and shadow, named, light and dark. Read this instead of a CSS file. |
+| `vision.md` | The feeling, the direction, and what would make a design wrong. Decided. Read first. |
+| `tokens.md` | Provisional. Every colour, font, size, spacing step, radius and shadow, named, light and dark. Read this instead of a CSS file. |
 | `components.md` | Every component the app needs: its states and its EN/DE copy. |
 | `platform-rules.md` | What "rebuild natively" means, and the accessibility floor. |
 
@@ -33,8 +42,9 @@ two while building, and fix them inside this style - they are not a reason to re
 - **The raw design output** - the gallery page and its stylesheet live in
   [`../design/`](../design/AGENTS.md). That is where the numbers came from; this folder is
   where they are agreed. Retuning happens there first, then here.
-- **Approval** - a component is looked at and approved in [`../storybook/`](../storybook/).
-  Nothing in Storybook ships either; once approved it is rebuilt natively.
+- **Approval** - a component is looked at in [`../storybook/`](../storybook/). The three that
+  stand there today are an interim built in this repository, not approved and not the
+  designer's work. Nothing in Storybook ships either; once approved it is rebuilt natively.
 - **Client code** - the iPhone app is [`../ios/`](../ios/AGENTS.md). It is still in the
   system look and has to be rebuilt in this one.
 

@@ -4,7 +4,9 @@ One entry per thing a client has to build. States come from
 [`../user-flows.md`](../user-flows.md), which stays the owner of behaviour; copy is that
 document's table, repeated here so a client agent reads one file.
 
-**In Storybook** means Julian has looked at it in `../storybook/` and it is approved to build.
+**In Storybook** means a version of it stands in `../storybook/` to be looked at. Nothing in
+there is approved yet: the three that exist were built in this repository as an interim, not
+delivered by the designer, and the fresh round replaces them.
 **Described only** means it is written down but nobody has seen it yet - build it after it has
 been through Storybook, not before.
 

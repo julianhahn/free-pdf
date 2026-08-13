@@ -166,6 +166,11 @@ Name each one; the code will use the same name.
 
 - iPhone, portrait only. iOS 18 and up. No iPad, no landscape.
 - System fonts and system type sizes; Dynamic Type must not break any layout.
+  **This line was the mistake.** It is what produced a gallery in SF Pro that looks like a
+  stock iPhone app, against the decision that the app must be recognizable on every
+  platform. This whole file is superseded by
+  [`claude-design-components-prompt.md`](./claude-design-components-prompt.md) - it is kept
+  only so nobody writes that line again.
 - Design light **and** dark. Both are first-class.
 - Every control needs a VoiceOver label written out, not implied.
 - The shutter must sit where a thumb reaches it one-handed.
