@@ -1,7 +1,7 @@
 # FreePDF Storybook
 
-A browser preview of the app's UI components, written in plain HTML + CSS, so designs can be
-looked at and approved before anything is built.
+A browser preview of the **delivered design system** in `../design/system/`. Nothing in here is
+hand-drawn any more.
 
 ## Start
 
@@ -12,21 +12,29 @@ npm run storybook
 ```
 
 Opens on http://localhost:6006. Every story renders at iPhone size (390x844 portrait) by default —
-the app is iPhone-portrait-only.
+the app is iPhone-portrait-only — and the toolbar has a Light / Dark switch, which sets
+`data-theme` the way the design system expects.
 
-## The three components in here are an interim
+## What is in here
 
-Scan row, buttons and the adjust controls were built here, in this repository, from a
-stylesheet the delivered gallery never used - they are not the designer's work and they are not
-approved. A fresh design round is redrawing every component with its own token set, and these
-three will be replaced by it. The brief is
-[`../design/claude-design-components-prompt.md`](../design/claude-design-components-prompt.md);
-the direction they must all meet is
-[`../client-guide-design-system/vision.md`](../client-guide-design-system/vision.md). The
-numbers behind the current stories are the provisional ones in
-[`../client-guide-design-system/tokens.md`](../client-guide-design-system/tokens.md).
+- All 18 delivered components, grouped as the system groups them: Core, Forms, Document, Lists,
+  Feedback. Every state named in a component's `.prompt.md` / `.d.ts` is its own story.
+- **Screens** — the five screens of the delivered iPhone kit (`design/system/ui_kits/iphone/`):
+  Scans, Camera, Pages, Adjust, Done.
+
+## The components are imported, not copied
+
+`ds.js` re-exports the components straight from `../design/system/components/`, and the stylesheet
+`../design/system/styles.css` (which imports all tokens) is loaded in `.storybook/preview.jsx`.
+Nothing is re-implemented here, so this Storybook cannot drift from what the designer delivered —
+edit the design system and the stories change with it.
+
+Vite is configured in `.storybook/main.js` for that: a `@ds` alias, `server.fs.allow` for the folder
+outside this one, `react` / `react-dom` aliased into this folder's `node_modules` (the design system
+has none), and one small transform that lets the iPhone kit's `<script type="text/babel">` files
+(they read a global, export nothing) be imported as modules without touching them on disk.
 
 ## Nothing in here ships
 
-This is a design sandbox. No code from this folder ends up in the app. Once a component is
-approved here, it is rebuilt natively in SwiftUI under `ios/`.
+This is a preview. No code from this folder ends up in the app; components are rebuilt natively in
+SwiftUI under `ios/`.
