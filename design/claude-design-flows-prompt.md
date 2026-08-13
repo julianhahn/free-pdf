@@ -1,56 +1,77 @@
-# Design prompt 2 — FreePDF, the whole flows (paste into the same Claude Design conversation)
+# Design prompt 2 — FreePDF, the remaining screens of every flow
 
 ## Read this first
 
-You already designed FreePDF's design system in this conversation: the editorial style —
-Cormorant Garamond headings over Lora body, one gold accent, outlined controls, colour as a
-stroke and never a fill, no red anywhere. That system is now **decided and closed** (Julian,
-2026-08-13). Do not re-invent it, do not offer a second direction, do not change a colour, a
-face, a size step, a spacing step or a radius. Every screen below is **composed out of that
-system**.
+The FreePDF design system **already exists**. It was delivered as code, not as pictures: token
+files, 18 components, guideline cards, and a click-through iPhone kit. It is **decided and
+closed** (Julian, 2026-08-13).
 
-Three components are already approved and built. Everything new must be assembled from them,
-not around them:
+Do not re-invent any of it. Do not offer a second direction. Do not change a colour, a face, a
+size step, a spacing step, a radius or a shadow. **Every screen below is composed out of the
+delivered components, called by their real names.** If a screen seems to need a new colour, a
+new size or a new word — stop and ask, do not invent it.
+
+Five iPhone screens were delivered with the system: **ScansScreen, CameraScreen, PagesScreen,
+AdjustScreen, DoneScreen**. This round is about the **remaining** screens and states of every
+flow, plus a review of those five (see "The five that already exist").
+
+### The delivered components — these exact names
 
 ```
-| Component | Approved states |
+| Group | Components |
 | --- | --- |
-| Scan row | seven status lines, pressed, swiped-left with a Delete action |
-| Buttons | primary, secondary, destructive, ghost, disabled, and the round shutter |
-| Adjust controls | switch, labelled slider with its printed value and reset, apply button with a running label |
+| core | Button, IconButton, Shutter, SectionLabel, Tag, Icon |
+| forms | Switch, Slider, TextField |
+| document | PageImage, PageCounter, Viewfinder |
+| lists | ScanRow, MenuList |
+| feedback | ConfirmDialog, EmptyState, ErrorLine, ProgressLine |
 ```
 
-This round is not components. **This round is screens and flows.** Julian wants to judge whole
-screens, because a single component on a blank page always looks bare and tells him nothing
-about whether the app works.
+What each one already does, so nothing is rebuilt by accident:
+
+```
+| Component | Already covers |
+| --- | --- |
+| Button | primary / secondary / destructive / ghost, fullWidth, disabled, busy (running label) |
+| IconButton | 36 px drawn, 44 pt tappable, outlined or plain, with a spoken label |
+| Shutter | 72 px accent ring on a solid paper disc, disabled while the photo is written, spoken label |
+| SectionLabel | 13 px uppercase group label |
+| Tag | small chip for a page's state |
+| Icon | Lucide glyph recoloured by mask |
+| Switch | 42 x 24 outlined switch row, label plus optional sub-line, disabled |
+| Slider | hairline track, printed value in tabular figures, min/max labels, the engine's suggestion as a tick |
+| TextField | label, placeholder, value, optional trailing text |
+| PageImage | a page in its paper frame; no picture = ruled placeholder; grey mode; refused state with its own text; corner label; selectable; tappable |
+| PageCounter | "Page 3 of 12" in tabular figures, on paper or over a viewfinder |
+| Viewfinder | 3:4 dark preview stage, accent corner marks, one quiet note line inside |
+| ScanRow | date title, derived subtitle, thumbnail, accent chevron, hairline, swiped state with the Delete action |
+| MenuList | a titled menu, items with an icon, a destructive item, a disabled item |
+| ConfirmDialog | the one raised surface: title, body, destructive confirm, cancel |
+| EmptyState | icon, title, body, optional action — also the shape for a full-screen takeover |
+| ErrorLine | the engine's own sentence, above the content |
+| ProgressLine | a line, a 3 px bar, a note |
+```
+
+Spacing is the delivered 4.6 px step scale (space-1 … space-6 = 4.6, 9.2, 13.8, 18.4, 27.6,
+36.8). Screen padding is space-4. **No free numbers.**
 
 ---
 
-## What is wrong right now, and what to fix
+## The five that already exist
 
-The components read as very minimal. Two likely reasons. Fix both, on purpose:
+These five came with the system. **Do not redraw them from scratch.** Review each against the
+flows below and hand back a short list of what is missing or wrong — the flows contain states
+the delivered version does not have.
 
-**1. The app is full of images and shows none.** This is a camera app that makes pictures of
-paper, and nothing in the design shows a picture of a page. Put the images in:
-
-- the scan row needs a small page thumbnail (the first page of that scan), so the list looks
-  like a shelf of documents and not a settings menu
-- the pages screen needs a real page image in its frame, and a filmstrip of neighbouring pages
-  under it, not only dots
-- the done screen needs a preview of the finished PDF's first page, not just a title
-- the camera needs the live preview treated as the main object on the screen
-- the adjust screen needs the page big, with the handles on it
-- an empty state needs a picture-shaped placeholder, so the empty and the full screen have the
-  same skeleton
-
-**2. Too little hierarchy between a heading and a row.** A title at 17 px over a subtitle at
-13 px, both in the same weight and colour, reads flat. Give a screen real levels: a screen
-title, a section label, a row title, a row subtitle, a caption — visibly different in size,
-weight and colour, in that order.
-
-What is wanted is **density and rhythm**, not decoration. More content per screen, clear
-repeating vertical spacing, alignment you can see. No new ornament, no textures, no
-illustrations, no second accent colour.
+```
+| Delivered screen | Covers | Review against |
+| --- | --- | --- |
+| ScansScreen | S3 | all seven row subtitles, pressed row, error line on top |
+| CameraScreen | S6 | disabled shutter (S7), counter at 1 / 7 / 40 (S8), failure line (S9), stand-in note (S12) |
+| PagesScreen | S15 | 40-page navigation, grey on (S16), refused page (S17), busy button (S21), failure (S22) |
+| AdjustScreen | S23 | the six tools one by one (S24–S29) and both apply paths (S30–S32) |
+| DoneScreen | S33 | field in use (S34), photos already deleted (S35) |
+```
 
 ---
 
@@ -67,8 +88,8 @@ may depend on the English length.
 
 # The flows
 
-Nine flows. Every screen in each flow, with when it is seen, what is on it, its states and its
-exact English copy.
+Nine flows. Every screen, with when it is seen, what is on it, its states, its exact English
+copy, and **what it is built from**.
 
 ---
 
@@ -77,9 +98,8 @@ exact English copy.
 ### S1 · Scans, empty
 Seen the very first time the app opens, and any time every scan has been deleted.
 
-On it: screen title "Scans", one action "New scan" top right, and a centred empty block —
-picture-shaped placeholder, headline, one paragraph. Nothing else. There is no tab bar, no
-settings, no account.
+Built from: `EmptyState` (icon, title, body) with a `Button` action; the screen title and the
+top-right "New scan" are the app bar. No tab bar, no settings, no account.
 
 ```
 | Where | English |
@@ -91,23 +111,25 @@ settings, no account.
 ```
 
 ### S2 · Scans, empty, with an error line
-Seen when "New scan" could not make the folder — the phone is out of storage. One line in
-destructive colour above the content, cleared on the next reload. The text is the system's own
-finished sentence; the app never rewrites it. Show it with a plausible sentence.
+Seen when "New scan" could not make the folder — the phone is out of storage.
 
-Tapping "New scan" when it works goes straight to the camera on Page 1. There is no naming
-step, no template picker, no onboarding.
+Built from: `ErrorLine` above `EmptyState`. The sentence is the system's own and is never
+rewritten; show it with a plausible one. Cleared on the next reload.
+
+Tapping "New scan" when it works goes straight to the camera on Page 1. No naming step, no
+template picker, no onboarding.
 
 ---
 
 ## Flow 2 — The list of scans
 
-### S3 · Scans, with rows
+### S3 · Scans, with rows — **delivered as ScansScreen, review only**
 The landing screen whenever at least one scan exists. Rows newest first. The row title is the
 folder date, e.g. "11 Aug 2026, 20:14" — there is no renaming, the date **is** the name.
 
-Show a list long enough to judge rhythm: at least seven rows, one per status line, and add the
-page thumbnail asked for above.
+Built from: a list of `ScanRow` with `thumb`, and `ErrorLine` above it when S2's error applies.
+
+Show at least seven rows, one per subtitle, so rhythm can be judged.
 
 ```
 | Row state | English subtitle |
@@ -121,14 +143,14 @@ page thumbnail asked for above.
 | done, photos deleted | 40 pages — PDF ready, photos deleted |
 ```
 
-Also show: a pressed row, and the list with the error line from S2 at the top.
+Also show: a pressed row, and the list with the error line at the top.
 
 ### S4 · A row swiped left
-Swiping a row reveals one 96 px wide **Delete** action in destructive colour. Nothing is
-deleted yet.
+Built from: `ScanRow` with `swiped` — the 96 px Delete action is already part of the component.
+Nothing is deleted yet.
 
 ### S5 · Delete-a-scan confirmation
-Seen after tapping Delete on the swiped row. Never skipped.
+Built from: `ConfirmDialog` over the list. Never skipped.
 
 ```
 | Where | English |
@@ -145,11 +167,13 @@ Cancel does nothing. Confirm removes the whole scan and the list reloads.
 
 ## Flow 3 — Shooting the pages
 
-### S6 · Camera, ready
+### S6 · Camera, ready — **delivered as CameraScreen, review only**
 Seen right after "New scan", and every time an unfinished scan is reopened. The title is the
-number the **next** shot lands on. Live preview at 3:4, portrait fixed, flash off. One shutter
-under the preview, reachable one-handed with a thumb. One full-width button under that. No
-corner thumbnail of the last shot, no photo-library import — deliberately.
+number the **next** shot lands on. Live preview at 3:4, portrait fixed, flash off. No corner
+thumbnail of the last shot, no photo-library import — deliberately.
+
+Built from: `Viewfinder` (with the live preview inside), `PageCounter` with `onDark` over it,
+`Shutter` placed where a thumb reaches, `Button` fullWidth under it.
 
 ```
 | Where | English |
@@ -161,18 +185,17 @@ corner thumbnail of the last shot, no photo-library import — deliberately.
 ```
 
 ### S7 · Camera, shutter disabled while the photo is written
-Seen for the fraction of a second after each press. The shutter is dead until the photo is on
-disk — that is what makes one press exactly one page. It must **look** dead and it must say so
-to a screen reader. Design this state explicitly.
+Built from: `Shutter` with `disabled`. Seen for the fraction of a second after each press — the
+shutter is dead until the photo is on disk, which is what makes one press exactly one page. It
+must **look** dead and say so to a screen reader. Show this state explicitly.
 
 ### S8 · Camera, page counter states
-The counter is the title and it counts up as pages are shot. Show it at "Page 1", "Page 7" and
-"Page 40" — numbers use tabular figures so the title does not shuffle while it counts. Also
-show the state before the first shot, where the "Scan …" button is disabled and reads
-"Photograph at least one page".
+Built from: `PageCounter`. Show it at "Page 1", "Page 7" and "Page 40" — tabular figures, so
+the title does not shuffle while it counts. Also show the state before the first shot, where
+`Button` is `disabled` and reads "Photograph at least one page".
 
 ### S9 · Camera, a photo missed the disk
-One line over the preview, destructive colour. One sentence shape, with the reason swapped in:
+Built from: `ErrorLine` over the `Viewfinder`. One sentence shape, reason swapped in:
 
 `Page 7 was not saved: <why> Nothing already photographed is lost.`
 
@@ -188,7 +211,9 @@ One line over the preview, destructive colour. One sentence shape, with the reas
 Design the line once and show it with the storage sentence.
 
 ### S10 · Camera, permission denied
-The whole screen becomes the sentence plus one button. There is no preview behind it.
+The whole screen becomes the sentence plus one button. No preview behind it.
+
+Built from: `EmptyState` (this is the full-screen takeover shape) with a `Button` action.
 
 ```
 | Where | English |
@@ -198,7 +223,7 @@ The whole screen becomes the sentence plus one button. There is no preview behin
 ```
 
 ### S11 · Camera, the screen cannot work
-Same full-screen takeover shape as S10, no button. Three sentences use it:
+Built from: `EmptyState` with no action. Same shape as S10. Three sentences use it:
 
 ```
 | Case | English |
@@ -209,8 +234,8 @@ Same full-screen takeover shape as S10, no button. Three sentences use it:
 ```
 
 ### S12 · Camera, simulator stand-in
-A quiet note under the preview area on a phone with no camera, where the shutter draws a page
-instead of taking one: "No camera on this iPhone. The shutter draws a page instead."
+Built from: `Viewfinder` with its `note`: "No camera on this iPhone. The shutter draws a page
+instead." Nothing new is needed.
 
 Leaving the camera at any moment is safe. Coming back lands on the viewfinder at the next free
 number.
@@ -223,6 +248,8 @@ number.
 Seen after tapping "Scan 8 pages". One page is cleaned at a time. The line counts photos done,
 not page numbers.
 
+Built from: `ProgressLine` (line, bar, note).
+
 ```
 | Where | English |
 | --- | --- |
@@ -230,25 +257,30 @@ not page numbers.
 | Note | You can close the app. It carries on from here. |
 ```
 
-A line of text, a bar, a reassurance note. Show it early (page 1 of 12) and late (page 11 of
-12), so the bar is judged at both ends.
+Show it early (page 1 of 12) and late (page 11 of 12), so the bar is judged at both ends.
 
 ### S14 · Scanning, a page was refused
-The cleanup refused one page. Its own finished sentence appears in destructive colour and the
-run **carries on** — the bar never gets stuck. When there is nothing left to do the screen
-moves to the pages, which is where a refused page can be retried, retaken or deleted.
+Built from: `ProgressLine` plus `ErrorLine` with the cleanup's own sentence. The run **carries
+on** — the bar never gets stuck. When there is nothing left to do the screen moves to the
+pages, which is where a refused page can be retried, retaken or deleted.
 
 ---
 
 ## Flow 5 — Checking and retaking the pages
 
-### S15 · Pages, a page shown
+### S15 · Pages, a page shown — **delivered as PagesScreen, review only**
 Seen once every photo has become a page, and whenever a finished scan is opened for changes.
 Title "Page 3 of 12". A carousel, one page per swipe, pinch to zoom (this screen exists to read
-small print). Under the page: navigation that is not 40 swipes — a filmstrip or dots with
-arrows **plus** a jump straight to a page number. A "Page" menu top right. One switch for the
-whole scan, "Grey", living on this screen and not inside Adjust. A full-width primary button at
-the bottom.
+small print). A "Page" menu top right. One `Switch` for the whole scan, "Grey", on this screen
+and not inside Adjust. A `Button` fullWidth at the bottom.
+
+Built from: `PageCounter`, `PageImage` (large), `Switch`, `Button`, `IconButton` for the menu.
+
+**Missing component — please add it to the system, do not draw it once.** The navigation under
+the page is not 40 swipes: it needs a rail of small pages plus a jump straight to a page
+number. `PageImage` is the tile, but there is no component for the rail or the jump. Add a
+`PageStrip` (a scrolling rail of `PageImage` thumbnails with one selected, plus the jump
+control) to the system, with its own props and states, so every client gets the same one.
 
 ```
 | Where | English |
@@ -259,14 +291,15 @@ the bottom.
 | Button, running | Making the PDF… |
 ```
 
-Show it for a 12-page scan and for a 40-page scan — the second is the one that tests the
-navigation.
+Show it for a 12-page scan and for a 40-page scan — the second is the one that tests the rail.
 
 ### S16 · Pages, Grey switched on
-Same screen, the switch on, the page image grey. Grey is per scan, not per page.
+Built from: the same screen, `Switch` checked, `PageImage` with `grey`. Grey is per scan, not
+per page.
 
 ### S17 · Pages, a refused page
-Instead of an image, a card in the page frame.
+Built from: `PageImage` with `state="refused"` and its `refusedText`, plus a `Button`
+(secondary) for the action. No new component.
 
 ```
 | Where | English |
@@ -276,7 +309,7 @@ Instead of an image, a card in the page frame.
 ```
 
 ### S18 · The Page menu, while checking
-Three items. Delete is marked as the destructive one.
+Built from: `MenuList`, title "Page", three items, the third marked destructive.
 
 ```
 | Item | English |
@@ -290,9 +323,10 @@ Three items. Delete is marked as the destructive one.
 "Retake this page" opens the camera on that one slot, one shot, and comes straight back.
 
 ### S19 · The Page menu, on a finished scan
-The same menu with a fourth item, **Shoot another page** — see Flow 8.
+Built from: the same `MenuList` with a fourth item, **Shoot another page** — see Flow 8.
 
 ### S20 · Delete-a-page confirmation
+Built from: `ConfirmDialog`.
 
 ```
 | Where | English |
@@ -307,12 +341,12 @@ Page numbers keep their gaps after a delete and are never renumbered. There is n
 no insert-in-the-middle, on purpose.
 
 ### S21 · Pages, making the PDF
-"Make PDF" appears **only** once every photo has a page. While it runs the button reads
-"Making the PDF…" and the pages stay visible and readable behind it.
+Built from: `Button` with `busy` — the running label is already a state of the component. "Make
+PDF" appears **only** once every photo has a page. The pages stay visible and readable behind it.
 
 ### S22 · Pages, making the PDF failed
-The engine's own sentence in destructive colour above the content. The pages stay. The button
-can be tapped again.
+Built from: `ErrorLine` above the content, with the engine's own sentence. The pages stay. The
+button can be tapped again.
 
 ---
 
@@ -320,7 +354,8 @@ can be tapped again.
 
 Adjust always comes **after** the automatic clean-up, on a page the user can already see.
 Reached from the Page menu. The principle is suggest-then-apply: every control opens sitting on
-the value the app suggested, and the user moves it or leaves it.
+the value the app suggested — that is what `Slider`'s `suggested` tick is for — and the user
+moves it or leaves it.
 
 There is **no live preview anywhere in this app.** The picture on this screen is the page as it
 stands now. Values are set, Apply is tapped, about a second passes, then the result is looked
@@ -328,10 +363,18 @@ at. Do not design a preview that updates as a slider moves.
 
 A page whose photo has been deleted cannot be adjusted at all.
 
-### S23 · Adjust, common frame
+### S23 · Adjust, common frame — **delivered as AdjustScreen, review only**
 Top bar: Cancel · title · Apply. A large picture of the page. Under it a strip of six tool
 names, one active at a time. Under that, the controls for the active tool. At the bottom, one
 switch.
+
+Built from: `Button` (Cancel ghost, Apply primary), `PageImage` large, `SectionLabel` over the
+control group, `Switch` at the bottom.
+
+**Missing component — please add it to the system.** The six-tool strip has no component.
+`Tag` is a state chip, not a selectable tool, and `MenuList` is a menu, not a horizontal strip.
+Add a `ToolStrip` (horizontal, one active at a time, 44 pt targets, spoken labels) rather than
+drawing it once on this screen.
 
 ```
 | Where | English |
@@ -345,9 +388,12 @@ switch.
 ```
 
 ### S24 · Adjust → Edges
-Four drag handles on the page picture, pre-set to the corners the app found, plus one on/off
-switch "Pull the sheet flat". A note line sits under the control and has three states: nothing
-to say, nothing to cut, or a warning.
+Built from: `PageImage` with four drag handles on it, `Switch` "Pull the sheet flat", and a
+quiet note line under the control with three states: nothing to say, nothing to cut, a warning.
+
+**Missing component — please add it to the system.** The draggable corner handles on a page are
+used by both Edges and Crop and belong in the system, not on two screens. Add a `PageHandles`
+overlay (four or eight handles over a `PageImage`, with the refusal state S28 needs).
 
 ```
 | Note state | English |
@@ -357,30 +403,33 @@ to say, nothing to cut, or a warning.
 ```
 
 ### S25 · Adjust → Straighten
-One slider, −10 to +10 degrees, one decimal, the value printed beside the label in accent, both
-ends labelled. Plus "Back to the suggestion".
+Built from: one `Slider`, −10 to +10 degrees, one decimal, `unit` "°", both ends labelled, the
+suggestion as its tick, plus a `Button` ghost "Back to the suggestion".
 
 ### S26 · Adjust → Brightness
-Two sliders and one on/off. Black point is how dark the darkest part becomes; white point is
-how bright the paper becomes. Both open where the app suggested.
+Built from: two `Slider` and one `Switch`. Black point is how dark the darkest part becomes;
+white point is how bright the paper becomes. Both open where the app suggested.
 
 ### S27 · Adjust → Sharpen
-One slider, 0 to 20, opening at 0.6. Zero means no sharpening at all — show that end state.
+Built from: one `Slider`, 0 to 20, opening at 0.6. Zero means no sharpening at all — show that
+end state.
 
 ### S28 · Adjust → Crop
-Drag handles on the page picture. A box that does not fit is refused, not silently shrunk —
-show what that refusal looks like.
+Built from: `PageImage` plus the `PageHandles` asked for in S24. A box that does not fit is
+refused, not silently shrunk — show what that refusal looks like, and make it a state of
+`PageHandles`.
 
 ### S29 · Adjust → Turn
-One button, a quarter turn clockwise per tap. Show the page after one tap.
+Built from: one `IconButton` (outlined), a quarter turn clockwise per tap. Show the page after
+one tap.
 
 ### S30 · Applying to one page
-"Apply to all pages" is off. Only this page is rewritten. About a second. Brief in-place busy
-state on the Apply button: "Applying…"
+Built from: `Switch` off, `Button` with `busy` reading "Applying…". Only this page is rewritten.
+About a second.
 
 ### S31 · Applying to all pages
-The switch is on. Every page is rewritten from its own photo, one at a time, while the screen
-stays up. Full-screen progress.
+Built from: `ProgressLine` as a full-screen takeover, with `PageCounter` for the counter line.
+Every page is rewritten from its own photo, one at a time, while the screen stays up.
 
 ```
 | Where | English |
@@ -391,12 +440,12 @@ stays up. Full-screen progress.
 ```
 
 This note is the **opposite** of the drain's note in S13, deliberately: the drain survives a
-kill, apply-to-all does not. The two progress screens must be visually distinct enough that the
-difference is noticed.
+kill, apply-to-all does not. Both use `ProgressLine`, so they must still be visually distinct
+enough that the difference is noticed — say how you did that without adding a colour.
 
 ### S32 · Applying to all pages, some pages skipped
-Pages whose photos were deleted cannot be rewritten. They are skipped and named afterwards, in
-one plain sentence on the screen the user lands back on.
+Built from: `ErrorLine` on the screen the user lands back on. Pages whose photos were deleted
+cannot be rewritten; they are skipped and named afterwards in one plain sentence.
 
 Adjusting also deletes an existing PDF, because the PDF is derived from the pages. That happens
 silently; there is no dialog for it.
@@ -405,11 +454,11 @@ silently; there is no dialog for it.
 
 ## Flow 7 — Making the PDF, the done screen, sharing, deleting the photos
 
-### S33 · Done, photos still there
+### S33 · Done, photos still there — **delivered as DoneScreen, review only**
 Seen the moment the PDF is written, and whenever a finished scan is opened.
 
-On it: the title, a preview of the PDF's first page, a text field, two primary buttons, one
-ghost action, then a quiet destructive block at the bottom with its footnote.
+Built from: `PageImage` (the PDF's first page), `TextField`, two `Button` primary, one `Button`
+ghost, then a `SectionLabel` over a quiet block with a `Button` destructive and its footnote.
 
 ```
 | Where | English |
@@ -428,7 +477,8 @@ The name is used only for the copy that leaves through Share. Nothing is stored 
 scan and the field is empty again, and the scan itself keeps its date name.
 
 ### S34 · Done, the name field in use
-Empty with the placeholder, focused, and typed in. The keyboard must not cover the two buttons.
+Built from: `TextField` in three states — empty with the placeholder, focused, typed in. The
+keyboard must not cover the two buttons.
 
 ### S35 · Done, photos already deleted
 The destructive block and its footnote are simply **gone**. Nothing greyed out, nothing left
@@ -439,12 +489,17 @@ the shorter layout has to look finished, not truncated.
 A sheet inside the app showing the finished PDF, with a close control. Nothing else on it.
 Nothing is copied, nothing leaves the phone.
 
+**Missing component — please add it to the system.** `ConfirmDialog` is the only raised surface
+the system has, and it is a dialog, not a sheet. Add a `Sheet` (raised surface, a close
+`IconButton`, content area) so the reader and any later sheet share one shape.
+
 ### S37 · Share PDF
-Opens the phone's own share sheet on the PDF, carrying the typed name. Do not design the sheet
-itself — design the moment before it, and make clear nothing is uploaded unasked.
+Built from: `Button` primary; the sheet itself is the phone's own — do not design it. Design the
+moment before it, and make clear nothing is uploaded unasked.
 
 ### S38 · Delete-the-photos confirmation
-Asked every time, never remembered. There is no settings screen to turn it off.
+Built from: `ConfirmDialog`. Asked every time, never remembered. There is no settings screen to
+turn it off.
 
 ```
 | Where | English |
@@ -466,9 +521,9 @@ From the Page menu on a finished scan (S19). Tapping it deletes the PDF, exactly
 pages" does, and opens the camera at the next free page number. The new page is cleaned like
 any other and the PDF is made again afterwards.
 
-Design the hand-off: the user was on a done scan and is now on a camera screen. Nothing on the
-camera screen tells them the PDF was thrown away — decide whether one calm line belongs there,
-and show your call.
+Built from: `MenuList` item, then the S6 camera screen. If you decide one calm line belongs on
+the camera screen to say the PDF was thrown away, it is a `Viewfinder` `note` or an
+`ErrorLine` — not a new component. Show your call.
 
 ---
 
@@ -492,22 +547,42 @@ screen, with no state carried in from the screen before it.
 
 ---
 
+# Fixes asked for
+
+**1. The disabled state is hard to read.** It is `--disabled-opacity: .45` in
+`tokens/colors.css`, applied as a flat opacity to the whole control. On a light paper ground
+that drops the label below a comfortable reading contrast — and the disabled camera button
+("Photograph at least one page") is a real instruction someone has to read, not decoration.
+
+Asked for: a disabled treatment that stays legible. Use a **colour role** — a defined disabled
+text colour and a disabled border colour — rather than a blanket opacity over the whole
+control. **The target is that the label stays readable at arm's length**, in both themes, on
+paper and on the viewfinder. It must still be obvious that the control is dead: shape, border
+and the absence of the accent carry that, not faintness. Hand back the new values and show
+every control in its disabled state side by side with its live one.
+
+---
+
 # What to hand back
 
-For **every screen above**, two things:
+For **every screen above** except the five marked delivered, two things:
 
 1. **A picture** — the screen, in light and in dark, iPhone portrait.
 2. **A short written spec**, so it can be rebuilt in code without guessing:
-   - which existing components it uses, using the names already established in this
-     conversation (Scan row, Primary button, Secondary button, Destructive button, Ghost
-     button, Shutter, Switch, Slider, Apply button)
+   - which delivered components it uses, **by their real names** (Button, IconButton, Icon,
+     Shutter, Tag, SectionLabel, Slider, Switch, TextField, PageCounter, PageImage, Viewfinder,
+     MenuList, ScanRow, ConfirmDialog, EmptyState, ErrorLine, ProgressLine) and which props and
+     states of each
    - in what order, top to bottom
-   - the spacing between them, in the spacing steps already decided — no free numbers
-   - anything genuinely new: name it, and say why an existing component could not do it
+   - the spacing between them, in the delivered 4.6 px steps — no free numbers
+   - anything genuinely new: name it, say why no existing component could do it, and propose it
+     as a **new component for the system**, not as a one-off drawing on that screen
    - the VoiceOver label for every control on it, written out
 
-If a screen needs something that does not exist yet, say so plainly rather than inventing a
-colour, a size or a word. If a word is missing, ask — do not write new copy.
+For the five delivered screens: a list of what the flows show that the kit's version does not,
+and what to change. Do not redraw them.
+
+If a word is missing, ask — do not write new copy.
 
 ---
 
@@ -520,23 +595,26 @@ colour, a size or a word. If a word is missing, ask — do not write new copy.
   text. German runs ~30% longer.
 - A written-out VoiceOver label on every control, saying what it does, not what it looks like.
 - 44 pt minimum touch target, even where the drawn control is smaller.
-- Never colour alone: with no red in this theme, a destructive action is carried by its words.
+- Never colour alone: there is no red in this theme, so a destructive action is carried by its
+  words, by accent-700 / accent-300, and by the double rule that already makes a destructive
+  button a different shape.
 - No network of any kind — no cloud, no sync, no upload, no "backing up".
 - No account, no sign-in, no onboarding.
 - **No settings screen.** Every choice is asked in the moment and never remembered.
 - No renaming a scan, no reordering pages, no inserting a page in the middle.
 - No live preview of an adjustment. The camera viewfinder is the only moving picture in the app.
 - No delete that happens straight away. Scan, page and photos each ask first.
+- No emoji, no illustration, no mascot, no stock photography, no gradients, no textures, no
+  second accent colour. The only image in the app is a page.
 
 # The thing to watch
 
 This is a **reading aesthetic** — serif faces, hairline gold, colour as a stroke — in an app
-that is camera, thumb and sliders in bad light. Two places is where that shows, and they are
-the two to get right:
+that is camera, thumb and sliders in bad light. The system already answered that in two places,
+and both answers are decided: the shutter is found by the mass of its solid paper disc, not by
+its ring; the destructive button carries a double rule so it is a different *shape*, not just
+different words.
 
-- **the shutter** — a 1 px gold ring on a dark viewfinder is hard to find with a thumb
-- **the destructive button** — "Delete the 40 photos" carries no red in this theme
-
-Fix both **inside** this style. They are not a reason to reopen the style, and a hairline must
-not be quietly thickened everywhere to solve them. Show what you did and say why it works with
-a thumb, in the dark, holding paper.
+Hold to those two answers on every screen you draw. Do not thicken a hairline elsewhere to
+solve a legibility problem — the disabled fix above is the one place the treatment is reopened,
+and it is reopened as a colour role, not as weight.
