@@ -65,11 +65,28 @@ Riskiest thing first. Each milestone ends in something that runs, and every chec
 command. Full text: [plan section 7](./iphone-client-plan.md#7-build-order); the
 file-by-file list is [plan section 6](./iphone-client-plan.md#6-files).
 
-**Now: nothing is scheduled.** All six milestones are built, and the manual check in
-[plan section 7](./iphone-client-plan.md#7-build-order) was walked on an iPhone 13 on
-2026-08-12: shoot, share into Files, delete the photos, and the force-quit in the middle of
-shooting. What is left is the parked items below, of which the 10 degree engine bug is the
-one a real sheet of paper will hit.
+**Now: waiting on one decision - which style the clients get.** The six milestones above
+are all built and walked on a phone, so what is being worked on has moved from the engine to
+the client. Two documents carry it: [`user-flows.md`](./user-flows.md), which is every flow
+the app should have and what control each engine tool gets, and
+[`client-guide-design-system/`](./client-guide-design-system/AGENTS.md), which is how a
+client looks. The reason there is any of this: **the app can reach almost none of the
+engine.** Sixteen capabilities - grey, brightness, sharpening, straightening, cropping,
+rotating, paper finding, page size, resolution - have no control anywhere. The client calls
+one fixed chain and that is all a user gets.
+
+The order from here, and nothing after step 1 can start before it:
+
+| # | What | Who |
+| --- | --- | --- |
+| 1 | **Pick the style.** Two candidates stand in Storybook as the same three components twice: the iPhone system look and the editorial theme Claude Design proposed. The style is defined once and rebuilt natively per client, so a system look cannot be the source - it is by definition not recognizable across platforms. | Julian, by looking |
+| 2 | Approve the remaining components in Storybook, one by one, in the chosen style. | Julian, by looking |
+| 3 | Widen the C boundary: one new function taking the photo path, the page path and a struct of all the values, so the adjusted case can cross it. Seven functions is the thing being avoided. | engine + ffi |
+| 4 | Rebuild the iPhone client against the approved components and the flows - which is also when the sixteen capabilities get their controls. | client agent |
+
+```sh
+cd storybook && npm install && npm run storybook    # step 1 and 2 happen here
+```
 
 **The camera has seen a phone, once.** On an iPhone 13 on 2026-08-12 it shot a portrait
 sheet and the PDF came out upright, which settles `videoRotationAngle = 90` - the one number
