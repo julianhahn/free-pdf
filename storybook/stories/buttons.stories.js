@@ -1,8 +1,8 @@
-import '../styles-editorial.css';
+import '../styles.css';
 
 const screen = (inner) => `<div class="screen">${inner}</div>`;
 
-export default { title: 'Editorial/Buttons' };
+export default { title: 'Buttons' };
 
 export const Primary = {
   render: () => screen(`<button type="button" class="btn btn-primary btn-block">Make PDF</button>`),

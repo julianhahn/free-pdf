@@ -15,8 +15,10 @@ is the one that decides behaviour. Where the gallery and the flows disagree, the
 a picture cannot know that the step is derived from the files, or that a kill has to be
 survivable.
 
-The theme that came back is **editorial**: Cormorant Garamond over Lora, a single gold
-accent, outlined buttons, colour as stroke rather than fill. That is not the iOS system
-look, and nothing about it is wrong - but a native client cannot get it from UIKit's
-defaults, so it costs a font file and hand-styled controls. Worth deciding before, not after
-([README, Next steps](../README.md)).
+The theme that came back is editorial: Cormorant Garamond over Lora, a single gold accent,
+outlined buttons, colour as stroke rather than fill. Julian chose it on 2026-08-13, and the
+rules it now carries live in
+[`../client-guide-design-system/`](../client-guide-design-system/AGENTS.md) - read them
+there, not here. What it costs a native client is a font file and hand-styled controls,
+because no platform's defaults look like this. That is the price of one recognizable app on
+every platform, and it was paid on purpose.

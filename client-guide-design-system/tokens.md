@@ -2,10 +2,10 @@
 
 Every number a client is allowed to use. Taken from
 `../design/gallery/_ds/classical-fee6c86c-b348-4033-b8e7-e8f35de9f737/styles.css` (light) and
-`../storybook/styles-editorial.css` (the dark override and the app-only pieces). Do not
+`../storybook/styles.css` (the dark override and the app-only pieces). Do not
 re-derive them from either file - copy from this table, so all clients read one list.
 
-These are the **candidate** values, see [AGENTS.md](./AGENTS.md).
+These are the **decided** values, see [AGENTS.md](./AGENTS.md).
 
 ## Colours
 
@@ -57,7 +57,8 @@ Interaction tints, because a native control must not fall back to its platform d
 | destructive text and border | accent-700 light, accent-300 dark |
 ```
 
-There is no red anywhere. That is the theme's choice, and the open concern named in AGENTS.md.
+There is no red anywhere. That is the style's choice, and one of the two places to watch while
+building, named in AGENTS.md.
 
 ## Type
 

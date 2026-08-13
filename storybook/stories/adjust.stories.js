@@ -1,8 +1,8 @@
-import '../styles-editorial.css';
+import '../styles.css';
 
 const screen = (inner) => `<div class="screen">${inner}</div>`;
 
-export default { title: 'Editorial/Adjust' };
+export default { title: 'Adjust' };
 
 // Grey is per scan, one switch — user-flows.md §7a, decision 4.
 export const GreySwitch = {

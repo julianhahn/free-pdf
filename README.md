@@ -65,9 +65,12 @@ Riskiest thing first. Each milestone ends in something that runs, and every chec
 command. Full text: [plan section 7](./iphone-client-plan.md#7-build-order); the
 file-by-file list is [plan section 6](./iphone-client-plan.md#6-files).
 
-**Now: waiting on one decision - which style the clients get.** The six milestones above
-are all built and walked on a phone, so what is being worked on has moved from the engine to
-the client. Two documents carry it: [`user-flows.md`](./user-flows.md), which is every flow
+**Now: the style is decided, and the client gets rebuilt in it.** Julian chose it on
+2026-08-13: one style, defined once and rebuilt natively in every client, because a
+platform-native system look is by definition not recognizable across platforms
+([the style](./client-guide-design-system/AGENTS.md)). The six milestones above are all built
+and walked on a phone, so what is being worked on has moved from the engine to the client.
+Two documents carry it: [`user-flows.md`](./user-flows.md), which is every flow
 the app should have and what control each engine tool gets, and
 [`client-guide-design-system/`](./client-guide-design-system/AGENTS.md), which is how a
 client looks. The reason there is any of this: **the app can reach almost none of the
@@ -79,13 +82,12 @@ The order from here, and nothing after step 1 can start before it:
 
 | # | What | Who |
 | --- | --- | --- |
-| 1 | **Pick the style.** Two candidates stand in Storybook as the same three components twice: the iPhone system look and the editorial theme Claude Design proposed. The style is defined once and rebuilt natively per client, so a system look cannot be the source - it is by definition not recognizable across platforms. | Julian, by looking |
-| 2 | Approve the remaining components in Storybook, one by one, in the chosen style. | Julian, by looking |
-| 3 | Widen the C boundary: one new function taking the photo path, the page path and a struct of all the values, so the adjusted case can cross it. Seven functions is the thing being avoided. | engine + ffi |
-| 4 | Rebuild the iPhone client against the approved components and the flows - which is also when the sixteen capabilities get their controls. | client agent |
+| 1 | **Approve the remaining components in Storybook**, one by one. Three stand there today - scan row, buttons, adjust; the rest of [`components.md`](./client-guide-design-system/components.md) still has to be drawn and looked at. | Julian, by looking |
+| 2 | Widen the C boundary: one new function taking the photo path, the page path and a struct of all the values, so the adjusted case can cross it. Seven functions is the thing being avoided. | engine + ffi |
+| 3 | Rebuild the iPhone client against the approved components and the flows - which is also when the sixteen capabilities get their controls. | client agent |
 
 ```sh
-cd storybook && npm install && npm run storybook    # step 1 and 2 happen here
+cd storybook && npm install && npm run storybook    # step 1 happens here
 ```
 
 **The camera has seen a phone, once.** On an iPhone 13 on 2026-08-12 it shot a portrait

@@ -8,12 +8,14 @@ Julian's decision, 2026-08-12: a little drift between platforms is fine, guessin
 not. If a client agent has to invent a colour or a word, this folder failed and needs the
 missing line added.
 
-**The tokens are a candidate.** The editorial theme (Cormorant Garamond over Lora, one gold
-accent, outlined buttons, colour as stroke) is what Claude Design returned as a proposal.
-Julian has not finally chosen it. One concern is already on the table: it is a reading
-aesthetic - serif faces, hairline gold - and this app is mostly camera, thumb and sliders in
-bad light. The shutter and the destructive button are where that shows: a 1 px gold ring on a
-dark viewfinder is hard to find with a thumb, and "delete the photos" carries no red.
+**The tokens are decided.** Julian's decision, 2026-08-13: the editorial theme (Cormorant
+Garamond over Lora, one gold accent, outlined buttons, colour as stroke) is the style. His
+reason: one style is defined once and rebuilt natively per client, and a platform-native
+system look is by definition not recognizable across platforms. It is a reading aesthetic -
+serif faces, hairline gold - and this app is mostly camera, thumb and sliders in bad light.
+The shutter and the destructive button are where that shows: a 1 px gold ring on a dark
+viewfinder is hard to find with a thumb, and "delete the photos" carries no red. Watch those
+two while building, and fix them inside this style - they are not a reason to reopen it.
 
 ## What is in here
 
@@ -34,7 +36,7 @@ dark viewfinder is hard to find with a thumb, and "delete the photos" carries no
 - **Approval** - a component is looked at and approved in [`../storybook/`](../storybook/).
   Nothing in Storybook ships either; once approved it is rebuilt natively.
 - **Client code** - the iPhone app is [`../ios/`](../ios/AGENTS.md). It is still in the
-  system look, not this one.
+  system look and has to be rebuilt in this one.
 
 ## What a client agent may invent, and what it may not
 
