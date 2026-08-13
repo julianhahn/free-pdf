@@ -37,7 +37,7 @@ that cannot open a browser.
 | # | Task | Blocked by | Check |
 | --- | --- | --- | --- |
 | 1 | Disabled becomes a colour role — DONE | - | npx storybook build |
-| 2 | Fold the four proposed components into the system | - | npx storybook build |
+| 2 | Fold the four proposed components into the system — DONE | - | npx storybook build |
 | 3 | Fix the five delivered screens | 1, 2 | npx storybook build |
 | 4 | Collect the missing words, get them from Julian | - | Julian answers |
 | 5 | Storybook: flows 1-2, the scans list | 1, 2, 3 | npx storybook build |
