@@ -23,14 +23,17 @@ export function PageStrip({
 }) {
   const railRef = React.useRef(null);
   React.useEffect(() => {
-    const tile = railRef.current?.querySelector(`[data-page="${selected}"]`);
-    tile?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    const rail = railRef.current;
+    const tile = rail?.querySelector(`[data-page="${selected}"]`);
+    /* Scroll the rail itself, not the screen: scrollIntoView would drag the
+       page above it out of view as well. */
+    if (rail && tile) rail.scrollLeft = tile.offsetLeft - (rail.clientWidth - tile.offsetWidth) / 2;
   }, [selected]);
 
   const open = jump === "open";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", ...style }} {...rest}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", minWidth: 0, ...style }} {...rest}>
       <div style={{ display: "flex", alignItems: "center" }}>
         <div
           ref={railRef}
@@ -42,6 +45,9 @@ export function PageStrip({
             padding: "var(--space-2)",
             overflowX: "auto",
             flex: 1,
+            /* Without this the 40 tiles set the row's intrinsic width, the rail
+               never scrolls, and the whole screen widens to fit it. */
+            minWidth: 0,
           }}
         >
           {pages.map((p) => (

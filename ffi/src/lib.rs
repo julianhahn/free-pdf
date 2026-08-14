@@ -1,22 +1,22 @@
 //! The C surface the phone links against.
 //!
-//! Two functions, and between them the order the engine's tools are used in for a
+//! Three functions, and between them the order the engine's tools are used in for a
 //! photo of a document. That order lives here and not in the engine, because the
 //! engine offers single tools and the client owns the order
 //! ([`../AGENTS.md`](../AGENTS.md)). This crate is a client - the smallest one
 //! there is, and the only one that has to speak C.
 //!
-//! What crosses the boundary: C strings, a size, and an int32. What never crosses:
-//! a pixel buffer, an image handle, an allocation the caller has to free, a struct,
-//! a callback. The rules of this crate are in [`AGENTS.md`](./AGENTS.md).
+//! What crosses the boundary: C strings, a size, an int32, and one read-only struct
+//! of numbers for the adjusted case. What never crosses: a pixel buffer, an image
+//! handle, an allocation the caller has to free, a callback. The rules of this crate are in [`AGENTS.md`](./AGENTS.md).
 
 // Edition 2024's rule, asked for early: an `unsafe fn` does not quietly make its whole
 // body unsafe, so every read of a caller's pointer is marked where it happens.
 #![deny(unsafe_op_in_unsafe_fn)]
 
 use core_engine::{
-    apply_levels, deskew, find_paper, load_image, pages_to_pdf, save_page, sharpen, straighten,
-    suggest_levels, suggest_straightening,
+    apply_levels, crop, deskew, find_paper, load_image, pages_to_pdf, rotate, save_page, sharpen,
+    straighten, suggest_levels, suggest_straightening, to_grayscale, Levels, Point,
 };
 use std::ffi::{c_char, CStr};
 use std::panic::{catch_unwind, UnwindSafe};
@@ -66,6 +66,71 @@ pub unsafe extern "C" fn freepdf_scan_page(
     let page = unsafe { path_from(out_page_path, "The page to write") };
 
     guard(error, error_size, move || scan_page(&photo?, &page?))
+}
+
+/// Every value the Adjust screen can move, in the order the recipe uses them.
+///
+/// One struct rather than seven functions, Julian's decision of 2026-08-12
+/// (`user-flows.md` DECISIONS point 12): the tools are only ever set together, and
+/// seven crossings would be seven chances to run them in the wrong order. It is read
+/// only, it is copied out at the boundary, and it holds no pointer, so the app never
+/// manages the engine's memory.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct FreepdfAdjustments {
+    /// The four paper corners as x, y pairs, in the photo's own pixels.
+    pub corners: [f32; 8],
+    pub pull_the_sheet_flat: i32,
+    /// -10 to +10 degrees. 0 turns nothing.
+    pub straighten_degrees: f32,
+    pub black: [u8; 3],
+    pub white: [u8; 3],
+    pub adjust_the_tones: i32,
+    /// 0 sharpens nothing: the engine refuses radius 0, so the call is skipped.
+    pub sharpen_radius: f32,
+    pub crop_x: u32,
+    pub crop_y: u32,
+    pub crop_width: u32,
+    pub crop_height: u32,
+    /// Quarter turns clockwise, 0 to 3.
+    pub quarter_turns: u32,
+    pub grey: i32,
+}
+
+/// Turns one photo into one finished page file, with the user's own values.
+///
+/// The same recipe as [`freepdf_scan_page`] and the same error contract; it replaces
+/// that call once the user has adjusted something. The page is written by
+/// [`save_page`], so it wears its real name only once it is whole.
+///
+/// Returns 0 on success. Anything else means nothing was written and `error` holds a
+/// sentence for the user.
+///
+/// # Safety
+/// Each path is either null or a NUL-terminated C string, `values` is either null or
+/// one readable [`FreepdfAdjustments`], and `error` is either null or `error_size`
+/// bytes the caller owns.
+#[no_mangle]
+pub unsafe extern "C" fn freepdf_adjust_page(
+    photo_path: *const c_char,
+    out_page_path: *const c_char,
+    values: *const FreepdfAdjustments,
+    error: *mut c_char,
+    error_size: usize,
+) -> i32 {
+    let photo = unsafe { path_from(photo_path, "The photo") };
+    let page = unsafe { path_from(out_page_path, "The page to write") };
+    // Copied here, next to the other reads of the caller's pointers, so nothing
+    // unsafe happens under catch_unwind.
+    let values = if values.is_null() {
+        Err("The app did not say what to adjust.".to_string())
+    } else {
+        Ok(unsafe { *values })
+    };
+
+    guard(error, error_size, move || {
+        adjust_page(&photo?, &page?, &values?)
+    })
 }
 
 /// Writes the finished pages as one PDF, in the order given.
@@ -126,6 +191,72 @@ fn scan_page(photo: &Path, page: &Path) -> Result<(), String> {
 
     img = sharpen(&img, SCAN_SHARPEN, 0)?;
     save_page(&img, page)
+}
+
+/// The same order of tools as [`scan_page`], with the user's values instead of the
+/// suggested ones, and the three tools the automatic run never uses: crop, turn, grey.
+///
+/// Two differences to [`scan_page`], both because the user chose the values here: a
+/// step that was switched off is skipped rather than suggested, and a step that fails
+/// - a crop box off the page, an angle that is not a quarter turn - is reported
+/// instead of quietly left alone. The crop box is in the page's pixels as the user
+/// sees it, so it is cut after the 3000 px cap, not before.
+fn adjust_page(photo: &Path, page: &Path, values: &FreepdfAdjustments) -> Result<(), String> {
+    let mut img = load_image(photo)?;
+
+    if values.pull_the_sheet_flat != 0 {
+        img = deskew(&img, corners_of(values))?;
+    }
+
+    if values.straighten_degrees != 0.0 {
+        img = straighten(&img, values.straighten_degrees)?;
+    }
+
+    if values.adjust_the_tones != 0 {
+        img = apply_levels(
+            &img,
+            Levels {
+                black: values.black,
+                white: values.white,
+            },
+        );
+    }
+
+    if img.width().max(img.height()) > LONGEST_EDGE {
+        img = img.thumbnail(LONGEST_EDGE, LONGEST_EDGE);
+    }
+
+    if values.sharpen_radius > 0.0 {
+        img = sharpen(&img, values.sharpen_radius, 0)?;
+    }
+
+    if values.crop_width != 0 && values.crop_height != 0 {
+        img = crop(
+            &img,
+            values.crop_x,
+            values.crop_y,
+            values.crop_width,
+            values.crop_height,
+        )?;
+    }
+
+    if values.quarter_turns % 4 != 0 {
+        img = rotate(&img, (values.quarter_turns % 4) * 90)?;
+    }
+
+    if values.grey != 0 {
+        img = to_grayscale(&img);
+    }
+
+    save_page(&img, page)
+}
+
+/// The eight numbers the app sends read as the four corners the engine takes.
+fn corners_of(values: &FreepdfAdjustments) -> [Point; 4] {
+    std::array::from_fn(|corner| Point {
+        x: values.corners[corner * 2],
+        y: values.corners[corner * 2 + 1],
+    })
 }
 
 /// Runs one piece of work and turns its outcome into what C understands: a status,
@@ -244,6 +375,76 @@ mod tests {
 
         assert_eq!(status, 1);
         assert_eq!(sentence(&error), "The engine hit an internal error.");
+    }
+
+    /// The adjusted case has to reach the page: the same photo, values the automatic
+    /// run would never choose, and a different page file out of it. A page that came
+    /// back byte for byte the same would mean the struct never arrived.
+    #[test]
+    fn adjusting_a_page_writes_something_else_than_the_automatic_run() {
+        let folder = std::env::temp_dir().join("freepdf_ffi_adjust");
+        std::fs::create_dir_all(&folder).expect("the temp folder");
+        let photo = folder.join("photo.jpg");
+        let automatic = folder.join("automatic.jpg");
+        let adjusted = folder.join("adjusted.jpg");
+        save_page(&a_photographed_sheet(), &photo).expect("the photo");
+        let values = FreepdfAdjustments {
+            corners: [0.0; 8],
+            pull_the_sheet_flat: 0,
+            straighten_degrees: 3.5,
+            black: [20, 20, 20],
+            white: [200, 200, 200],
+            adjust_the_tones: 1,
+            sharpen_radius: 4.0,
+            crop_x: 10,
+            crop_y: 10,
+            crop_width: 300,
+            crop_height: 200,
+            quarter_turns: 1,
+            grey: 1,
+        };
+
+        let scanned = unsafe {
+            freepdf_scan_page(c_path(&photo).as_ptr(), c_path(&automatic).as_ptr(), std::ptr::null_mut(), 0)
+        };
+        let status = unsafe {
+            freepdf_adjust_page(
+                c_path(&photo).as_ptr(),
+                c_path(&adjusted).as_ptr(),
+                &values,
+                std::ptr::null_mut(),
+                0,
+            )
+        };
+
+        assert_eq!(scanned, 0, "the automatic run failed");
+        assert_eq!(status, 0, "the adjusted run failed");
+        assert_ne!(
+            std::fs::read(&automatic).expect("the automatic page"),
+            std::fs::read(&adjusted).expect("the adjusted page"),
+            "the adjusted page is byte for byte the automatic one"
+        );
+    }
+
+    /// Paper with lines of writing on it, built here rather than read from
+    /// `test_images/`: no test reads a file it did not write itself.
+    fn a_photographed_sheet() -> core_engine::DynamicImage {
+        let (width, height) = (600u32, 400u32);
+        let mut img = core_engine::DynamicImage::new_rgb8(width, height);
+        // Written through the raw samples, because this crate keeps no `image`
+        // dependency of its own - the engine owns that version.
+        let samples: &mut [u8] = img.as_mut_rgb8().expect("an rgb image");
+        for pixel in 0..(width * height) as usize {
+            let (x, y) = (pixel as u32 % width, pixel as u32 / width);
+            let writing = y % 40 < 6 && (30..width - 30).contains(&x);
+            let colour = if writing { [30, 30, 30] } else { [230, 227, 218] };
+            samples[pixel * 3..pixel * 3 + 3].copy_from_slice(&colour);
+        }
+        img
+    }
+
+    fn c_path(path: &Path) -> std::ffi::CString {
+        std::ffi::CString::new(path.to_str().expect("a readable path")).expect("no NUL in the path")
     }
 
     /// The buffer is the app's, and the sentence is whatever a path made it. Writing

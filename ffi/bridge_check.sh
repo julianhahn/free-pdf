@@ -109,7 +109,25 @@ let size = pixelSize(of: page)
 precondition(max(size.width, size.height) == 3000,
              "the page is \(size.width)x\(size.height), so the 3000 px cap did not hold")
 
-// 5 - and the pages become a PDF. Two of them, so the array really is walked.
+// 5 - the adjusted case, which is the only place a struct crosses. A quarter turn
+// and a crop, so the page cannot come back the shape the automatic run gives it.
+let adjusted = work.appendingPathComponent("0002.jpg")
+var values = FreepdfAdjustments()
+values.straighten_degrees = 2.0
+values.sharpen_radius = 1.0
+values.crop_width = 1200
+values.crop_height = 800
+values.quarter_turns = 1
+values.grey = 1
+let turned = call { error, size in
+    freepdf_adjust_page(photo.path, adjusted.path, &values, error, size)
+}
+precondition(turned.status == 0, "adjusting the photo failed: \(turned.message)")
+let turnedSize = pixelSize(of: adjusted)
+precondition(turnedSize.width == 800 && turnedSize.height == 1200,
+             "the adjusted page is \(turnedSize.width)x\(turnedSize.height), so crop and turn did not happen")
+
+// 6 - and the pages become a PDF. Two of them, so the array really is walked.
 let pdf = work.appendingPathComponent("scan.pdf")
 // Written exactly as the app's wrapper has to write it: `strdup(...)!` so the copies
 // are not optional, and `UnsafePointer<CChar>` spelled out, because `UnsafePointer($0)`

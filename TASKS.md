@@ -40,15 +40,15 @@ that cannot open a browser.
 | 2 | Fold the four proposed components into the system — DONE | - | npx storybook build |
 | 3 | Fix the five delivered screens — DONE | 1, 2 | npx storybook build |
 | 4 | Collect the missing words, get them from Julian — DONE | - | Julian answers |
-| 5 | Storybook: flows 1-2, the scans list | 1, 2, 3 | npx storybook build |
-| 6 | Storybook: flow 3, the camera | 5 | npx storybook build |
-| 7 | Storybook: flow 4, the scan runs | 5 | npx storybook build |
-| 8 | Storybook: flow 5, the pages | 5 | npx storybook build |
-| 9 | Storybook: flow 6, adjust | 8 | npx storybook build |
-| 10 | Storybook: flow 7, done | 5 | npx storybook build |
-| 11 | Storybook: flows 8-9, one more page | 6, 8 | npx storybook build |
+| 5 | Storybook: flows 1-2, the scans list — DONE | 1, 2, 3 | npx storybook build |
+| 6 | Storybook: flow 3, the camera — DONE | 5 | npx storybook build |
+| 7 | Storybook: flow 4, the scan runs — DONE | 5 | npx storybook build |
+| 8 | Storybook: flow 5, the pages — DONE | 5 | npx storybook build |
+| 9 | Storybook: flow 6, adjust — DONE | 8 | npx storybook build |
+| 10 | Storybook: flow 7, done — DONE | 5 | npx storybook build |
+| 11 | Storybook: flows 8-9, one more page — DONE | 6, 8 | npx storybook build |
 | 12 | Julian approves the screens | 5-11 | Julian says yes |
-| 13 | Widen the C boundary for the adjusted case | - | cargo test --workspace, bash ffi/bridge_check.sh |
+| 13 | Widen the C boundary for the adjusted case — DONE | - | cargo test --workspace, bash ffi/bridge_check.sh |
 | 14 | iOS: the scans list | 12 | bash ios/check/run.sh, by hand |
 | 15 | iOS: the camera | 14 | bash ios/check/scan_check.sh |
 | 16 | iOS: the scan runs | 14 | bash ios/check/scan_check.sh |

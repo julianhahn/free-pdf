@@ -1,15 +1,18 @@
 # ffi
 
-The one library file the iPhone app links into itself, and the two C functions it
+The one library file the iPhone app links into itself, and the three C functions it
 calls. Nothing else belongs in here: no screens, no storage, no second way of doing
 something the engine already does.
 
 ## The boundary is the design
 
-What crosses: C strings, a size, an int32. What never crosses: a pixel buffer, an
-image handle, an allocation the caller has to free, a struct, a callback. Adding any
-of those means the app has to manage the engine's memory, and a leak or a double free
-then lives on the phone rather than in a test.
+What crosses: C strings, a size, an int32, and `FreepdfAdjustments` - one read-only
+struct of numbers, copied out at the boundary, holding no pointer. It is what makes
+the adjusted case **one** function instead of seven, Julian's decision of 2026-08-12
+(`user-flows.md` DECISIONS point 12). What never crosses: a pixel buffer, an image
+handle, an allocation the caller has to free, a callback. Adding any of those means
+the app has to manage the engine's memory, and a leak or a double free then lives on
+the phone rather than in a test.
 
 - **Every entry point goes through `guard`.** Unwinding out of an `extern "C"`
   function is undefined behaviour, so `catch_unwind` is not error handling, it is the
@@ -29,6 +32,12 @@ then lives on the phone rather than in a test.
   crash.
 
 ## The order of tools lives here, not in the engine
+
+`adjust_page` is the same chain with the user's own values, plus the three tools the
+automatic run never uses: crop, turn, grey. Two rules of its own: a step switched off
+is skipped, and a step that fails - a crop box off the page - is reported rather than
+quietly left alone, because the user chose that value. The crop box is in the page's
+pixels as the user sees them, so it is cut after the 3000 px cap.
 
 `scan_page` is the whole chain a photo of a document wants: deskew, straighten,
 levels, cap, sharpen, write. It sits in this crate because the engine offers single
@@ -59,8 +68,9 @@ It builds the host library and compiles a Swift file against
 same mechanism as Xcode's bridging header setting - so the boundary is really
 crossed, without a simulator or Xcode. Then: a missing photo names the file, a null
 path still returns a sentence, a caller that passes no error buffer does not crash,
-and a generated 3200x2400 photo comes out as a 3000 px page and two of those come out
-as a PDF ending in `%%EOF`.
+a generated 3200x2400 photo comes out as a 3000 px page, the same photo through
+`freepdf_adjust_page` comes out cropped and turned, and two pages come out as a PDF
+ending in `%%EOF`.
 
 Two things about it are load bearing:
 
@@ -94,5 +104,5 @@ rustup target add aarch64-apple-ios aarch64-apple-ios-sim
 
 Xcode does not know about cargo, so a forgotten `build-ios.sh` links yesterday's
 Rust. The four build settings on the app target, and the Swift wrapper that calls
-these two functions, are in
+these three functions, are in
 [plan section 5](../iphone-client-plan.md#5-the-c-surface) until `ios/` exists.

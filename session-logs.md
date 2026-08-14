@@ -8,6 +8,18 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-14 - the adjusted case can cross to Swift
+
+TASKS.md task 13. `freepdf_adjust_page` is the third C function: photo path, page path,
+and one read-only `FreepdfAdjustments` struct - the corners and the flatten switch, the
+angle, the black and white points and their switch, the sharpen radius, the crop box, the
+quarter turns, grey. Same recipe as `scan_page`, plus crop, turn and grey, which the
+automatic run never uses. A switched-off step is skipped; a step the user set wrong (a
+crop box off the page) is reported, not silently left alone.
+The crop box is in the page's pixels after the 3000 px cap, because that is the picture
+the user is looking at. `bridge_check.sh` now crosses the struct from Swift as well.
+Next: task 18 (iOS Adjust) is unblocked once Julian approves the screens in task 12.
+
 ## 2026-08-12 - the client can reach almost none of the engine, and now there is a plan for it
 
 The iOS client calls one fixed chain and nothing else: sixteen engine capabilities - grey,

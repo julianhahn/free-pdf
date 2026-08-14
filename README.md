@@ -27,7 +27,7 @@ Every command in this file runs from the repository root, `/Users/julianhahn/fre
 cargo test --workspace
 ```
 
-44 green on a Mac, 41 elsewhere - three tests need `sips` for HEIC. Then read
+45 green on a Mac, 42 elsewhere - three tests need `sips` for HEIC. Then read
 [Next steps](#next-steps): it is the one place that says what is being built right now, and
 every session leaves it correct.
 
@@ -83,7 +83,7 @@ The order from here, and nothing after step 1 can start before it:
 | # | What | Who |
 | --- | --- | --- |
 | 1 | **Approve the remaining components in Storybook**, one by one. Three stand there today - scan row, buttons, adjust; the rest of [`components.md`](./client-guide-design-system/components.md) still has to be drawn and looked at. | Julian, by looking |
-| 2 | Widen the C boundary: one new function taking the photo path, the page path and a struct of all the values, so the adjusted case can cross it. Seven functions is the thing being avoided. | engine + ffi |
+| 2 | **done** - the C boundary is wide enough for Adjust: `freepdf_adjust_page` takes the photo path, the page path and one `FreepdfAdjustments` struct of all the values. One function, not seven. | engine + ffi |
 | 3 | Rebuild the iPhone client against the approved components and the flows - which is also when the sixteen capabilities get their controls. | client agent |
 
 ```sh
@@ -102,7 +102,7 @@ own iCloud container is gone, and a `ShareLink` is the whole export
 | # | State | What gets built | Check |
 | --- | --- | --- | --- |
 | 1 | **done** | `save_page`, `pages_to_pdf`, `place(...)` in the engine. | `cargo test --workspace`, and `--scan` on any photo still produces a PDF |
-| 2 | **done** | `ffi/`: one `staticlib` the app links into itself, the hand-written `ffi/include/freepdf.h`, and two C functions, `freepdf_scan_page` and `freepdf_pages_to_pdf`. ([rules](./ffi/AGENTS.md)) | `bash ffi/bridge_check.sh` -> "bridge ok" (~1 s, host architecture) |
+| 2 | **done** | `ffi/`: one `staticlib` the app links into itself, the hand-written `ffi/include/freepdf.h`, and three C functions: `freepdf_scan_page`, `freepdf_adjust_page` and `freepdf_pages_to_pdf`. ([rules](./ffi/AGENTS.md)) | `bash ffi/bridge_check.sh` -> "bridge ok" (~1 s, host architecture) |
 | 3 | **done** | `ios/FreePDF/Scan.swift` plus `ios/check/`: the folder layout, the derived step, the sweep. Foundation only. ([rules](./ios/AGENTS.md)) | `bash ios/check/run.sh` -> "resume ok" (~2 s, no Xcode) |
 | 4 | **done** | The Xcode project and the app: list, flow, the scan loop, the two FFI calls, and the camera stand-in with its `-autofake` launch argument. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` -> "scan ok" (~3 min, "iPhone 17 Pro" simulator) |
 | 5 | **done** | `ios/FreePDF/CameraView.swift`: the session, the preview, the shutter and `PageWriter`. The stand-in lost its button and kept its drawing. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` still says "scan ok"; the camera itself is by hand: shoot 5 pages, force-quit while aiming at 6, relaunch - the row reads "5 pages - keep shooting" and the counter says "Page 6" |
