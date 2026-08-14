@@ -46,11 +46,10 @@ const CameraFrame = ({ page, pages, writing = false, error = null, note = null }
     >
       {error ? <ErrorLine>{error}</ErrorLine> : null}
       <Viewfinder note={note}>
+        {/* The page number is the app bar title and nothing else: the delivered
+            document also put a counter over the picture, user-flows.md §4 does
+            not, and Julian chose the title. */}
         <Preview />
-        {/* The counter over the picture, inset space-3 from the top-left corner (S7 spec). */}
-        <div style={{ position: "absolute", top: "var(--space-3)", left: "var(--space-3)" }}>
-          <PageCounter onDark>{`Page ${page}`}</PageCounter>
-        </div>
       </Viewfinder>
       <div style={{ display: "grid", placeItems: "center", paddingTop: "var(--space-2)" }}>
         <Shutter
@@ -95,11 +94,6 @@ export const S8Counter = {
       <div style={{ display: "flex", gap: "var(--space-3)" }}>
         {[1, 7, 40].map((n) => (
           <PageCounter key={n}>{`Page ${n}`}</PageCounter>
-        ))}
-      </div>
-      <div style={{ display: "flex", gap: "var(--space-3)", background: "var(--viewfinder)", padding: "var(--space-4)", borderRadius: "var(--radius-md)" }}>
-        {[1, 7, 40].map((n) => (
-          <PageCounter key={n} onDark>{`Page ${n}`}</PageCounter>
         ))}
       </div>
     </div>

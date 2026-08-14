@@ -1,6 +1,6 @@
 import React from "react";
 import { AppBar, Screen, StatusLine } from "@ds/ui_kits/iphone/Chrome.jsx";
-import { Button, PageCounter, Shutter, Viewfinder } from "../ds.js";
+import { Button, Shutter, Viewfinder } from "../ds.js";
 
 /* Flow 8, one more page on a finished scan: S39 of "FreePDF Flow 8-9.dc.html".
    Same phone frame and same camera screen as Flow3Camera.stories.jsx; only the
@@ -46,10 +46,8 @@ export const S39ShootAnotherPage = {
         }
       >
         <Viewfinder note="The PDF was removed. It is made again after this page.">
+          {/* The page number is the app bar title only — see Flow3Camera. */}
           <Preview />
-          <div style={{ position: "absolute", top: "var(--space-3)", left: "var(--space-3)" }}>
-            <PageCounter onDark>Page 41</PageCounter>
-          </div>
         </Viewfinder>
         <div style={{ display: "grid", placeItems: "center", paddingTop: "var(--space-2)" }}>
           <Shutter label="Photograph page 41" />
