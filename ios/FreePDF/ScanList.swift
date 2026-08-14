@@ -24,18 +24,21 @@ struct ScanList: View {
                 // outside the List because the empty state covers the List, and S2 of the
                 // flows document is exactly the empty list carrying this sentence.
                 Text(message)
-                    .foregroundStyle(.red)
+                    .font(Token.Face.body(Token.Size.textSub))
+                    .foregroundStyle(Token.Palette.destructive)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
             }
             List {
             ForEach(scans, id: \.url) { scan in
                 NavigationLink(value: scan) {
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: Token.Size.space1) {
                         Text(scan.title)
+                            .font(Token.Face.heading(Token.Size.textRowTitle))
+                            .foregroundStyle(Token.Palette.text)
                         Text(scan.subtitle)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .font(Token.Face.body(Token.Size.textSub))
+                            .foregroundStyle(Token.Palette.textMuted)
                     }
                 }
                 .swipeActions {
