@@ -412,6 +412,18 @@ Storybook story for it. Today's app is seven files in
 `/Users/julianhahn/free-pdf/ios/FreePDF/`: `FreePDFApp.swift`, `Scan.swift`, `ScanList.swift`,
 `ScanFlow.swift`, `CameraView.swift`, `Engine.swift`, `FakeShoot.swift`.
 
+**The tokens.** No colour, size, spacing step or radius is written into a screen, and no
+SwiftUI default stands in for one - not `.red`, not `.footnote`, not `.secondary`, not a bare
+`spacing:` number. They come from `Token` in `/Users/julianhahn/free-pdf/ios/FreePDF/Tokens.swift`,
+which is **generated** out of `/Users/julianhahn/free-pdf/design/system/tokens/*.css` by
+`node design/system/tokens/build-tokens.mjs`. Never edit `Tokens.swift`; change the CSS and run
+the generator. A missing token is a token to add to the CSS, not a number to type.
+
+`ScanList.swift` was moved over in task 14. The four older screens - `ScanFlow.swift`,
+`CameraView.swift`, `FakeShoot.swift`, `FreePDFApp.swift` - still carry system defaults.
+**Julian's decision: each of tasks 15 to 19 moves the screen it touches over as it goes**, so
+there is no separate cleanup task and no screen is rewritten twice.
+
 **What never changes, whatever the screen.** The files are the only state and the step is read
 off them every time. No manifest. Every file earns its name by rename after a complete write.
 No network call of any kind. Every failure sentence comes from the engine and is printed
