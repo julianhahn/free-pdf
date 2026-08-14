@@ -231,3 +231,56 @@ precondition(exists(halfMade.pageDirectory),
              "page/ is still missing, so this scan can never be scanned")
 precondition(halfMade.state == .shooting, "the repaired scan is \(halfMade.state)")
 precondition(halfMade.photos == [1], "the sweep took the photo with it: \(halfMade.photos)")
+
+// MARK: - 13. The seven sentences the list rows say
+
+// Five states, seven sentences: one page reads differently from eight, and a pdfDone
+// scan whose photos are gone says so. The row is the only thing telling the user where
+// tapping lands him, so a wrong sentence sends him to the wrong screen in his head.
+func rowReads(_ scan: Scan, _ expected: String) {
+    precondition(scan.subtitle == expected,
+                 "the row says \"\(scan.subtitle)\", not \"\(expected)\"")
+}
+
+let rows = workspace.appendingPathComponent("Rows", isDirectory: true)
+rowReads(newScan(in: rows), "No pages yet")
+
+let oneShot = newScan(in: rows)
+shoot(oneShot, [1])
+rowReads(oneShot, "1 page — keep shooting")
+
+let eightShot = newScan(in: rows)
+shoot(eightShot, Array(1...8))
+rowReads(eightShot, "8 pages — keep shooting")
+
+let midScan = newScan(in: rows)
+shoot(midScan, Array(1...40))
+scanned(midScan, Array(1...12))
+rowReads(midScan, "12 of 40 pages scanned")
+
+let checkable = newScan(in: rows)
+shoot(checkable, Array(1...40))
+scanned(checkable, Array(1...40))
+rowReads(checkable, "40 pages — ready to check")
+
+let pdfDone = newScan(in: rows)
+shoot(pdfDone, Array(1...40))
+scanned(pdfDone, Array(1...40))
+write("%PDF", to: pdfDone.pdf)
+rowReads(pdfDone, "40 pages — PDF ready")
+
+pdfDone.deletePhotos()
+rowReads(pdfDone, "40 pages — PDF ready, photos deleted")
+
+// MARK: - 14. What the delete dialog says goes
+
+// The question is the only undo there is - there is no trash for a sandbox folder - so
+// it names this scan's own counts, and each count carries its own plural.
+precondition(pdfDone.deleteBody == "40 pages, the PDF and 0 photos go. This cannot be undone.",
+             "the dialog says \"\(pdfDone.deleteBody)\"")
+
+let single = newScan(in: rows)
+shoot(single, [1])
+scanned(single, [1])
+precondition(single.deleteBody == "1 page, the PDF and 1 photo go. This cannot be undone.",
+             "the dialog says \"\(single.deleteBody)\"")

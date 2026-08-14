@@ -47,7 +47,7 @@ that cannot open a browser.
 | 9 | Storybook: flow 6, adjust — DONE | 8 | npx storybook build |
 | 10 | Storybook: flow 7, done — DONE | 5 | npx storybook build |
 | 11 | Storybook: flows 8-9, one more page — DONE | 6, 8 | npx storybook build |
-| 12 | Julian approves the screens | 5-11 | Julian says yes |
+| 12 | Julian approves the screens — DONE | 5-11 | Julian says yes |
 | 13 | Widen the C boundary for the adjusted case — DONE | - | cargo test --workspace, bash ffi/bridge_check.sh |
 | 14 | iOS: the scans list | 12 | bash ios/check/run.sh, by hand |
 | 15 | iOS: the camera | 14 | bash ios/check/scan_check.sh |
@@ -497,6 +497,14 @@ does, `user-flows.md` wins.
    `user-flows.md` section 5 shows only a back arrow reading "Scans".
 4. **Words that do not exist yet.** Seven sentences are placeholders written by the designer -
    they are gathered in task 4 and must not be shipped as they stand.
+
+**Decided on 2026-08-14, not open any more.**
+
+5. **The page number on the camera screen.** It is the app bar title and nothing else. The
+   counter over the viewfinder is gone from flow 3 and flow 8. Built that way already.
+6. **"New scan" on the scans list.** The delivered `ScansScreen.jsx` puts it in a footer, the
+   flows put it in the app bar. The stories follow the app bar. Julian judged this too small
+   to chase, so the old kit screen stays as it is - decided not to chase, not open.
 
 ## The delivered design system copy
 

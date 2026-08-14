@@ -12,45 +12,78 @@ struct ScanList: View {
     @State private var scans: [Scan] = []
     @State private var message: String?
 
+    /// The scan the swipe asked to delete. Nothing is removed until it is confirmed:
+    /// there is no trash for a sandbox folder, so the only undo is the question.
+    @State private var pendingDelete: Scan?
+
     var body: some View {
-        List {
+        VStack(spacing: 0) {
             if let message {
-                Text(message).foregroundStyle(.red)
+                // The system's own sentence, printed unchanged, above the list. It goes
+                // at the next reload, because the next tap is the answer to it. It sits
+                // outside the List because the empty state covers the List, and S2 of the
+                // flows document is exactly the empty list carrying this sentence.
+                Text(message)
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
             }
+            List {
             ForEach(scans, id: \.url) { scan in
                 NavigationLink(value: scan) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(scan.title)
-                        Text(subtitle(scan))
+                        Text(scan.subtitle)
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
                 }
+                .swipeActions {
+                    Button("Delete", role: .destructive) { pendingDelete = scan }
+                }
             }
-            .onDelete { rows in
-                rows.map { scans[$0] }.forEach { $0.delete() }
-                reload()
             }
-        }
-        .overlay {
-            if scans.isEmpty {
-                ContentUnavailableView(
-                    "No scans yet",
-                    systemImage: "doc.text.viewfinder",
-                    description: Text("Tap New scan and photograph the pages, one after "
-                                      + "another. You can stop whenever you like."))
+            .overlay {
+                if scans.isEmpty {
+                    // No action here: New scan lives in the toolbar and nowhere else,
+                    // as user-flows.md section 1 draws it.
+                    ContentUnavailableView {
+                        Label("No scans yet", systemImage: "doc.text.viewfinder")
+                    } description: {
+                        Text("Tap New scan and photograph the pages, one after another. "
+                             + "You can stop whenever you like.")
+                    }
+                }
             }
         }
         .navigationTitle("Scans")
         .toolbar {
-            Button("New scan") {
-                // Out of storage on the very first tap is the one way this fails, and
-                // its sentence is already written for the screen.
-                do { open = [try Scan.create()] }
-                catch { message = error.localizedDescription }
+            Button("New scan", action: newScan)
+        }
+        .alert("Delete this scan?", isPresented: confirming, presenting: pendingDelete) { scan in
+            Button("Delete scan", role: .destructive) {
+                scan.delete()
+                reload()
             }
+            Button("Cancel", role: .cancel) {}
+        } message: { scan in
+            Text(scan.deleteBody)
         }
         .onAppear(perform: reload)
+    }
+
+    /// Open while a scan is waiting to be confirmed; dismissing clears it, so the swiped
+    /// row goes back to being an ordinary row.
+    private var confirming: Binding<Bool> {
+        Binding(get: { pendingDelete != nil },
+                set: { if !$0 { pendingDelete = nil } })
+    }
+
+    private func newScan() {
+        // Out of storage on the very first tap is the one way this fails, and its
+        // sentence is already written for the screen.
+        do { open = [try Scan.create()] }
+        catch { message = error.localizedDescription }
     }
 
     private func reload() {
@@ -58,23 +91,4 @@ struct ScanList: View {
         message = nil
     }
 
-    /// What the row says under the date. Five states, and each one tells the user where
-    /// tapping it will land him.
-    private func subtitle(_ scan: Scan) -> String {
-        let photos = scan.photos.count
-        let pages = scan.pages.count
-        switch scan.state {
-        case .empty:    return "No pages yet"
-        case .shooting: return "\(pageCount(photos)) - keep shooting"
-        case .scanning: return "\(pages) of \(pageCount(photos)) scanned"
-        case .ready:    return "\(pageCount(pages)) - ready to check"
-        case .done:     return "\(pageCount(pages)) - PDF ready"
-                               + (photos == 0 ? ", photos deleted" : "")
-        }
-    }
-}
-
-/// `1 page`, `8 pages`. Every screen that counts pages says it the same way.
-func pageCount(_ number: Int) -> String {
-    "\(number) page\(number == 1 ? "" : "s")"
 }

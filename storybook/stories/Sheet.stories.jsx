@@ -5,7 +5,6 @@ export default {
   component: Sheet,
   args: {
     title: "11 Aug 2026, 20:14",
-    // placeholder, awaiting task 4: no copy table gives the close wording
     closeLabel: "Close the PDF",
     style: { width: 700, height: 420, position: "relative" },
   },

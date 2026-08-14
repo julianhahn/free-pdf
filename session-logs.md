@@ -8,6 +8,22 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-14 - every flow has a screen, and Julian approved them
+
+TASKS.md tasks 5 to 11 and 13 are built and committed: the scans list, the camera, the scan
+run, the pages, adjust, done, and the one-more-page screen, as stories in
+`storybook/stories/`. Julian looked at the built Storybook and ticked off task 12, so the
+iOS tasks 14 to 19 are unblocked.
+
+One bug only the browser could show: the `PageStrip` rail wrapped its tiles at 40 pages.
+Found by measuring the tiles' bounding boxes in a headless browser, not by reading the
+build log - a green build says nothing about the layout. Fixed with a `minWidth` on the tile.
+
+Two decisions from Julian, written into TASKS.md "Open questions" as decided: the page
+number on the camera screen is the app bar title only, the counter over the viewfinder is
+gone from flows 3 and 8; and "New scan" sits in the app bar as the flows draw it, so the old
+`ScansScreen.jsx` footer stays wrong on purpose - too small to chase.
+
 ## 2026-08-14 - the adjusted case can cross to Swift
 
 TASKS.md task 13. `freepdf_adjust_page` is the third C function: photo path, page path,

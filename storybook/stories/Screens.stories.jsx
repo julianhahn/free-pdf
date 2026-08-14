@@ -77,10 +77,12 @@ export const PagesPhotoGone = {
 export const PagesAllGood = { render: phone(PagesScreen, { pages: GOOD_PAGES }) };
 export const PagesMenuChecking = { render: phone(PagesScreen, { menuOpen: true }) };
 export const PagesMenuDone = { render: phone(PagesScreen, { menuOpen: true, done: true }) };
-/* No PagesSkippedNote story: the sentence naming the pages an apply-to-all
-   skipped (user-flows 7b.4, design S32) exists in no copy table, so `skippedNote`
-   has nothing to pass. Flagged for task 4.
-   No PagesMakePdfHidden story either: Make PDF is derived now — the default page
+export const PagesSkippedNote = {
+  render: phone(PagesScreen, {
+    skippedNote: "Pages 4, 9 and 18 were not changed, because their photos are missing.",
+  }),
+};
+/* No PagesMakePdfHidden story either: Make PDF is derived now — the default page
    list already hides it (page 5 is refused), which the Pages story shows.
    No PagesMakePdfFailed story: the failure sentence is the engine's own
    (user-flows 8.5) and no copy table has one. Flagged for task 4. */
@@ -97,24 +99,19 @@ export const AdjustEdgesWarning = {
 };
 export const AdjustCrop = { render: phone(AdjustScreen, { tool: "Crop" }) };
 export const AdjustCropRefused = {
-  /* The refusal sentence exists in no copy table (user-flows 7a only says a box that
-     does not fit is refused). Task 4 owns the wording; this is a placeholder. */
   render: phone(AdjustScreen, {
     tool: "Crop",
     cropRefused: true,
-    cropRefusedText: "[task 4: the crop refusal sentence]",
+    cropRefusedText: "The crop falls outside the page. Move a corner back in.",
   }),
 };
 export const AdjustStraighten = { render: phone(AdjustScreen, { tool: "Straighten" }) };
 export const AdjustBrightness = {
-  /* user-flows 7a describes "two sliders, black point and white point, plus an on/off"
-     in prose only; no copy table names them, and the on/off is not the tool name
-     "Brightness". Task 4 owns all three words — placeholders here. */
   render: phone(AdjustScreen, {
     tool: "Brightness",
-    blackPointLabel: "[task 4: black point label]",
-    whitePointLabel: "[task 4: white point label]",
-    levelsLabel: "[task 4: the brightness on/off label]",
+    blackPointLabel: "Black point",
+    whitePointLabel: "White point",
+    levelsLabel: "Adjust the tones",
   }),
 };
 export const AdjustSharpen = { render: phone(AdjustScreen, { tool: "Sharpen" }) };
@@ -130,9 +127,9 @@ export const AdjustApplyingAll = { render: phone(AdjustScreen, { applyingAll: tr
 
 export const Done = { render: phone(DoneScreen) };
 export const DoneNameTyped = { render: phone(DoneScreen, { name: "Insurance letter" }) };
-/* No story restores a reader-sheet title or close wording: §9.1 gives the sheet
-   neither, and no copy table has them. Flagged for task 4 (the design system's own
-   Sheet still defaults closeLabel to "Close the PDF" — task 4's call, not a screen's). */
+/* No story restores a reader-sheet title: §9.1 gives the sheet none. The close
+   wording is the copy table's "Close the PDF" (user-flows 9.1), which the design
+   system's Sheet already defaults to. */
 export const DoneNameFocused = { render: phone(DoneScreen, { focusName: true }) };
 /* No story passes `photosGroupLabel`: no copy table names the label over the
    photo-deletion group. Flagged for task 4. */

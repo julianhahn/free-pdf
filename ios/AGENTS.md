@@ -127,6 +127,33 @@ redraw on, refreshed at every moment the files change, never a second truth.
   every time the user leaves a scan, and a sweep at that moment could delete the `.part`
   file the engine is writing right then.
 
+### The list
+
+Newest first straight from the folder names, every row read off the files each draw. Two
+rules of its own:
+
+- **Nothing is deleted until the question is answered.** There is no trash for a sandbox
+  folder, so the swipe only asks; `Cancel` puts the row back and takes nothing. The
+  question names this scan's own counts, and pages and photos each carry their own plural.
+- **The seven sentences live on `Scan`, not on the screen.** Five states, seven sentences -
+  one page reads differently from eight, and a finished scan whose photos are gone says so.
+  They sit in `Scan.swift` because that is the half of the app `run.sh` can compile, and
+  three mutations were run against them: the plural dropped, the photos-deleted tail
+  dropped, and the photo plural dropped. All three aborted on the line meant to catch them.
+
+The error line is the one failure this screen has - `New scan` could not make the folder,
+which in practice is a full iPhone. The system's own sentence, printed unchanged above the
+list, gone at the next reload.
+
+The eleven sentences this screen prints — the seven subtitles and the four words of the
+delete question, English and German — are the copy table in
+[`../user-flows.md`](../user-flows.md) section 2. They are not copied here: a second copy
+drifts, and this one already had the wrong dash before it was a day old.
+
+The row draws no page thumbnail, where the delivered flow document draws one. A thumbnail
+means decoding a JPEG per row on the screen that opens first, and an empty scan has none to
+decode - **not built, and Julian's to overrule**.
+
 ### The drain
 
 One page at a time, from the first photo that has no page file, until there is none

@@ -9,6 +9,11 @@
 
 import Foundation
 
+/// `1 page`, `8 pages`. Every screen that counts pages says it the same way.
+func pageCount(_ number: Int) -> String {
+    "\(number) page\(number == 1 ? "" : "s")"
+}
+
 /// One scan: a folder of photos, the pages made from them, and the finished PDF.
 ///
 /// `Hashable` because the list screen pushes a scan onto the navigation stack, and it
@@ -98,6 +103,33 @@ struct Scan: Hashable {
         // gets the progress line instead.
         if pages.isEmpty { return .shooting }
         return unscanned.isEmpty ? .ready : .scanning
+    }
+
+    /// What the row says under the date. Five states - seven sentences, because a scan of
+    /// one page and a finished scan without its photos each read differently - and every
+    /// one of them tells the user where tapping it will land him.
+    ///
+    /// It lives here rather than on the screen so that `check/run.sh` can read it back:
+    /// the plurals and the seventh sentence are the parts that break silently.
+    var subtitle: String {
+        let photos = photos.count
+        let pages = pages.count
+        switch state {
+        case .empty:    return "No pages yet"
+        case .shooting: return "\(pageCount(photos)) — keep shooting"
+        case .scanning: return "\(pages) of \(pageCount(photos)) scanned"
+        case .ready:    return "\(pageCount(pages)) — ready to check"
+        case .done:     return "\(pageCount(pages)) — PDF ready"
+                               + (photos == 0 ? ", photos deleted" : "")
+        }
+    }
+
+    /// What the delete dialog says under its question. It counts off the disk, so the
+    /// question is about this scan and not about scans in general.
+    var deleteBody: String {
+        let photos = photos.count
+        return "\(pageCount(pages.count)), the PDF and "
+             + "\(photos) photo\(photos == 1 ? "" : "s") go. This cannot be undone."
     }
 
     // MARK: - Making and finding scans
