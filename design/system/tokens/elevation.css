@@ -4,7 +4,8 @@
 --shadow-sm:0 1px 2px rgba(45,43,43,.14);
 --shadow-md:0 3px 10px rgba(45,43,43,.16);
 --shadow-lg:0 12px 32px rgba(45,43,43,.22);
---hairline:1px solid var(--divider);
+--hairline-w:1px;
+--hairline:var(--hairline-w) solid var(--divider);
 }
 [data-theme="dark"]{
 --shadow-sm:0 1px 2px rgba(0,0,0,.5);

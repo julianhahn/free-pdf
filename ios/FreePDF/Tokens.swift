@@ -106,6 +106,12 @@ enum Token {
         /// --viewfinder
         static let viewfinder = Color(light: UIColor(red: 0.1059, green: 0.102, blue: 0.098, alpha: 1),
                              dark: UIColor(red: 0.0745, green: 0.0706, blue: 0.0667, alpha: 1))
+        /// --on-dark-muted
+        static let onDarkMuted = Color(light: UIColor(red: 0.9725, green: 0.9569, blue: 0.9569, alpha: 0.72),
+                              dark: UIColor(red: 0.9725, green: 0.9569, blue: 0.9569, alpha: 0.72))
+        /// --shutter-disc-edge
+        static let shutterDiscEdge = Color(light: UIColor(red: 0.1765, green: 0.1686, blue: 0.1686, alpha: 0.18),
+                                  dark: UIColor(red: 0.1765, green: 0.1686, blue: 0.1686, alpha: 0.18))
         /// --hover-accent
         static let hoverAccent = Color(light: UIColor(red: 0.7137, green: 0.5098, blue: 0.2078, alpha: 0.12),
                               dark: UIColor(red: 0.8824, green: 0.6784, blue: 0.4, alpha: 0.12))
@@ -186,6 +192,8 @@ enum Token {
         static let textMeta: CGFloat = 11
         /// --text-kicker
         static let textKicker: CGFloat = 10
+        /// --hairline-w
+        static let hairlineW: CGFloat = 1
         /// --shutter-size
         static let shutterSize: CGFloat = 72
         /// --shutter-ring
@@ -218,6 +226,8 @@ enum Token {
         static let iconRow: CGFloat = 18
         /// --icon-empty
         static let iconEmpty: CGFloat = 30
+        /// --viewfinder-corner
+        static let viewfinderCorner: CGFloat = 26
     }
 
     enum Number {
@@ -237,6 +247,10 @@ enum Token {
         static let weightHeading: CGFloat = 600
         /// --weight-body
         static let weightBody: CGFloat = 400
+        /// --viewfinder-corner-inset
+        static let viewfinderCornerInset: CGFloat = 0.06
+        /// --page-ratio
+        static let pageRatio: CGFloat = 0.75
     }
 
     enum Face {

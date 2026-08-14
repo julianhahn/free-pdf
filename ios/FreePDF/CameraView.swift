@@ -8,6 +8,9 @@
 //
 //  No image work happens here ([`../AGENTS.md`](../AGENTS.md)) - the JPEG the camera
 //  hands over is written exactly as it came, EXIF and all, and the engine does the rest.
+//
+//  Every colour, size and step comes from `Token`, which is generated out of
+//  design/system/tokens/*.css. No number is written here.
 
 import AVFoundation
 import SwiftUI
@@ -38,51 +41,42 @@ struct CameraView: View {
     /// The user said no to the camera. There is nothing to shoot then, so the screen
     /// becomes the sentence and the way to Settings.
     @State private var denied = false
+    /// A sentence about the screen rather than about one page: no camera, a session that
+    /// would not start, a stand-in that would not draw. It takes the whole screen over
+    /// and offers nothing, because there is nothing to press.
+    @State private var blocked: String?
 
     /// The page the next shot lands on, read off the disk rather than counted.
     private var number: Int { slot ?? scan.nextPage }
 
     var body: some View {
-        if denied {
-            permission
-        } else {
-            viewfinder
-        }
-    }
-
-    // MARK: - Shooting
-
-    private var viewfinder: some View {
-        VStack(spacing: 20) {
-            preview
-
-            if let message {
-                Text(message).font(.footnote).foregroundStyle(.red)
-            }
-
-            Button(action: shoot) {
-                Image(systemName: "circle.circle.fill").font(.system(size: 68))
-            }
-            .disabled(busy)
-            .accessibilityLabel("Photograph page \(number)")
-
-            // A retake is one shot, so it takes itself back to the pages afterwards.
-            if slot == nil {
-                Button(photos.isEmpty ? "Photograph at least one page"
-                                      : "Scan \(pageCount(photos.count))") { finished() }
-                    // `busy` for the same reason the shutter carries it, and it matters
-                    // more here: leaving while a photo is in flight tears this screen
-                    // down, the session stops, the capture is aborted - and the sentence
-                    // saying so would be written into a screen that no longer exists.
-                    // The user would get a 7 page PDF of an 8 page document in silence.
-                    .disabled(photos.isEmpty || busy)
+        Group {
+            if let blocked {
+                takeover(blocked, settings: false)
+            } else if denied {
+                takeover("FreePDF needs the camera to photograph the pages.", settings: true)
+            } else {
+                viewfinder
             }
         }
-        .padding()
-        // The counter, top centre. The back button reads "Scans" by itself, and there
-        // is no Save button because there is nothing to save.
-        .navigationTitle("Page \(number)")
+        .background(Token.Palette.bg)
+        .tint(Token.Palette.accent)
+        // The counter, top centre, on every one of those three screens: leaving is
+        // always possible and the page number never disappears. It is a toolbar item
+        // rather than `navigationTitle` for one reason - a title cannot carry a font,
+        // and this one has to be the heading face with tabular figures, so nothing
+        // shuffles between "Page 1" and "Page 40". The back button reads "Scans" by
+        // itself, and there is no Save button because there is nothing to save.
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Page \(number)")
+                    .font(Token.Face.heading(Token.Size.textH5))
+                    .tracking(Token.Size.textH5 * Token.Number.trackingHeading)
+                    .monospacedDigit()
+                    .foregroundStyle(Token.Palette.text)
+            }
+        }
         .onAppear { photos = scan.photos }
         // The session goes before the drain does its work: the pipeline holds about
         // 200 MB, and the drain peaks near 280 MB on its own
@@ -91,36 +85,141 @@ struct CameraView: View {
         .task { await begin() }
     }
 
-    /// The live picture, or - where there is no camera at all - the stand-in that keeps
-    /// the app usable on a simulator.
-    @ViewBuilder
-    private var preview: some View {
-        if Camera.device == nil {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.quaternary)
-                .overlay(Text("No camera on this iPhone. The shutter draws a page instead.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding())
-        } else {
-            Preview(layer: camera.preview)
-                // 3:4 is the shape of the photo that gets written, so nothing the user
-                // frames is cropped away by the preview alone.
-                .aspectRatio(3.0 / 4.0, contentMode: .fit)
+    // MARK: - Shooting
+
+    private var viewfinder: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: Token.Size.space4) {
+                // Above the picture, not under it: it is about the press that just
+                // happened, and it pushes nothing off the screen the user is aiming at.
+                if let message { errorLine(message) }
+                preview
+                shutter.padding(.top, Token.Size.space2)
+            }
+            .padding(Token.Size.screenPadding)
+
+            Spacer(minLength: 0)
+
+            // A retake is one shot, so it takes itself back to the pages afterwards.
+            if slot == nil { footer }
         }
     }
 
-    private var permission: some View {
-        VStack(spacing: 20) {
-            Text("FreePDF needs the camera to photograph the pages.")
-                .multilineTextAlignment(.center)
-            Button("Open Settings") {
-                UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
-            }
-            .buttonStyle(.borderedProminent)
+    /// The engine's own sentence, printed unchanged, with the rule on its left: this
+    /// theme never marks anything by colour alone.
+    private func errorLine(_ sentence: String) -> some View {
+        HStack(spacing: Token.Size.space2) {
+            Rectangle()
+                .fill(Token.Palette.destructive)
+                .frame(width: Token.Size.ruleStrong)
+            Text(sentence)
+                .font(Token.Face.body(Token.Size.textSub))
+                .lineSpacing(Token.Size.textSub * (Token.Number.leadingBody - 1))
+                .foregroundStyle(Token.Palette.destructive)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding()
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// The live picture on its dark ground, or - where there is no camera at all - the
+    /// stand-in that keeps the app usable on a simulator. 3:4 is the shape of the photo
+    /// that gets written, so nothing the user frames is cropped away by the preview
+    /// alone; the frame shrinks to make room for the error line, it is never cropped.
+    private var preview: some View {
+        ZStack {
+            Token.Palette.viewfinder
+            if Camera.device == nil {
+                Text("No camera on this iPhone. The shutter draws a page instead.")
+                    .font(Token.Face.body(Token.Size.textMeta))
+                    .foregroundStyle(Token.Palette.onDarkMuted)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                    .padding(Token.Size.space3)
+            } else {
+                Preview(layer: camera.preview)
+            }
+            // Four corner marks rather than a hairline rectangle: on a dark moving
+            // picture a thin continuous line reads as part of the scene.
+            Corners()
+                .stroke(Token.Palette.accent, lineWidth: Token.Size.ruleStrong)
+        }
+        .aspectRatio(Token.Number.pageRatio, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: Token.Size.radiusMd))
+    }
+
+    /// The one control on the screen, dead while the photo is written - and it says so,
+    /// because a control that does nothing without saying why is a broken app.
+    private var shutter: some View {
+        Button(action: shoot) {}
+            .buttonStyle(ShutterStyle(busy: busy))
+            .disabled(busy)
+            .accessibilityLabel(busy ? "Photographing page \(number), wait"
+                                     : "Photograph page \(number)")
+    }
+
+    /// The screen's action, pinned above a hairline. Outlined, never filled: in this
+    /// theme colour is a stroke.
+    private var footer: some View {
+        // `busy` for the same reason the shutter carries it, and it matters more here:
+        // leaving while a photo is in flight tears this screen down, the session stops,
+        // the capture is aborted - and the sentence saying so would be written into a
+        // screen that no longer exists. The user would get a 7 page PDF of an 8 page
+        // document in silence.
+        let off = photos.isEmpty || busy
+        return VStack(spacing: 0) {
+            Rectangle()
+                .fill(Token.Palette.divider)
+                .frame(height: Token.Size.hairlineW)
+            Button { finished() } label: {
+                Text(photos.isEmpty ? "Photograph at least one page"
+                                    : "Scan \(pageCount(photos.count))")
+                    .font(Token.Face.heading(Token.Size.textControl))
+                    .tracking(Token.Size.textControl * Token.Number.trackingHeading)
+                    .monospacedDigit()
+                    .foregroundStyle(off ? Token.Palette.disabledText : Token.Palette.accent)
+                    .padding(.vertical, Token.Size.buttonPaddingY)
+                    .padding(.horizontal, Token.Size.buttonPaddingX)
+                    .frame(maxWidth: .infinity, minHeight: Token.Size.touchMin)
+                    .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
+                        .stroke(off ? Token.Palette.disabledBorder : Token.Palette.accent,
+                                lineWidth: Token.Size.hairlineW))
+            }
+            .disabled(off)
+            .padding(Token.Size.screenPadding)
+        }
+    }
+
+    /// The whole screen becomes one sentence. A button only where there is something to
+    /// do: if there is one, the user can fix this; if there is none, he cannot, and he
+    /// does not have to work out which.
+    private func takeover(_ sentence: String, settings: Bool) -> some View {
+        VStack(spacing: 0) {
+            Image(systemName: "camera.slash")
+                .font(.system(size: Token.Size.iconEmpty))
+                .foregroundStyle(Token.Palette.accent)
+                .padding(.bottom, Token.Size.space3)
+            Text(sentence)
+                .font(Token.Face.heading(Token.Size.textH4))
+                .tracking(Token.Size.textH4 * Token.Number.trackingHeading)
+                .foregroundStyle(Token.Palette.text)
+                .multilineTextAlignment(.center)
+            if settings {
+                Button("Open Settings") {
+                    UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+                }
+                .font(Token.Face.heading(Token.Size.textControl))
+                .foregroundStyle(Token.Palette.accent)
+                .padding(.vertical, Token.Size.buttonPaddingY)
+                .padding(.horizontal, Token.Size.buttonPaddingX)
+                .frame(minHeight: Token.Size.touchMin)
+                .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
+                    .stroke(Token.Palette.accent, lineWidth: Token.Size.hairlineW))
+                .padding(.top, Token.Size.space4)
+                .accessibilityHint("Opens the iPhone's settings for FreePDF, "
+                                   + "where the camera can be allowed.")
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(Token.Size.screenPadding)
     }
 
     /// Asks for the camera, starts it, and lets `-autofake` make the taps a script
@@ -134,10 +233,19 @@ struct CameraView: View {
                 _ = await AVCaptureDevice.requestAccess(for: .video)
             }
             denied = AVCaptureDevice.authorizationStatus(for: .video) != .authorized
-            if !denied { message = await camera.start() }
+            // A session that will not start is the screen, not a page: there is nothing
+            // to press and no photo was lost.
+            if !denied { blocked = await camera.start() }
+        } else {
+            // No camera at all. On a simulator that is the stand-in's whole reason to
+            // exist and the shutter draws instead; on a phone it is the end of this
+            // screen, and the sentence has this one home.
+            #if !targetEnvironment(simulator)
+            blocked = "This iPhone has no camera to photograph with."
+            #endif
         }
         if slot == nil, let sentence = FakeShoot.autoShoot(scan, finished: finished) {
-            message = sentence
+            say(sentence)
         }
         photos = scan.photos
     }
@@ -147,8 +255,9 @@ struct CameraView: View {
     private func shoot() {
         let page = number
         guard Camera.device != nil else {
-            message = FakeShoot.write(page: page, into: scan)
-            if message == nil { landed() }
+            let sentence = FakeShoot.write(page: page, into: scan)
+            say(sentence)
+            if sentence == nil { landed() }
             return
         }
         busy = true
@@ -157,6 +266,17 @@ struct CameraView: View {
             busy = false
             message = sentence
             if sentence == nil { landed() }
+        }
+    }
+
+    /// Puts a sentence where it belongs. The stand-in has one of each kind: a page that
+    /// missed the disk is the line over the viewfinder, a page it could not draw at all
+    /// is the screen.
+    private func say(_ sentence: String?) {
+        if let sentence, FakeShoot.isDrawFailure(sentence) {
+            blocked = sentence
+        } else {
+            message = sentence
         }
     }
 
@@ -227,9 +347,11 @@ private final class Camera: Sendable {
         await withCheckedContinuation { waiting in
             queue.async { [self] in
                 guard !session.isRunning else { return waiting.resume(returning: nil) }
-                guard let device = Self.device else {
-                    return waiting.resume(returning: "This iPhone has no camera to photograph with.")
-                }
+                // Nothing to start and nothing to say: the screen branches on the same
+                // value before it ever calls this, and the sentence for having no camera
+                // is written there, once. The device is read here rather than handed in
+                // because `AVCaptureDevice` is not `Sendable` and this closure is.
+                guard let device = Self.device else { return waiting.resume(returning: nil) }
                 let input: AVCaptureDeviceInput
                 do {
                     input = try AVCaptureDeviceInput(device: device)
@@ -374,6 +496,52 @@ private final class PageWriter: NSObject, AVCapturePhotoCaptureDelegate, Sendabl
                      didFinishCaptureFor resolvedSettings: AVCaptureResolvedPhotoSettings,
                      error: (any Error)?) {
         done(pageNotSaved(number, "the camera stopped before the photo arrived."))
+    }
+}
+
+// MARK: - The shutter and the frame
+
+/// The shutter: a ring in the accent, a gap in the ground, and a paper disc inside it -
+/// the sheet about to be photographed. Disabled it keeps the disc at full `--paper`, so
+/// the mass a thumb aims at does not fade, and only the ring goes quiet. Opacity is not
+/// the mechanism anywhere in this system.
+private struct ShutterStyle: ButtonStyle {
+    let busy: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        Circle()
+            .strokeBorder(busy ? Token.Palette.disabledBorder : Token.Palette.accent,
+                          lineWidth: Token.Size.shutterRing)
+            .frame(width: Token.Size.shutterSize, height: Token.Size.shutterSize)
+            .overlay {
+                Circle()
+                    .fill(configuration.isPressed && !busy
+                          ? Token.Palette.accent200 : Token.Palette.paper)
+                    .overlay(Circle().strokeBorder(Token.Palette.shutterDiscEdge,
+                                                   lineWidth: Token.Size.hairlineW))
+                    .padding(Token.Size.shutterRing + Token.Size.shutterGap)
+            }
+            .frame(minWidth: Token.Size.touchMin, minHeight: Token.Size.touchMin)
+    }
+}
+
+/// The four corner marks of the viewfinder, one arm long each, set in from the frame.
+private struct Corners: Shape {
+    func path(in rect: CGRect) -> Path {
+        let inset = CGPoint(x: rect.width * Token.Number.viewfinderCornerInset,
+                            y: rect.height * Token.Number.viewfinderCornerInset)
+        let arm = Token.Size.viewfinderCorner
+        var path = Path()
+        for x in [rect.minX + inset.x, rect.maxX - inset.x] {
+            for y in [rect.minY + inset.y, rect.maxY - inset.y] {
+                let towards = CGPoint(x: x == rect.minX + inset.x ? arm : -arm,
+                                      y: y == rect.minY + inset.y ? arm : -arm)
+                path.move(to: CGPoint(x: x + towards.x, y: y))
+                path.addLine(to: CGPoint(x: x, y: y))
+                path.addLine(to: CGPoint(x: x, y: y + towards.y))
+            }
+        }
+        return path
     }
 }
 

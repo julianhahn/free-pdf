@@ -50,7 +50,7 @@ that cannot open a browser.
 | 12 | Julian approves the screens — DONE | 5-11 | Julian says yes |
 | 13 | Widen the C boundary for the adjusted case — DONE | - | cargo test --workspace, bash ffi/bridge_check.sh |
 | 14 | iOS: the scans list — DONE | 12 | bash ios/check/run.sh, by hand |
-| 15 | iOS: the camera | 14 | bash ios/check/scan_check.sh |
+| 15 | iOS: the camera — DONE | 14 | bash ios/check/scan_check.sh |
 | 16 | iOS: the scan runs | 14 | bash ios/check/scan_check.sh |
 | 17 | iOS: the pages | 16 | bash ios/check/scan_check.sh, by hand |
 | 18 | iOS: adjust | 13, 17 | bash ios/check/scan_check.sh, by hand |

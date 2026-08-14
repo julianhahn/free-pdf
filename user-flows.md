@@ -166,7 +166,9 @@ Rotation is fixed at portrait, set on both the preview and the photo output, so 
 preview never lies about what is written. Flash off. Landscape is not built.
 
 Copy is exactly the existing table (ios/AGENTS.md): `Page 7` / `Seite 7`, VoiceOver
-`Photograph page 7` / `Seite 7 fotografieren`, `Scan 8 pages` / `8 Seiten scannen`,
+`Photograph page 7` / `Seite 7 fotografieren` - and while the photo is being written, when
+the shutter is dead, `Photographing page 7, wait` / `Seite 7 wird fotografiert, warten` -
+`Scan 8 pages` / `8 Seiten scannen`,
 with the singular `Scan 1 page` / `1 Seite scannen`,
 disabled `Photograph at least one page` / `Mindestens eine Seite fotografieren`.
 

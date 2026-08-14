@@ -84,7 +84,7 @@ The order from here, and nothing after step 1 can start before it:
 | --- | --- | --- |
 | 1 | **done** on 2026-08-14 for the seven flow screens ([`TASKS.md`](./TASKS.md) task 12). What is still unapproved: the remaining components, one by one. Three stand there today - scan row, buttons, adjust; the rest of [`components.md`](./client-guide-design-system/components.md) still has to be drawn and looked at. | Julian, by looking |
 | 2 | **done** - the C boundary is wide enough for Adjust: `freepdf_adjust_page` takes the photo path, the page path and one `FreepdfAdjustments` struct of all the values. One function, not seven. | engine + ffi |
-| 3 | Rebuild the iPhone client against the approved components and the flows - which is also when the sixteen capabilities get their controls. Underway, screen by screen: [`TASKS.md`](./TASKS.md) 14 to 19, of which 14 (the scans list) is built. | client agent |
+| 3 | Rebuild the iPhone client against the approved components and the flows - which is also when the sixteen capabilities get their controls. Underway, screen by screen: [`TASKS.md`](./TASKS.md) 14 to 19, of which 14 (the scans list) and 15 (the camera) are built. | client agent |
 
 ```sh
 cd storybook && npm install && npm run storybook    # step 1 happens here

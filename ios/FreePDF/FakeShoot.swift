@@ -58,6 +58,13 @@ enum FakeShoot {
         }
     }
 
+    /// True for the one sentence `write` makes that is about the screen rather than
+    /// about a page: nothing was photographed and nothing can be, so the screen says so
+    /// and offers nothing. The sentence itself is still written in one place, above.
+    static func isDrawFailure(_ sentence: String) -> Bool {
+        sentence.hasSuffix("could not be drawn.")
+    }
+
     /// Shoots until the wanted number is on disk, then asks for them to be scanned.
     ///
     /// It stops on the first failure rather than trying for ever, and hands the sentence

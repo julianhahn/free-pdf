@@ -8,6 +8,27 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-15 - the camera, and the screen-level sentence gets its own screen
+
+TASKS.md task 15. `CameraView.swift` is flow 3 on the tokens: the dead shutter while the
+photo is written (with its own spoken label), the counter naming the next page as a
+principal toolbar item, the error line over the viewfinder for a page that missed the disk,
+and the three cannot-work sentences as a takeover with no button - the split the old file
+did not have, everything went into one small red line under the preview.
+
+Two shared kit files caught up with the tokens they should have used (`Shutter`'s disc edge,
+`Viewfinder`'s corner marks and note), and the generator learned two more shapes: an `em`
+and a CSS ratio, so `--page-ratio` is `Token.Number.pageRatio` instead of a typed `3.0/4.0`.
+
+Julian's call on the one missing sentence: the German for the dead shutter is
+"Seite 7 wird fotografiert, warten". Three departures from flow 3 are written into
+`ios/AGENTS.md` as his to overrule - the counter is a toolbar item not a title, no re-check
+after Settings (changing the permission kills the app anyway), and the takeover has no body.
+
+Green: typecheck, `scan_check.sh` "scan ok", `run.sh` "resume ok", `--check`/`--self-check`
+"tokens ok", `npx storybook build`. The phone half of task 15 - five pages, force-quit while
+aiming at six, relaunch, "Page 6" - and anything needing a real camera is still Julian's.
+
 ## 2026-08-15 - the scans list is the first screen built on the tokens
 
 TASKS.md task 14. `ios/FreePDF/ScanList.swift` is the approved flows 1-2 screen: the pressed

@@ -99,7 +99,14 @@ function collect() {
     // An em is a plain number too: it is a fraction of the font size, and the caller
     // multiplies it by the size it is drawing at (`--tracking-heading`).
     const n = l.match(/^(-?[\d.]+)em$/) ?? (/^-?[\d.]+$/.test(l) ? [, l] : null);
-    if (n) numbers[name] = Number(n[1]);
+    if (n) {
+      numbers[name] = Number(n[1]);
+      continue;
+    }
+    // A CSS ratio - `3/4` - is a number everywhere but in CSS, where the slash is the
+    // only way to say it. SwiftUI's aspectRatio wants the division done.
+    const ratio = l.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+    if (ratio) numbers[name] = Number(ratio[1]) / Number(ratio[2]);
   }
   const family = (name) => resolve(light[name], light).split(",")[0].replace(/["']/g, "").trim();
   return { colors, lengths, numbers, fonts: { heading: family("font-heading"), body: family("font-body") } };

@@ -241,8 +241,9 @@ checked by hand:
 
 | Where | English | German |
 | --- | --- | --- |
-| Page counter, top centre (the navigation title, which is also why Back reads "Scans") | Page 7 | Seite 7 |
+| Page counter, top centre (a principal toolbar item on all three of its screens; Back reads "Scans" from the list behind it) | Page 7 | Seite 7 |
 | The shutter, for VoiceOver | Photograph page 7 | Seite 7 fotografieren |
+| The shutter while the photo is written, for VoiceOver (it is dead, and says why) | Photographing page 7, wait | Seite 7 wird fotografiert, warten |
 | Primary button | Scan 8 pages | 8 Seiten scannen |
 | Primary button, nothing photographed yet (disabled) | Photograph at least one page | Mindestens eine Seite fotografieren |
 | Camera access denied | FreePDF needs the camera to photograph the pages. | FreePDF braucht die Kamera, um die Seiten zu fotografieren. |
@@ -266,6 +267,25 @@ photograph with." / "Dieses iPhone hat keine Kamera, um zu fotografieren.", "The
 could not be started." / "Die Kamera konnte nicht gestartet werden." - with the system's
 own reason appended where there is one - and, from the stand-in, "Page 7 could not be
 drawn." / "Seite 7 konnte nicht gezeichnet werden."
+
+Two sentences and a screen, told apart by where they are drawn: a page that missed the
+disk is the error line over the viewfinder, and the three above are the whole screen -
+same shape as the permission takeover, with no button, because there is nothing to press.
+The stand-in's two are split the same way, by `FakeShoot.isDrawFailure`.
+
+Three things flow 3 draws that this screen does not, all deliberate and all
+**Julian's to overrule**:
+
+- **The counter is a principal toolbar item, not `navigationTitle`.** A title cannot carry
+  a font, and this one has to be the heading face with tabular figures so nothing shuffles
+  between "Page 1" and "Page 40". The bar itself is still the system's, for the reasons the
+  list section gives.
+- **No re-check when the user comes back from Settings.** Changing a privacy permission
+  there terminates the app, so the way back through the denied screen is a relaunch, and a
+  `scenePhase` watcher would be code for a moment that cannot happen.
+- **The permission takeover shows one sentence, not a body under it.** The flow's
+  `EmptyState` has room for both; there is nothing true to put there that the sentence and
+  the button do not already say.
 
 The failure sentence says "Nothing already photographed is lost." where
 [plan section 12](../iphone-client-plan.md#12-every-line-of-text-the-app-shows) wrote

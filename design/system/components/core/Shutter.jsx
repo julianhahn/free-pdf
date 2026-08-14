@@ -29,7 +29,7 @@ export function Shutter({ disabled = false, onPress, label = "Photograph page", 
     height: "100%",
     borderRadius: "var(--radius-round)",
     background: pressed && !disabled ? "var(--accent-200)" : "var(--paper)",
-    boxShadow: "inset 0 0 0 1px rgba(45,43,43,.18)",
+    boxShadow: "inset 0 0 0 var(--hairline-w) var(--shutter-disc-edge)",
   };
   return (
     <button

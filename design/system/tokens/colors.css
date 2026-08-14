@@ -17,6 +17,8 @@
 --on-accent:var(--neutral-100);
 --paper:#fdfcfa;            /* a page image's ground; the one near-white in the system */
 --viewfinder:#1b1a19;       /* the dark ground behind a live preview */
+--on-dark-muted:rgba(248,244,244,.72); /* the quiet note inside the viewfinder */
+--shutter-disc-edge:rgba(45,43,43,.18); /* the paper disc's own edge, so it is a control */
 
 /* interaction tints */
 --hover-accent:color-mix(in srgb,var(--accent) 12%,transparent);

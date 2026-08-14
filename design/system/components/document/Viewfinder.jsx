@@ -15,8 +15,8 @@ export function Viewfinder({ children, note, corners = true, style, ...rest }) {
   };
   const corner = (pos) => ({
     position: "absolute",
-    width: 26,
-    height: 26,
+    width: "var(--viewfinder-corner)",
+    height: "var(--viewfinder-corner)",
     borderColor: "var(--accent)",
     borderStyle: "solid",
     borderWidth: 0,
@@ -27,14 +27,14 @@ export function Viewfinder({ children, note, corners = true, style, ...rest }) {
       {children}
       {corners ? (
         <>
-          <span style={corner({ top: "6%", left: "6%", borderTopWidth: 2, borderLeftWidth: 2 })} />
-          <span style={corner({ top: "6%", right: "6%", borderTopWidth: 2, borderRightWidth: 2 })} />
-          <span style={corner({ bottom: "6%", left: "6%", borderBottomWidth: 2, borderLeftWidth: 2 })} />
-          <span style={corner({ bottom: "6%", right: "6%", borderBottomWidth: 2, borderRightWidth: 2 })} />
+          <span style={corner({ top: "calc(var(--viewfinder-corner-inset) * 100%)", left: "calc(var(--viewfinder-corner-inset) * 100%)", borderTopWidth: "var(--rule-strong)", borderLeftWidth: "var(--rule-strong)" })} />
+          <span style={corner({ top: "calc(var(--viewfinder-corner-inset) * 100%)", right: "calc(var(--viewfinder-corner-inset) * 100%)", borderTopWidth: "var(--rule-strong)", borderRightWidth: "var(--rule-strong)" })} />
+          <span style={corner({ bottom: "calc(var(--viewfinder-corner-inset) * 100%)", left: "calc(var(--viewfinder-corner-inset) * 100%)", borderBottomWidth: "var(--rule-strong)", borderLeftWidth: "var(--rule-strong)" })} />
+          <span style={corner({ bottom: "calc(var(--viewfinder-corner-inset) * 100%)", right: "calc(var(--viewfinder-corner-inset) * 100%)", borderBottomWidth: "var(--rule-strong)", borderRightWidth: "var(--rule-strong)" })} />
         </>
       ) : null}
       {note ? (
-        <span style={{ position: "absolute", left: "var(--space-3)", right: "var(--space-3)", bottom: "var(--space-3)", font: `var(--weight-body) var(--text-meta)/1.45 var(--font-body)`, color: "rgba(248,244,244,.72)" }}>{note}</span>
+        <span style={{ position: "absolute", left: "var(--space-3)", right: "var(--space-3)", bottom: "var(--space-3)", font: `var(--weight-body) var(--text-meta)/1.45 var(--font-body)`, color: "var(--on-dark-muted)" }}>{note}</span>
       ) : null}
     </div>
   );
