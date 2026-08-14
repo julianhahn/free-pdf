@@ -39,7 +39,7 @@ that cannot open a browser.
 | 1 | Disabled becomes a colour role — DONE | - | npx storybook build |
 | 2 | Fold the four proposed components into the system — DONE | - | npx storybook build |
 | 3 | Fix the five delivered screens — DONE | 1, 2 | npx storybook build |
-| 4 | Collect the missing words, get them from Julian | - | Julian answers |
+| 4 | Collect the missing words, get them from Julian — DONE | - | Julian answers |
 | 5 | Storybook: flows 1-2, the scans list | 1, 2, 3 | npx storybook build |
 | 6 | Storybook: flow 3, the camera | 5 | npx storybook build |
 | 7 | Storybook: flow 4, the scan runs | 5 | npx storybook build |
@@ -180,36 +180,19 @@ the scan run (S14), the PageStrip words "Go to page" and "Go", and the singular 
 delete-a-scan body. Hand it to Julian. When he answers, put the answers into the copy tables in
 `/Users/julianhahn/free-pdf/user-flows.md` - that is where the app reads its words from.
 
-**The list, as tasks 2 and 3 found it.** Every one of these is a slot in the code with no
-default: the screen or component renders nothing until a word arrives. Nothing here was invented.
+**Answered on 2026-08-14.** Julian read the sixteen sentences, said they were good, and asked
+for the wording to be drafted rather than written by him - so they are drafted here and in the
+copy tables of `user-flows.md`, where the app reads its words from. They are his to change; the
+draft is not a decision. Three of the collected lines needed no word at all:
 
-```
-| Where | Missing wording | What it is for |
-| --- | --- | --- |
-| CameraScreen | the singular of "Scan 8 pages" | the finish button after one shot; "Scan 1 pages" reads wrong |
-| PagesScreen | the skipped-pages sentence | names the pages an apply-to-all could not rewrite (S32) |
-| PagesScreen | the Make PDF failure sentence | when stitching fails; section 8.5 says only "the engine's sentence" |
-| PagesScreen | the page menu's spoken name | section 6 gives the menu title "Page" and nothing more |
-| AdjustScreen | the Crop refusal sentence | a crop box that falls outside the page (S28) |
-| AdjustScreen | the black point slider label | apply_levels, first slider; 7a is prose, not a table |
-| AdjustScreen | the white point slider label | apply_levels, second slider |
-| AdjustScreen | the Brightness on/off label | must not reuse the tool name "Brightness" |
-| AdjustScreen | "Pull the sheet flat" | the Edges on/off; 7a names it, the section 7 table does not |
-| AdjustScreen | the Turn button label | the table gives only the tool name "Turn" |
-| AdjustScreen | what Sharpen reads at 0 | 7a says 0 means no sharpening; no word for it |
-| DoneScreen | the reader sheet title | section 9.1 gives the sheet no title |
-| DoneScreen | the reader sheet close wording | section 9.1 gives no close label |
-| DoneScreen | the name field suffix | section 10 gives label and placeholder "scan" only |
-| DoneScreen | the photo-deletion group label | the SectionLabel over the delete-photos block |
-| ScansScreen | the storage error above the list | section 1 says only "the system's own sentence" |
-| PageStrip | "Go to page", "Go" | the jump control |
-| ConfirmDialog | the singular German of the delete-a-scan body | one scan, not several |
-```
+- the Make PDF failure and the storage error above the scans list are the engine's and the
+  system's own sentences, printed unchanged. The slot stays empty on purpose.
+- the name field's `.pdf` suffix is a design addition, not a missing word. It is gone.
 
-Two more that are a decision, not a translation: `Chrome.jsx` labels the back control "Back",
-but `ios/AGENTS.md` says it reads "Scans"; and the camera pairs "Page 7" with "Scan 7 pages"
-while both tables pair it with "Scan 8 pages" - section 4.1 and 4.4 make the table's pairing
-impossible, so the kit follows the rules and not the table.
+Two are a decision, not a translation, and are still open: `Chrome.jsx` labels the back control
+"Back" where `ios/AGENTS.md` says it reads "Scans"; and the camera pairs "Page 7" with
+"Scan 7 pages" while both tables pair it with "Scan 8 pages" - sections 4.1 and 4.4 make the
+table's pairing impossible, so the kit follows the rules.
 
 **Done when.** Julian has answered every line and `user-flows.md` carries the answers.
 

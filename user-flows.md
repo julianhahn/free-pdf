@@ -128,6 +128,7 @@ The redesign makes the docs true.
 | --- | --- | --- |
 | Title | Delete this scan? | Diesen Scan löschen? |
 | Body | 40 pages, the PDF and 40 photos go. This cannot be undone. | 40 Seiten, das PDF und 40 Fotos werden gelöscht. Das lässt sich nicht rückgängig machen. |
+| Body, one | 1 page, the PDF and 1 photo go. This cannot be undone. | 1 Seite, das PDF und 1 Foto werden gelöscht. Das lässt sich nicht rückgängig machen. |
 | Confirm | Delete scan | Scan löschen |
 | Cancel | Cancel | Abbrechen |
 ```
@@ -165,6 +166,7 @@ preview never lies about what is written. Flash off. Landscape is not built.
 
 Copy is exactly the existing table (ios/AGENTS.md): `Page 7` / `Seite 7`, VoiceOver
 `Photograph page 7` / `Seite 7 fotografieren`, `Scan 8 pages` / `8 Seiten scannen`,
+with the singular `Scan 1 page` / `1 Seite scannen`,
 disabled `Photograph at least one page` / `Mindestens eine Seite fotografieren`.
 
 ### 4a. Errors on the camera
@@ -272,6 +274,7 @@ only lives in memory today and a relaunch is the only retry there is.
 | --- | --- | --- |
 | Title | Page 3 of 12 | Seite 3 von 12 |
 | Menu | Page | Seite |
+| Menu, spoken | Page menu | Seitenmenü |
 | Menu item | Retake this page | Diese Seite neu fotografieren |
 | Menu item | Adjust page | Seite anpassen |
 | Menu item | Delete page | Seite löschen |
@@ -281,6 +284,9 @@ only lives in memory today and a relaunch is the only retry there is.
 | Button, running | Making the PDF… | PDF wird erstellt… |
 | Delete confirm title | Delete this page? | Diese Seite löschen? |
 | Delete confirm body | The photo goes too. This cannot be undone. | Das Foto wird ebenfalls gelöscht. Das lässt sich nicht rückgängig machen. |
+| Skipped after apply-to-all | Pages 4, 9 and 18 were not changed, because their photos are missing. | Seite 4, 9 und 18 wurden nicht geändert, weil ihre Fotos fehlen. |
+| Jump | Choose a page | Seite wählen |
+| Jump, confirm | Go | Los |
 ```
 
 Changes to today: pinch-to-zoom on the page (this screen exists to check small print, and
@@ -363,6 +369,13 @@ path, not two.
 | All-pages switch | Apply to all pages | Auf alle Seiten anwenden |
 | Running, one page | Applying… | Wird angewendet… |
 | Running, all pages | Applying to 40 pages… | Wird auf 40 Seiten angewendet… |
+| Crop refused | The crop falls outside the page. Move a corner back in. | Der Ausschnitt liegt außerhalb der Seite. Zieh eine Ecke zurück ins Bild. |
+| Edges switch | Pull the sheet flat | Blatt geradeziehen |
+| Levels slider | Black point | Schwarzpunkt |
+| Levels slider | White point | Weißpunkt |
+| Levels switch | Adjust the tones | Tonwerte anpassen |
+| Sharpen at zero | None | Keine |
+| Turn, spoken | A quarter turn clockwise | Eine Vierteldrehung im Uhrzeigersinn |
 | Edges warning | The page runs off the frame. Move back and photograph it again. | Die Seite ragt aus dem Bild. Geh weiter weg und fotografiere sie noch einmal. |
 | Edges, nothing to cut | The sheet fills the whole photo, so there is nothing to cut away. | Das Blatt füllt das ganze Foto, es gibt nichts abzuschneiden. |
 ```
@@ -470,6 +483,9 @@ something. One function, not seven.
 | Button | Change pages | Seiten ändern |
 | Destructive | Delete the 40 photos (78 MB) | Die 40 Fotos löschen (78 MB) |
 | Footnote | The PDF stays. Deleted photos cannot be brought back. | Das PDF bleibt. Gelöschte Fotos lassen sich nicht wiederherstellen. |
+| Reader sheet title | PDF | PDF |
+| Reader sheet close, spoken | Close the PDF | PDF schließen |
+| Photos group | Photos | Fotos |
 ```
 
 1. **Open PDF** → a reader sheet inside the app. Nothing copied, nothing leaves.
