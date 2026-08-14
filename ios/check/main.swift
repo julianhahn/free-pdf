@@ -284,3 +284,22 @@ shoot(single, [1])
 scanned(single, [1])
 precondition(single.deleteBody == "1 page, the PDF and 1 photo go. This cannot be undone.",
              "the dialog says \"\(single.deleteBody)\"")
+
+// MARK: - 15. The row title, and what the swipe finally does
+
+// The date on the row is the folder name read back through a formatter, and a folder
+// this app did not make is shown as it is rather than hidden.
+let titled = newScan(in: rows, at: Date(timeIntervalSince1970: 1_799_150_400))
+precondition(!titled.title.isEmpty && titled.title != titled.url.lastPathComponent,
+             "the row title is \"\(titled.title)\", which is the folder name")
+let foreign = Scan(url: rows.appendingPathComponent("not-a-scan", isDirectory: true))
+precondition(foreign.title == "not-a-scan", "an unreadable name reads \"\(foreign.title)\"")
+
+// Confirming takes the whole folder - photos, pages and PDF. There is no trash for a
+// sandbox folder, so this is the one moment the files really go.
+let doomed = newScan(in: rows)
+shoot(doomed, [1, 2])
+scanned(doomed, [1])
+write("%PDF", to: doomed.pdf)
+doomed.delete()
+precondition(!exists(doomed.url), "the scan folder is still there after delete()")

@@ -23,15 +23,18 @@ const declarations = (css, selector) => {
   const out = {};
   const re = new RegExp(`${selector.replace(/[[\]"]/g, "\\$&")}\\s*\\{([^}]*)\\}`, "g");
   for (const [, body] of css.matchAll(re)) {
-    for (const [, name, value] of body.matchAll(/--([\w-]+)\s*:\s*([^;]+)/g)) {
-      out[name] = value.trim().replace(/\/\*.*?\*\//g, "").trim();
+    // Comments go first, before anything is matched: a comment that mentions a variable
+    // - `/* neutral-700 on --bg: 5.6:1 */` - is otherwise read as a declaration of its
+    // own and overwrites the real one.
+    for (const [, name, value] of body.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/--([\w-]+)\s*:\s*([^;]+)/g)) {
+      out[name] = value.trim();
     }
   }
   return out;
 };
 
 const read = (f) => readFileSync(join(HERE, f), "utf8");
-const FILES = ["colors.css", "spacing.css", "radius.css", "typography.css", "fonts.css", "elevation.css"];
+const FILES = ["colors.css", "spacing.css", "radius.css", "typography.css", "fonts.css", "elevation.css", "controls.css"];
 const css = FILES.map(read).join("\n");
 
 const light = declarations(css, ":root");
@@ -93,7 +96,10 @@ function collect() {
       lengths[name] = lp;
       continue;
     }
-    if (/^-?[\d.]+$/.test(l)) numbers[name] = Number(l);
+    // An em is a plain number too: it is a fraction of the font size, and the caller
+    // multiplies it by the size it is drawing at (`--tracking-heading`).
+    const n = l.match(/^(-?[\d.]+)em$/) ?? (/^-?[\d.]+$/.test(l) ? [, l] : null);
+    if (n) numbers[name] = Number(n[1]);
   }
   const family = (name) => resolve(light[name], light).split(",")[0].replace(/["']/g, "").trim();
   return { colors, lengths, numbers, fonts: { heading: family("font-heading"), body: family("font-body") } };

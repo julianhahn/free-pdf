@@ -73,6 +73,9 @@ enum Token {
         /// --accent-900
         static let accent900 = Color(light: UIColor(red: 0.2275, green: 0.1529, blue: 0.051, alpha: 1),
                             dark: UIColor(red: 0.2275, green: 0.1529, blue: 0.051, alpha: 1))
+        /// --bg
+        static let bg = Color(light: UIColor(red: 0.9529, green: 0.949, blue: 0.949, alpha: 1),
+                     dark: UIColor(red: 0.1765, green: 0.1686, blue: 0.1686, alpha: 1))
         /// --surface
         static let surface = Color(light: UIColor(red: 0.9176, green: 0.9137, blue: 0.9137, alpha: 1),
                           dark: UIColor(red: 0.2667, green: 0.2549, blue: 0.2549, alpha: 1))
@@ -124,6 +127,9 @@ enum Token {
         /// --disabled-text
         static let disabledText = Color(light: UIColor(red: 0.3765, green: 0.3647, blue: 0.3647, alpha: 1),
                                dark: UIColor(red: 0.7294, green: 0.7137, blue: 0.7137, alpha: 1))
+        /// --disabled-border
+        static let disabledBorder = Color(light: UIColor(red: 0.1255, green: 0.1216, blue: 0.1137, alpha: 0.16),
+                                 dark: UIColor(red: 0.9725, green: 0.9569, blue: 0.9569, alpha: 0.22))
         /// --disabled-surface
         static let disabledSurface = Color(light: UIColor(red: 0, green: 0, blue: 0, alpha: 0),
                                   dark: UIColor(red: 0, green: 0, blue: 0, alpha: 0))
@@ -180,6 +186,38 @@ enum Token {
         static let textMeta: CGFloat = 11
         /// --text-kicker
         static let textKicker: CGFloat = 10
+        /// --shutter-size
+        static let shutterSize: CGFloat = 72
+        /// --shutter-ring
+        static let shutterRing: CGFloat = 2
+        /// --shutter-gap
+        static let shutterGap: CGFloat = 4
+        /// --switch-w
+        static let switchW: CGFloat = 42
+        /// --switch-h
+        static let switchH: CGFloat = 24
+        /// --switch-knob
+        static let switchKnob: CGFloat = 16
+        /// --switch-travel-start
+        static let switchTravelStart: CGFloat = 3
+        /// --switch-travel-end
+        static let switchTravelEnd: CGFloat = 21
+        /// --slider-track
+        static let sliderTrack: CGFloat = 1
+        /// --slider-thumb
+        static let sliderThumb: CGFloat = 17
+        /// --icon-button
+        static let iconButton: CGFloat = 36
+        /// --input-min-h
+        static let inputMinH: CGFloat = 36
+        /// --swipe-action-w
+        static let swipeActionW: CGFloat = 96
+        /// --rule-strong
+        static let ruleStrong: CGFloat = 2
+        /// --icon-row
+        static let iconRow: CGFloat = 18
+        /// --icon-empty
+        static let iconEmpty: CGFloat = 30
     }
 
     enum Number {
@@ -189,6 +227,12 @@ enum Token {
         static let leadingHeading: CGFloat = 1.12
         /// --leading-body
         static let leadingBody: CGFloat = 1.55
+        /// --tracking-heading
+        static let trackingHeading: CGFloat = -0.015
+        /// --tracking-h6
+        static let trackingH6: CGFloat = 0.08
+        /// --tracking-kicker
+        static let trackingKicker: CGFloat = 0.1
         /// --weight-heading
         static let weightHeading: CGFloat = 600
         /// --weight-body

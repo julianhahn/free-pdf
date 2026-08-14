@@ -145,14 +145,30 @@ The error line is the one failure this screen has - `New scan` could not make th
 which in practice is a full iPhone. The system's own sentence, printed unchanged above the
 list, gone at the next reload.
 
-The eleven sentences this screen prints — the seven subtitles and the four words of the
-delete question, English and German — are the copy table in
-[`../user-flows.md`](../user-flows.md) section 2. They are not copied here: a second copy
-drifts, and this one already had the wrong dash before it was a day old.
+The twelve sentences this screen prints — the seven subtitles, the four words of the
+delete question and the swipe's own `Delete`, English and German — are the copy tables in
+[`../user-flows.md`](../user-flows.md) sections 2 and 3. They are not copied here: a second
+copy drifts, and this one already had the wrong dash before it was a day old.
 
-The row draws no page thumbnail, where the delivered flow document draws one. A thumbnail
-means decoding a JPEG per row on the screen that opens first, and an empty scan has none to
-decode - **not built, and Julian's to overrule**.
+Three things the flows 1-2 document draws that this screen does not, all deliberate and
+all **Julian's to overrule**:
+
+- **No page thumbnail on the row.** It means decoding a JPEG per row on the screen that
+  opens first, and an empty scan has none to decode.
+- **The app bar is the system's**, not a drawn bar of 52 px with its own hairline. A
+  navigation bar is the one place iOS owns the back gesture, the large-title collapse and
+  the Dynamic Type behaviour, and redrawing it buys a font and loses all three.
+- **The delete question is the system's alert**, not `ConfirmDialog` on its own scrim. The
+  words are the copy table's either way, and the platform dialog is the one surface the
+  user already trusts. Nothing else in the app is raised, so the shadow and scrim tokens
+  stay out of `Tokens.swift` until something needs them.
+
+The confirm button's spoken hint drops the photo count the flows document reads out
+("its PDF and its 40 photos" becomes "its photos"): the alert body right above it already
+says the number, and a hint that counts would say it twice in one breath.
+
+The swipe action is 96 px wide in the design (`--swipe-action-w`) and system-wide here:
+SwiftUI's `swipeActions` sizes its own buttons, so the token is generated and unused.
 
 ### The drain
 

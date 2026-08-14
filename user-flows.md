@@ -126,6 +126,7 @@ The redesign makes the docs true.
 ```
 | Where | English | German |
 | --- | --- | --- |
+| Swipe action | Delete | Löschen |
 | Title | Delete this scan? | Diesen Scan löschen? |
 | Body | 40 pages, the PDF and 40 photos go. This cannot be undone. | 40 Seiten, das PDF und 40 Fotos werden gelöscht. Das lässt sich nicht rückgängig machen. |
 | Body, one | 1 page, the PDF and 1 photo go. This cannot be undone. | 1 Seite, das PDF und 1 Foto werden gelöscht. Das lässt sich nicht rückgängig machen. |

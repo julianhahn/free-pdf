@@ -8,6 +8,23 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-15 - the scans list is the first screen built on the tokens
+
+TASKS.md task 14. `ios/FreePDF/ScanList.swift` is the approved flows 1-2 screen: the pressed
+row, the error line with its 2 px rule, the hand-built empty state with its own New scan
+button, full-bleed rows with the divider hairline and the accent chevron, and the VoiceOver
+strings copied out of the flow document. Every value is a `Token`; not one number is typed.
+
+Two token bugs found on the way, both in `design/system/tokens/build-tokens.mjs`: a comment
+that mentions a variable (`/* neutral-700 on --bg */`) was read as a declaration and ate
+`--bg` and `--disabled-border`, and `controls.css` was never read at all. Fixed, regenerated,
+`--check` and `--self-check` pass.
+
+Four deliberate departures from the flow document are written into `ios/AGENTS.md` and are
+Julian's to overrule: no row thumbnail, the system app bar, the system alert for the delete
+question, and the confirm hint without the photo count. `run.sh` says "resume ok"; the
+by-hand half of the check - three scans, swipe, cancel, swipe, delete - is still Julian's.
+
 ## 2026-08-14 - every flow has a screen, and Julian approved them
 
 TASKS.md tasks 5 to 11 and 13 are built and committed: the scans list, the camera, the scan

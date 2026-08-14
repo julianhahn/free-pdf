@@ -4,5 +4,8 @@
 --switch-w:42px;--switch-h:24px;--switch-knob:16px;--switch-travel-start:3px;--switch-travel-end:21px;
 --slider-track:1px;--slider-thumb:17px;
 --icon-button:36px;--input-min-h:36px;--swipe-action-w:96px;
+--rule-strong:2px; /* the rule that marks an error line, so colour is never alone */
+--icon-row:18px;   /* the chevron on a list row */
+--icon-empty:30px; /* the icon above an empty state */
 --page-ratio:3/4; /* @kind other */
 }
