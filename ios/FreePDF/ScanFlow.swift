@@ -67,27 +67,66 @@ struct ScanFlow: View {
     // MARK: - Scanning
 
     private var scanning: some View {
-        VStack(spacing: 16) {
-            ProgressView(value: Double(pages.count), total: Double(max(photos.count, 1)))
-            Text("Scanning page \(current) of \(photos.count)")
-            Text("You can close the app. It carries on from here.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-            if let message {
-                Text(message).font(.footnote).foregroundStyle(.red)
+        VStack(alignment: .leading, spacing: Token.Size.space4) {
+            // The refusal sits at the top, and the block stays centred in what is left:
+            // a refusal is one page's outcome, not the run's, so the bar carries on.
+            if let message { ErrorLine(sentence: message) }
+            VStack(alignment: .leading, spacing: Token.Size.space2) {
+                Text(line)
+                    .font(Token.Face.body(Token.Size.textSub))
+                    .lineSpacing(Token.Size.textSub * (Token.Number.leadingBody - 1))
+                    // Tabular figures, so the line does not shuffle its width between
+                    // "1 of 12" and "11 of 12".
+                    .monospacedDigit()
+                    .foregroundStyle(Token.Palette.text)
+                bar
+                Text(note)
+                    .font(Token.Face.body(Token.Size.textMeta))
+                    .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
+                    .foregroundStyle(Token.Palette.textMuted)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         }
-        .padding()
-        .navigationTitle(scan.title)
+        .padding(Token.Size.screenPadding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Token.Palette.bg)
+        .tint(Token.Palette.accent)
         .navigationBarTitleDisplayMode(.inline)
         .task { await drain() }
     }
 
-    /// The page being worked on, read from the files rather than counted, so a gap or a
-    /// page that was deleted cannot make the line say a number that is not being done.
-    private var current: Int {
-        scan.unscanned.first { !failed.contains($0) } ?? photos.count
+    /// The bar: a rule that fills, no radius and no system tint. The filled part is a
+    /// full width rule squeezed from the left, so nothing here has to measure the space
+    /// it was given.
+    private var bar: some View {
+        Rectangle()
+            .fill(Token.Palette.dividerStrong)
+            .frame(height: Token.Size.progressBarH)
+            .overlay {
+                Rectangle()
+                    .fill(Token.Palette.accent)
+                    .scaleEffect(x: CGFloat(atPhoto) / CGFloat(max(photos.count, 1)),
+                                 y: 1,
+                                 anchor: .leading)
+            }
     }
+
+    private var line: String { "Scanning page \(atPhoto) of \(photos.count)" }
+    private var note: String { "You can close the app. It carries on from here." }
+
+    /// Which photo of the run is being worked on, 1 based - what the line counts and how
+    /// far the bar has come.
+    private var atPhoto: Int { min(photosDone + 1, photos.count) }
+
+    /// How many photos are done, counted in the run rather than read as a page number:
+    /// page numbers keep their gaps after a delete, so "page 12 of 11" is what a number
+    /// would say.
+    ///
+    /// Counted out of `photos` and `pages` - the disk as it was last read - and never off
+    /// the disk itself. A view body that lists a directory the drain is writing into gives
+    /// a different answer twice in one frame, and SwiftUI then never settles: every page
+    /// lands, and the app sits on this screen for ever instead of moving on to the PDF.
+    private var photosDone: Int { photos.filter(pages.contains).count }
 
     /// One page at a time, from the first photo that has no page file, until there is
     /// none left it can do.

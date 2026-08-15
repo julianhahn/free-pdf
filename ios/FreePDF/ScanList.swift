@@ -28,22 +28,9 @@ struct ScanList: View {
                 // at the next reload, because the next tap is the answer to it. It sits
                 // outside the List because the empty state covers the List, and S2 of the
                 // flows document is exactly the empty list carrying this sentence.
-                //
-                // The rule on its left is the point: this theme never marks anything by
-                // colour alone.
-                HStack(spacing: Token.Size.space2) {
-                    Rectangle()
-                        .fill(Token.Palette.destructive)
-                        .frame(width: Token.Size.ruleStrong)
-                    Text(message)
-                        .font(Token.Face.body(Token.Size.textSub))
-                        .lineSpacing(Token.Size.textSub * (Token.Number.leadingBody - 1))
-                        .foregroundStyle(Token.Palette.destructive)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(Token.Size.screenPadding)
-                .padding(.bottom, Token.Size.space4)
+                ErrorLine(sentence: message)
+                    .padding(Token.Size.screenPadding)
+                    .padding(.bottom, Token.Size.space4)
             }
             List {
                 ForEach(scans, id: \.url) { scan in

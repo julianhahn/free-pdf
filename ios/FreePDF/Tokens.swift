@@ -220,6 +220,8 @@ enum Token {
         static let inputMinH: CGFloat = 36
         /// --swipe-action-w
         static let swipeActionW: CGFloat = 96
+        /// --progress-bar-h
+        static let progressBarH: CGFloat = 3
         /// --rule-strong
         static let ruleStrong: CGFloat = 2
         /// --icon-row

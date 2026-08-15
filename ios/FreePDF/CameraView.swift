@@ -92,7 +92,7 @@ struct CameraView: View {
             VStack(spacing: Token.Size.space4) {
                 // Above the picture, not under it: it is about the press that just
                 // happened, and it pushes nothing off the screen the user is aiming at.
-                if let message { errorLine(message) }
+                if let message { ErrorLine(sentence: message) }
                 preview
                 shutter.padding(.top, Token.Size.space2)
             }
@@ -103,22 +103,6 @@ struct CameraView: View {
             // A retake is one shot, so it takes itself back to the pages afterwards.
             if slot == nil { footer }
         }
-    }
-
-    /// The engine's own sentence, printed unchanged, with the rule on its left: this
-    /// theme never marks anything by colour alone.
-    private func errorLine(_ sentence: String) -> some View {
-        HStack(spacing: Token.Size.space2) {
-            Rectangle()
-                .fill(Token.Palette.destructive)
-                .frame(width: Token.Size.ruleStrong)
-            Text(sentence)
-                .font(Token.Face.body(Token.Size.textSub))
-                .lineSpacing(Token.Size.textSub * (Token.Number.leadingBody - 1))
-                .foregroundStyle(Token.Palette.destructive)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .fixedSize(horizontal: false, vertical: true)
     }
 
     /// The live picture on its dark ground, or - where there is no camera at all - the
