@@ -55,6 +55,10 @@ that cannot open a browser.
 | 17 | iOS: the pages | 16 | bash ios/check/scan_check.sh, by hand |
 | 18 | iOS: adjust | 13, 17 | bash ios/check/scan_check.sh, by hand |
 | 19 | iOS: done, share, delete the photos | 17 | bash ios/check/scan_check.sh, by hand |
+| 20 | iOS: the page state file | 18 | bash ios/check/run.sh |
+| 21 | iOS: Adjust opens on the state and writes it | 20 | bash ios/check/scan_check.sh |
+| 22 | iOS: the turn and the crop come out of the state | 21 | bash ios/check/scan_check.sh |
+| 23 | iOS: Grey becomes a fact about the pages | 21 | bash ios/check/scan_check.sh |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -490,6 +494,117 @@ destructive photos block with its confirmation, and the whole block gone once th
 Design: flow 7 document. **Check:** `scan_check.sh` says "scan ok" and ends in a PDF that ends
 in `%%EOF`, and by hand: type a name, share into Files, see the file carry that name; delete the
 photos, see the block gone and Change pages still working.
+
+---
+
+## 20 to 23. The page keeps what the user asked for
+
+Julian decided on 2026-08-15: every page carries a state. It is set from the engine's
+suggestion the first time and kept after that, so a value can be nudged instead of set again
+from the photo. It lives in one small text file per page, `state/NNNN.txt`, written by Swift
+and read by Swift.
+
+**Why a file and not the pixels.** The same 24 numbers spliced into the page JPEG would cost a
+new C function, a changed `save_page`, a header change and a marker splicer, and the engine
+would have to know a format it does not need. Re-deriving them instead does not work:
+`freepdf_suggest_adjustments` always answers with the drain's sharpen radius, so every reopen
+would sharpen the page again.
+
+**Why this is not the manifest that was rejected.** `state/NNNN.txt` is never an input to
+`Scan.state`, `photos`, `pages`, `unscanned` or `nextPage` - the step is still read off the two
+directories every time. It holds what the user asked for, never where the work got to. The page
+is renamed first and the state second, so a kill in between costs one nudge and never a wrong
+page.
+
+**Blocked by.** 18, all of them.
+
+## 20. The page state file
+
+**Why.** Every value the user sets on Adjust dies with the view - `AdjustView` holds all of it in `@State` and re-seeds from `Engine.suggest` on each open, so a crop, a turn and a shifted level evaporate at the next Apply. One file per page holds what he last asked for. It is never an input to `Scan.state`, `photos`, `pages`, `unscanned` or `nextPage` - the step is still read off the files every time, which is what the manifest failed at (`/Users/julianhahn/free-pdf/ios/AGENTS.md`, "The manifest that isn't").
+
+**Read.** `/Users/julianhahn/free-pdf/ios/AGENTS.md` in full. `/Users/julianhahn/free-pdf/ios/FreePDF/Scan.swift` - `numbers(in:)`, `pageNumber`, `sweep()`, `state`. `/Users/julianhahn/free-pdf/ios/FreePDF/Engine.swift` - `Engine.Adjustments`. `/Users/julianhahn/free-pdf/ios/check/main.swift`.
+
+**Build.** In `/Users/julianhahn/free-pdf/ios/FreePDF/Scan.swift`:
+
+- `stateDirectory` = `<scan>/state`, `stateURL(_ number: Int)` = `state/NNNN.txt`.
+- `writeState(_ number: Int, _ values: Engine.Adjustments)`: one ASCII line, newline-terminated, `1` then 24 space-separated numbers in this order - `c0x c0y c1x c1y c2x c2y c3x c3y flat angle bR bG bB wR wG wB tones sharpen cx cy cw ch turns grey`. Corners are fractions 0…1 of the photo, one decimal for the angle and the sharpen, four for the crop, integers for the rest. Written to `state/NNNN.part` and renamed - the same earn-your-name rule the engine uses in `core_engine/src/pdf.rs`.
+- `readState(_ number: Int) -> Engine.Adjustments?`: `nil` unless the first token is `1` and exactly 24 further tokens all parse. No error sentence - absent state is a normal case, not a failure.
+- `deleteState(_ number: Int)`.
+- `sweep()`: add `"state"` to the root allow-list (today `["photo","page","scan.pdf"]`), create `state/` if missing, and delete every entry inside it that is not `NNNN.txt`, plus any `NNNN.txt` with neither a photo nor a page.
+- In `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift`, `drain()`: call `scan.deleteState(number)` right after `Engine.scanPage` returns, before the list refresh. This is the retake rule - a page the engine just built from a photo carries the engine's own recipe, and any older sidecar described a photo that is gone.
+- In `deletePage`, delete the sidecar with the page.
+
+Nothing new is added to `Engine.Adjustments`; corners stay fractions and are multiplied by `photoSize` at the call, as `AdjustView` does today.
+
+**Docs.** `/Users/julianhahn/free-pdf/ios/AGENTS.md`: a new paragraph under the storage model saying `state/NNNN.txt` holds what the user last asked for, never where the work got to, and that it is deleted by the drain, by `deletePage` and by `sweep()`. The sentence in "The manifest that isn't" stays true and must be left standing - say in one line why this file is not that file. `/Users/julianhahn/free-pdf/core_engine/AGENTS.md`: unchanged, no engine code moves.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/run.sh` says "resume ok", with new cases: a full value set round-trips; a truncated line, a garbage line and an empty file each read back `nil`; `sweep()` keeps `state/0007.txt`, deletes `state/0007.part` and `state/foo`, keeps the `state` directory itself, and removes a sidecar with neither photo nor page; `state` and `subtitle` are unchanged by all of it.
+
+## 21. Adjust opens on the state and writes it
+
+**Why.** Task 20 makes the file; nothing reads it yet. This is the task that makes "the state is simply always there" true: the engine's suggestion seeds a page the first time, and after that the screen opens on what the user last asked for.
+
+**Read.** `/Users/julianhahn/free-pdf/ios/FreePDF/AdjustView.swift` in full - `.task`, `seed(_:)`, the Apply path. `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift` - `write(_:_:on:)` and `apply(_:_:allPages:)`. `/Users/julianhahn/free-pdf/ios/FreePDF/Scan.swift` after task 20.
+
+**Build.**
+
+- `.task` still calls `Engine.suggest` on the photo - its two notes ("runs off the frame", "fills the whole photo") are about the photo and are wanted on every open.
+- `seed(_:)` becomes one branch: if `scan.readState(number)` returns values, every control opens on them; otherwise on the suggestion. Delete the unconditional `box = wholePicture` line and the unconditional `quarterTurns = 0`.
+- `ScanFlow.write(_:_:on:)`: after `Engine.adjustPage` returns and the page has been renamed into place, call `scan.writeState(number, values)`. The order is fixed and is the whole safety argument: page first, sidecar second. On an all-pages run each page writes its own sidecar after its own rename, with that page's own re-asked corners when `own == false`.
+
+**The kill story, to be written into the report.** Killed before the page's rename: old page, old-or-no sidecar, nothing happened. Killed after the page's rename and before the sidecar's: the new page with the previous instruction - the user redoes one nudge, nothing is corrupt, no screen lies about done or not-done, and `Scan.state` never read this file. Killed during the sidecar write: a `.part` that `sweep()` takes. The reverse skew - a sidecar ahead of its page - is impossible by the write order.
+
+**Docs.** `/Users/julianhahn/free-pdf/user-flows.md` section 7: the sentence that every tool re-seeds from the engine on each open becomes false - replace it with "the engine seeds a page once, and after that the tools open on what was last applied". `/Users/julianhahn/free-pdf/ios/AGENTS.md`: same correction next to the Adjust notes.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by hand: straighten page 1 to -3.2°, Apply, reopen Adjust, the angle reads -3.2°; force-quit and relaunch, it still reads -3.2°.
+
+## 22. The turn and the crop come out of the state
+
+**Why.** The EXIF turn patch (`ScanFlow.turn`, `turned.write(to: photo)`) rewrites a photo in place, which breaks the append-only rule the rest of the app keeps, and it exists only because nothing remembered the turn. The sidecar remembers it. The crop is the worst-lost value: the box resets to the whole picture on every open, so a crop silently disappears at the next Apply.
+
+**The uncommitted work, decided.** The EXIF turn patch is **reverted** - `import ImageIO`, `Self.turn(photo:by:)`, the whole EXIF branch and the `own = false` re-ask it forced go away, and the photo goes back to being the camera's untouched bytes. The **crop-as-fractions change is kept unchanged** - fractions are what makes the crop storable at all, and nothing here makes it wrong.
+
+**Read.** `/Users/julianhahn/free-pdf/ffi/src/lib.rs:318-360` - the recipe order: corners, straighten, the 3000 px cap, the turn, then the crop. `/Users/julianhahn/free-pdf/ios/AGENTS.md` lines about "Edges shows the photo, every other tool the page" and "The turn goes on the photo, not on the page".
+
+**Build.**
+
+- Delete the turn patch as above. `quarterTurns` travels in `Engine.Adjustments` and in the sidecar; the engine turns the image, as it did before the patch.
+- The crop keeps its canvas: **the page, not the photo.** The crop the engine cuts is a fraction of an image that exists only mid-recipe - after corners, straighten, the cap and the turn - which is neither the photo nor the page, so moving the handles onto the photo trades one mismatch for a worse one on every turned page. Instead the box opens at the whole picture, which is honest (the page on screen is already the last cut, so there is no *further* cut yet), and Apply **composes** the new drag onto the stored crop: `x = oldX + newX * oldW`, `w = oldW * newW`, same for y and h. Four lines.
+- If the turn changes while a crop is stored, rotate the stored box with it before composing - one quarter turn clockwise maps `(x,y,w,h)` to `(1-y-h, x, h, w)`. Four more lines, applied once per quarter turn of difference.
+
+**Cut on purpose:** composition means the user can only ever cut tighter, never widen. Ceiling: widening needs "Scan this page again", which is already the undo for everything else on this screen.
+
+**Docs.** `/Users/julianhahn/free-pdf/ios/AGENTS.md`: the whole paragraph beginning "**The turn goes on the photo, not on the page.**" becomes false and is deleted - replace with one sentence saying the turn is stored in the page's state file and applied by the engine at every Apply. The "**An all-pages run does not send this page's pixels to the others.**" paragraph stays, minus the re-ask-because-the-photo-changed clause. `/Users/julianhahn/free-pdf/core_engine/AGENTS.md`: "Every step has its own space" stays exactly as written - it is the reason the crop composes rather than moves canvas; add one sentence saying so.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by hand: crop page 1 to its middle, Apply, reopen Adjust, tap Turn once, Apply - the page is still the middle third and now turned; force-quit, relaunch, Adjust again, Apply with nothing changed - the page does not move.
+
+## 23. Grey becomes a fact about the pages
+
+**Why.** `@State private var grey` on `PagesView` greys what is on screen, not what is written - its own comment says so. Leave the scan and come back and the colour is back, while pages adjusted in between are genuinely grey on disk. One truth, in the files.
+
+**Read.** `/Users/julianhahn/free-pdf/ios/FreePDF/PagesView.swift` - the switch, `.grayscale(grey ? 1 : 0)`, the comment block. `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift` - `apply(_:_:allPages:)` and its takeover. `/Users/julianhahn/free-pdf/user-flows.md` section 7a.
+
+**Build.**
+
+- Delete `@State private var grey`, `.grayscale(grey ? 1 : 0)`, the comment block, and `ScanFlow.adjustGrey`.
+- The switch reads the lowest-numbered sidecar that has a `grey` token and shows that. Flipping it runs the existing all-pages Apply with each page's own stored values and `grey` flipped - the same takeover, the same "Keep the app open.", the same skipped-pages sentence. No new words.
+- A page with no sidecar gets the engine's suggestion plus the flipped `grey`, exactly as Adjust would.
+
+**Cut on purpose:** the switch shows page one's answer, so a scan whose pages disagree about grey shows one of them. Ceiling: add a reconciliation when someone reports it.
+
+**Docs.** `/Users/julianhahn/free-pdf/ios/AGENTS.md`: "**Grey greys the screen, not the file.**" becomes false - rewrite as one switch that rewrites every page. `/Users/julianhahn/free-pdf/user-flows.md` 7a: the words "Off today, unreachable in the app at all" become false and go.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by hand: a three page scan, flip Grey, watch the takeover, leave the scan, come back - all three are still grey.
+
+## What is deleted by this plan
+
+- `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift`: `import ImageIO`, `Self.turn(photo:by:)` and the whole EXIF branch, the `own = false` re-ask it forced, `adjustGrey`. About 75 lines.
+- `/Users/julianhahn/free-pdf/ios/FreePDF/PagesView.swift`: `@State private var grey`, `.grayscale(grey ? 1 : 0)`, the four-line comment, the `onAdjust(showing, grey)` argument. About 20 lines.
+- `/Users/julianhahn/free-pdf/ios/FreePDF/AdjustView.swift`: the unconditional `box = wholePicture` and `quarterTurns = 0` in `seed(_:)` and the comment that explained them. About 10 lines.
+- `/Users/julianhahn/free-pdf/ios/AGENTS.md`: the "turn goes on the photo" paragraph, the "Grey greys the screen" paragraph.
+- `/Users/julianhahn/free-pdf/user-flows.md`: 7a's "Off today, unreachable in the app at all", and 7's re-seed-every-open sentence.
+
+`ffi/`, `core_engine/`, `freepdf.h`, `ffi/bridge_check.sh` and `ios/check/scan_check.sh`'s existing cases are untouched, and they must stay green unchanged - that is the proof no boundary moved.
 
 ---
 
