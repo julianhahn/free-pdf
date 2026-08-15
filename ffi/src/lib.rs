@@ -1,6 +1,6 @@
 //! The C surface the phone links against.
 //!
-//! Three functions, and between them the order the engine's tools are used in for a
+//! Four functions, and between them the order the engine's tools are used in for a
 //! photo of a document. That order lives here and not in the engine, because the
 //! engine offers single tools and the client owns the order
 //! ([`../AGENTS.md`](../AGENTS.md)). This crate is a client - the smallest one
@@ -88,13 +88,74 @@ pub struct FreepdfAdjustments {
     pub adjust_the_tones: i32,
     /// 0 sharpens nothing: the engine refuses radius 0, so the call is skipped.
     pub sharpen_radius: f32,
-    pub crop_x: u32,
-    pub crop_y: u32,
-    pub crop_width: u32,
-    pub crop_height: u32,
+    /// The cut, as fractions 0…1 of the image this recipe holds right before cropping
+    /// - after the corners, the straightening, the 3000 px cap and the turn. Fractions
+    /// and not pixels because that image is made here and the app never sees its size;
+    /// the same fraction then means the same piece on every page. A width or height of
+    /// 0, or one too thin to reach one pixel, cuts nothing.
+    pub crop_x: f32,
+    pub crop_y: f32,
+    pub crop_width: f32,
+    pub crop_height: f32,
     /// Quarter turns clockwise, 0 to 3.
     pub quarter_turns: u32,
     pub grey: i32,
+}
+
+/// What the engine would have chosen by itself for one photo.
+///
+/// One struct so the Adjust screen can open every control on the engine's own
+/// answer instead of a neutral default (`user-flows.md` section 7, "suggest, then
+/// apply"). `values` is handed straight back to [`freepdf_adjust_page`] once the
+/// user has fine-tuned it; the three flags are what the screen says about the sheet
+/// and cannot be worked out from `values` alone.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct FreepdfSuggestion {
+    /// The engine's own values, ready to be shown, changed, and handed back.
+    pub values: FreepdfAdjustments,
+    /// 0 when no sheet was found at all, and `values.corners` are then all zero.
+    pub found_a_sheet: i32,
+    /// The sheet fills the whole photo, so there is nothing to cut away.
+    pub fills_the_whole_photo: i32,
+    /// The sheet leaves the frame, so pulling it flat would bend the picture.
+    pub runs_off_the_picture: i32,
+}
+
+/// Asks the engine what it would do with this photo on its own.
+///
+/// Writes nothing to disk. The corners in `out_suggestion.values.corners` are in
+/// **the photo's own upright full size pixels** - the photo after its EXIF
+/// orientation has been applied, which is the space the app draws the photo in.
+/// They are not page pixels: the finished page has been pulled flat, straightened
+/// and capped, and none of that is a straight scaling.
+///
+/// Returns 0 on success. Anything else means nothing was written and `error` holds a
+/// sentence for the user.
+///
+/// # Safety
+/// `photo_path` is either null or a NUL-terminated C string, `out_suggestion` is
+/// either null or one writable [`FreepdfSuggestion`], and `error` is either null or
+/// `error_size` bytes the caller owns.
+#[no_mangle]
+pub unsafe extern "C" fn freepdf_suggest_adjustments(
+    photo_path: *const c_char,
+    out_suggestion: *mut FreepdfSuggestion,
+    error: *mut c_char,
+    error_size: usize,
+) -> i32 {
+    let photo = unsafe { path_from(photo_path, "The photo") };
+    let out = if out_suggestion.is_null() {
+        Err("The app gave nowhere to put the suggestion.".to_string())
+    } else {
+        Ok(out_suggestion)
+    };
+
+    guard(error, error_size, move || {
+        let suggestion = suggest_adjustments(&photo?)?;
+        unsafe { *out? = suggestion };
+        Ok(())
+    })
 }
 
 /// Turns one photo into one finished page file, with the user's own values.
@@ -193,14 +254,67 @@ fn scan_page(photo: &Path, page: &Path) -> Result<(), String> {
     save_page(&img, page)
 }
 
+/// The values [`scan_page`] would have picked for itself, without writing a page.
+///
+/// It walks the same chain in the same order, because a suggestion measured on a
+/// different image is a different suggestion: the tone points are read off the sheet
+/// after it was pulled flat and straightened, exactly as the automatic run reads them.
+/// Only the steps that change what a later step sees are actually applied here.
+fn suggest_adjustments(photo: &Path) -> Result<FreepdfSuggestion, String> {
+    let mut img = load_image(photo)?;
+
+    let sheet = find_paper(&img);
+    let runs_off = sheet.as_ref().is_some_and(|s| s.runs_off_the_picture());
+    let mut corners = [0.0f32; 8];
+    if let Some(sheet) = &sheet {
+        for (slot, point) in sheet.corners().iter().enumerate() {
+            corners[slot * 2] = point.x;
+            corners[slot * 2 + 1] = point.y;
+        }
+        if !runs_off {
+            img = deskew(&img, sheet.corners())?;
+        }
+    }
+
+    let degrees = suggest_straightening(&img);
+    if degrees != 0.0 {
+        img = straighten(&img, degrees)?;
+    }
+
+    let levels = suggest_levels(&img);
+
+    Ok(FreepdfSuggestion {
+        values: FreepdfAdjustments {
+            corners,
+            pull_the_sheet_flat: i32::from(sheet.is_some() && !runs_off),
+            straighten_degrees: degrees,
+            black: levels.black,
+            white: levels.white,
+            adjust_the_tones: i32::from(!levels.are_unchanged()),
+            sharpen_radius: SCAN_SHARPEN,
+            // The automatic run cuts nothing and turns nothing, so neither does the
+            // suggestion: 0 width and 0 turns are what those controls call "off".
+            crop_x: 0.0,
+            crop_y: 0.0,
+            crop_width: 0.0,
+            crop_height: 0.0,
+            quarter_turns: 0,
+            grey: 0,
+        },
+        found_a_sheet: i32::from(sheet.is_some()),
+        fills_the_whole_photo: i32::from(sheet.as_ref().is_some_and(|s| s.is_the_whole_image())),
+        runs_off_the_picture: i32::from(runs_off),
+    })
+}
+
 /// The same order of tools as [`scan_page`], with the user's values instead of the
 /// suggested ones, and the three tools the automatic run never uses: crop, turn, grey.
 ///
 /// Two differences to [`scan_page`], both because the user chose the values here: a
 /// step that was switched off is skipped rather than suggested, and a step that fails
-/// - a crop box off the page, an angle that is not a quarter turn - is reported
-/// instead of quietly left alone. The crop box is in the page's pixels as the user
-/// sees it, so it is cut after the 3000 px cap, not before.
+/// - an angle that is not a quarter turn - is reported instead of quietly left alone.
+/// The crop is fractions of the image this function holds at that moment, so it is
+/// cut after the 3000 px cap and after the turn, not before.
 fn adjust_page(photo: &Path, page: &Path, values: &FreepdfAdjustments) -> Result<(), String> {
     let mut img = load_image(photo)?;
 
@@ -230,18 +344,14 @@ fn adjust_page(photo: &Path, page: &Path, values: &FreepdfAdjustments) -> Result
         img = sharpen(&img, values.sharpen_radius, 0)?;
     }
 
-    if values.crop_width != 0 && values.crop_height != 0 {
-        img = crop(
-            &img,
-            values.crop_x,
-            values.crop_y,
-            values.crop_width,
-            values.crop_height,
-        )?;
-    }
-
+    // The turn comes first, so the fractions are of the picture the user drew the box
+    // on: the app shows the page turned as this recipe will turn it.
     if values.quarter_turns % 4 != 0 {
         img = rotate(&img, (values.quarter_turns % 4) * 90)?;
+    }
+
+    if let Some((x, y, width, height)) = crop_box(img.width(), img.height(), values) {
+        img = crop(&img, x, y, width, height)?;
     }
 
     if values.grey != 0 {
@@ -249,6 +359,24 @@ fn adjust_page(photo: &Path, page: &Path, values: &FreepdfAdjustments) -> Result
     }
 
     save_page(&img, page)
+}
+
+/// The crop fractions as pixels of the image they are cut from, or `None` when there is
+/// nothing to cut.
+///
+/// Each edge is rounded and then held inside the image, so a box the app already keeps
+/// inside the picture can never be refused for one pixel of rounding; `crop` still
+/// refuses a box that is genuinely impossible. A box too thin to reach one pixel cuts
+/// nothing, which is what a zero width already means.
+fn crop_box(width: u32, height: u32, values: &FreepdfAdjustments) -> Option<(u32, u32, u32, u32)> {
+    let edge = |start: f32, length: f32, size: u32| {
+        let at = ((start.max(0.0) * size as f32).round() as u32).min(size);
+        let long = (length.max(0.0) * size as f32).round() as u32;
+        (at, long.min(size - at))
+    };
+    let (x, cut_width) = edge(values.crop_x, values.crop_width, width);
+    let (y, cut_height) = edge(values.crop_y, values.crop_height, height);
+    (cut_width > 0 && cut_height > 0).then_some((x, y, cut_width, cut_height))
 }
 
 /// The eight numbers the app sends read as the four corners the engine takes.
@@ -396,10 +524,10 @@ mod tests {
             white: [200, 200, 200],
             adjust_the_tones: 1,
             sharpen_radius: 4.0,
-            crop_x: 10,
-            crop_y: 10,
-            crop_width: 300,
-            crop_height: 200,
+            crop_x: 0.1,
+            crop_y: 0.1,
+            crop_width: 0.5,
+            crop_height: 0.4,
             quarter_turns: 1,
             grey: 1,
         };

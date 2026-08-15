@@ -1,14 +1,15 @@
 # ffi
 
-The one library file the iPhone app links into itself, and the three C functions it
+The one library file the iPhone app links into itself, and the four C functions it
 calls. Nothing else belongs in here: no screens, no storage, no second way of doing
 something the engine already does.
 
 ## The boundary is the design
 
-What crosses: C strings, a size, an int32, and `FreepdfAdjustments` - one read-only
-struct of numbers, copied out at the boundary, holding no pointer. It is what makes
-the adjusted case **one** function instead of seven, Julian's decision of 2026-08-12
+What crosses: C strings, a size, an int32, and two structs of plain numbers holding
+no pointer - `FreepdfAdjustments` in, `FreepdfSuggestion` out, both copied at the
+boundary. `FreepdfAdjustments` is what makes the adjusted case **one** function
+instead of seven, Julian's decision of 2026-08-12
 (`user-flows.md` DECISIONS point 12). What never crosses: a pixel buffer, an image
 handle, an allocation the caller has to free, a callback. Adding any of those means
 the app has to manage the engine's memory, and a leak or a double free then lives on
@@ -35,9 +36,9 @@ the phone rather than in a test.
 
 `adjust_page` is the same chain with the user's own values, plus the three tools the
 automatic run never uses: crop, turn, grey. Two rules of its own: a step switched off
-is skipped, and a step that fails - a crop box off the page - is reported rather than
-quietly left alone, because the user chose that value. The crop box is in the page's
-pixels as the user sees them, so it is cut after the 3000 px cap.
+is skipped, and a step that fails is reported rather than quietly left alone,
+because the user chose that value. The crop box is fractions 0…1 of the image this
+function holds at that moment, so it is cut after the 3000 px cap and after the turn.
 
 `scan_page` is the whole chain a photo of a document wants: deskew, straighten,
 levels, cap, sharpen, write. It sits in this crate because the engine offers single
@@ -52,6 +53,24 @@ is a client. Two rules hold it together:
   costs 33 bytes per pixel, so the cap is what keeps a 12 MP photo from peaking near
   400 MB on a phone iOS kills at about 1.4 GB. It is applied before sharpening, not
   after, and the number carries its measurement in `src/lib.rs`.
+
+`suggest_adjustments` walks that same chain for the Adjust screen but writes nothing:
+the engine suggests, the user only fine-tunes (`user-flows.md` section 7). It has to
+redo the deskew and the straightening rather than only measure them, because the tone
+points are read off the sheet **after** it was pulled flat - a suggestion measured on
+another image is another suggestion. Two things it carries that the app cannot work
+out for itself: whether the sheet fills the whole photo and whether it runs off the
+frame, which are the two lines section 7a puts under the Edges control.
+
+**The corners are in the photo's own upright full size pixels** - the photo after its
+EXIF orientation was applied. That is the space the app draws the photo in, and the
+only one it can draw the corners in. It is *not* the page's space: the page is pulled
+flat (a new size), maybe straightened (another one) and then capped at 3000 px, so
+there is no scaling that takes one to the other. `crop_*` is not pixels at all: it is fractions 0…1 of the
+image `adjust_page` holds right before cropping - the one the corners, the straightening,
+the cap and the turn made, which no client ever sees. That is Julian's decision of 2026-08-15: a
+box outside the page cannot be expressed, and the same fraction means the same piece on
+every page, so an all-pages run can carry it.
 
 The command line runner has the same chain behind `--scan` and its own copy of the
 sharpening radius. That duplication is deliberate - each client owns its order - but
@@ -69,7 +88,10 @@ same mechanism as Xcode's bridging header setting - so the boundary is really
 crossed, without a simulator or Xcode. Then: a missing photo names the file, a null
 path still returns a sentence, a caller that passes no error buffer does not crash,
 a generated 3200x2400 photo comes out as a 3000 px page, the same photo through
-`freepdf_adjust_page` comes out cropped and turned, and two pages come out as a PDF
+`freepdf_adjust_page` comes out cropped and turned, the same crop fractions cut the same
+relative piece out of two differently sized photos, `freepdf_suggest_adjustments`
+calls that photo a sheet filling the frame with all four corners inside it and its
+own values are then accepted unchanged by `freepdf_adjust_page`, and two pages come out as a PDF
 ending in `%%EOF`.
 
 Two things about it are load bearing:
@@ -104,5 +126,5 @@ rustup target add aarch64-apple-ios aarch64-apple-ios-sim
 
 Xcode does not know about cargo, so a forgotten `build-ios.sh` links yesterday's
 Rust. The four build settings on the app target, and the Swift wrapper that calls
-these three functions, are in
+these functions, are in
 [plan section 5](../iphone-client-plan.md#5-the-c-surface) until `ios/` exists.

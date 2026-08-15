@@ -4,6 +4,7 @@
 //  every time. Nothing here stores where the user got to, so a kill cannot leave this
 //  screen believing something the disk disagrees with ([`AGENTS.md`](../AGENTS.md)).
 
+import ImageIO
 import PDFKit
 import SwiftUI
 
@@ -34,6 +35,16 @@ struct ScanFlow: View {
     @State private var message: String?
     @State private var making = false
     @State private var reading = false
+    /// The page the Adjust screen is open on, and the scan's Grey switch as it stood
+    /// when it was opened. `nil` means the screen is not up.
+    @State private var adjusting: Int?
+    @State private var adjustGrey = false
+    /// True while one page is being written, so the Adjust screen can say so.
+    @State private var applyingOne = false
+    /// The pages an all-pages run still has to write, and how many it has done. Non-nil
+    /// is the takeover: no app bar, no way back, and nothing else on screen.
+    @State private var applyingAll: [Int]?
+    @State private var applied = 0
 
     init(scan: Scan) {
         self.scan = scan
@@ -52,6 +63,19 @@ struct ScanFlow: View {
                     shooting = false
                     refresh()
                 }
+            } else if applyingAll != nil {
+                takeover
+            } else if let adjusting {
+                AdjustView(photo: scan.photoURL(adjusting),
+                           page: scan.pageURL(adjusting),
+                           position: (numbers.firstIndex(of: adjusting) ?? 0) + 1,
+                           grey: adjustGrey,
+                           applying: applyingOne,
+                           message: message,
+                           onCancel: { self.adjusting = nil; message = nil },
+                           onApply: { values, allPages in
+                               Task { await apply(adjusting, values, allPages: allPages) }
+                           })
             } else if finished {
                 done
             } else if unscanned.allSatisfy(failed.contains) {
@@ -81,7 +105,7 @@ struct ScanFlow: View {
                     // "1 of 12" and "11 of 12".
                     .monospacedDigit()
                     .foregroundStyle(Token.Palette.text)
-                bar
+                bar(atPhoto, of: photos.count)
                 Text(note)
                     .font(Token.Face.body(Token.Size.textMeta))
                     .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
@@ -100,14 +124,14 @@ struct ScanFlow: View {
     /// The bar: a rule that fills, no radius and no system tint. The filled part is a
     /// full width rule squeezed from the left, so nothing here has to measure the space
     /// it was given.
-    private var bar: some View {
+    private func bar(_ done: Int, of total: Int) -> some View {
         Rectangle()
             .fill(Token.Palette.dividerStrong)
             .frame(height: Token.Size.progressBarH)
             .overlay {
                 Rectangle()
                     .fill(Token.Palette.accent)
-                    .scaleEffect(x: CGFloat(atPhoto) / CGFloat(max(photos.count, 1)),
+                    .scaleEffect(x: CGFloat(done) / CGFloat(max(total, 1)),
                                  y: 1,
                                  anchor: .leading)
             }
@@ -163,11 +187,169 @@ struct ScanFlow: View {
         }
     }
 
+    // MARK: - Applying
+
+    /// The all-pages run, and the one screen in this app that takes the phone over: no
+    /// app bar and no way back, because a kill leaves a mix of adjusted and unadjusted
+    /// pages with nothing on disk telling them apart.
+    ///
+    /// It is the drain's furniture with the drain's note turned around. The drain says
+    /// "You can close the app" because it resumes; this cannot resume, so it says the
+    /// opposite, and the counter above the bar is the second line that tells the two
+    /// screens apart.
+    private var takeover: some View {
+        let total = applyingAll?.count ?? 0
+        return VStack(alignment: .leading, spacing: Token.Size.space4) {
+            Text("Page \(min(applied + 1, total)) of \(total)")
+                .font(Token.Face.body(Token.Size.textSub))
+                .monospacedDigit()
+                .foregroundStyle(Token.Palette.text)
+            Text("Applying to \(total) pages…")
+                .font(Token.Face.body(Token.Size.textSub))
+                .monospacedDigit()
+                .foregroundStyle(Token.Palette.text)
+            bar(applied, of: total)
+            Text("Keep the app open.")
+                .font(Token.Face.body(Token.Size.textMeta))
+                .foregroundStyle(Token.Palette.textMuted)
+        }
+        .padding(Token.Size.screenPadding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .background(Token.Palette.bg)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Applying to \(total) pages. Keep the app open.")
+    }
+
+    private func apply(_ number: Int, _ values: Engine.Adjustments, allPages: Bool) async {
+        // Two taps land as two tasks before either sets a flag, and the second run would
+        // count "Page 14 of 7" over the first one's pages.
+        guard !applyingOne, applyingAll == nil else { return }
+        message = nil
+        // The PDF is derived from the pages, so a rewritten page makes it wrong. Same
+        // move as Change pages and Shoot another page, and it goes first: a kill after it
+        // costs a rebuild, never a PDF holding a page the user replaced.
+        try? FileManager.default.removeItem(at: scan.pdf)
+        if allPages {
+            // Straight off the disk, like `makePDF()`: the run has to cover every page,
+            // and the cache one refresh behind could leave one out. Both directories,
+            // because a page whose photo is gone has to be refused and named, not
+            // silently missed.
+            let numbers = Array(Set(scan.photos + scan.pages)).sorted()
+            let photos = Set(scan.photos)
+            applyingAll = numbers
+            applied = 0
+            var skipped: [Int] = []
+            for one in numbers {
+                if !photos.contains(one) { skipped.append(one) }
+                if !(await write(one, values, on: one == number)) {
+                    // Whatever went wrong, the engine's own sentence is on screen and it
+                    // has to say which page it was about.
+                    message = "Page \(one): " + (message ?? "")
+                }
+                applied += 1
+                refresh()
+            }
+            applyingAll = nil
+            adjusting = nil
+            // One missing photo already put the engine's own sentence on screen, named
+            // with its page. More than one needs the sentence that names them all - and
+            // that sentence is only ever about missing photos, which is its only cause.
+            if skipped.count > 1 {
+                let all = skipped.map(String.init).formatted(.list(type: .and))
+                message = "Pages \(all) were not changed, because their photos are missing."
+            }
+        } else {
+            applyingOne = true
+            if await write(number, values, on: true) { adjusting = nil }
+            applyingOne = false
+            refresh()
+        }
+    }
+
+    /// One page rewritten, or the engine's sentence on screen and `false`. Detached, so a
+    /// page in flight runs to the end: it lands whole or was never there.
+    ///
+    /// `own` is false for every page of an all-pages run except the one the user was
+    /// looking at. Only the corners are pixels of that one photo and mean nothing on any
+    /// other, so they are asked of the engine again, per page. The crop travels: it is a
+    /// fraction, so the same box cuts the same piece out of every page.
+    ///
+    /// The switch comes from that page's own suggestion too, not from the page the user
+    /// was looking at: a photo with no sheet in it has no corners to pull flat, and one
+    /// that runs off the frame would be bent. Both are left alone rather than refused,
+    /// exactly as the automatic run leaves them ([`../../ffi/AGENTS.md`](../../ffi/AGENTS.md)).
+    private func write(_ number: Int, _ values: Engine.Adjustments, on own: Bool) async -> Bool {
+        let photo = scan.photoURL(number)
+        let page = scan.pageURL(number)
+        do {
+            try await Task.detached(priority: .userInitiated) {
+                var mine = values
+                var own = own
+                // The turn goes on the photo, not on the page. The page is rebuilt from
+                // the photo every time and nothing on disk remembers what the last run
+                // was told, so a turn baked into the page would be lost at the next
+                // Apply while the screen still showed it. On the photo it is re-read
+                // for free, by the engine and by this screen alike. If the photo cannot
+                // be turned, the engine turns the page as before.
+                if mine.quarterTurns != 0, Self.turn(photo, by: Int(mine.quarterTurns)) {
+                    mine.quarterTurns = 0
+                    // The corners were measured on the photo as it stood before.
+                    own = false
+                }
+                if !own {
+                    if mine.pullTheSheetFlat {
+                        let its = try Engine.suggest(photo)
+                        mine.corners = its.values.corners
+                        mine.pullTheSheetFlat = its.foundASheet && !its.runsOffThePicture
+                    } else {
+                        mine.corners = Array(repeating: 0, count: 8)
+                    }
+                }
+                try Engine.adjustPage(photo, into: page, mine)
+            }.value
+            return true
+        } catch {
+            message = error.localizedDescription
+            return false
+        }
+    }
+
+    /// Turns the photo itself, by quarter turns clockwise, and says whether it worked.
+    ///
+    /// Only the orientation tag moves: the compressed picture is copied through
+    /// untouched, so turning a page again and again costs no quality. `load_image`
+    /// applies that tag, so the next run of the recipe produces the turned page by
+    /// itself - the file is the state, exactly as everywhere else in this app.
+    nonisolated private static func turn(_ photo: URL, by quarters: Int) -> Bool {
+        guard let source = CGImageSourceCreateWithURL(photo as CFURL, nil),
+              let type = CGImageSourceGetType(source),
+              let all = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+        else { return false }
+        var tag = all[kCGImagePropertyOrientation] as? Int ?? 1
+        if !(1...8).contains(tag) { tag = 1 }
+        for _ in 0..<(quarters % 4) { tag = Self.clockwise[tag] }
+        let turned = NSMutableData()
+        guard let out = CGImageDestinationCreateWithData(turned, type, 1, nil) else { return false }
+        CGImageDestinationAddImageFromSource(out, source, 0,
+                                             [kCGImagePropertyOrientation: tag] as CFDictionary)
+        guard CGImageDestinationFinalize(out),
+              (try? turned.write(to: photo, options: .atomic)) != nil
+        else { return false }
+        return true
+    }
+
+    /// The EXIF orientation tag one quarter turn clockwise on, for each of the eight.
+    /// Index 0 is unused: the tags count from 1.
+    nonisolated private static let clockwise = [0, 6, 7, 8, 5, 2, 3, 4, 1]
+
     // MARK: - Checking the pages
 
     private var check: some View {
         PagesView(scan: scan,
                   numbers: numbers,
+                  photos: photos,
                   failed: failed,
                   complete: unscanned.isEmpty,
                   making: making,
@@ -175,6 +357,11 @@ struct ScanFlow: View {
                   showing: $showing,
                   onRetake: retake,
                   onDelete: deletePage,
+                  onAdjust: { number, grey in
+                      adjustGrey = grey
+                      message = nil
+                      adjusting = number
+                  },
                   onShootAnother: shootAnother,
                   onMakePDF: { Task { await makePDF() } })
         // The second of the two lines the camera stand-in reaches out of its own file

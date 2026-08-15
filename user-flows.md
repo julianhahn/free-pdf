@@ -397,8 +397,8 @@ path, not two.
 | apply_levels | Adjust → Brightness | two sliders, black point and white point, plus an on/off |
 | sharpen | Adjust → Sharpen | slider 0…20 radius, opening at the drain's 0.6. 0 means no sharpening: the client skips the call, because the engine refuses radius 0 |
 | to_grayscale | the pages screen | one switch, Colour / Grey, for the whole scan. Off today, unreachable in the app at all |
-| crop | Adjust → Crop | drag handles on the page. A box that does not fit is refused, not shrunk |
-| rotate | Adjust → Turn | one button, a quarter turn clockwise each tap |
+| crop | Adjust → Crop | drag handles on the page. The box crosses as fractions 0…1 of the image the engine cuts, so a corner dragged out is read as the edge |
+| rotate | Adjust → Turn | one button, a quarter turn clockwise each tap. The app turns the photo's orientation instead, so the page is rebuilt turned every time |
 | Paper::is_the_whole_image | Adjust → Edges | none — it is the line under the Edges control |
 | Paper::runs_off_the_picture | Adjust → Edges | none — it is the warning line under the Edges control |
 | save_page | nowhere, by design | none. Quality 85 is fixed and stays fixed |

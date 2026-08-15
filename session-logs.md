@@ -8,6 +8,26 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-15 - Adjust, and the engine learns to suggest
+
+TASKS.md task 18. `ios/FreePDF/AdjustView.swift` is new and carries flow 7: the six tools one
+at a time, no live preview, Apply one page or all with the takeover, and the skipped-pages
+sentence. `freepdf_suggest_adjustments` is the fourth C function - it answers what the
+automatic run would have chosen for one photo, so every control opens on the engine's own
+value instead of a neutral default and "Back to the suggestion" means something.
+
+Two traps closed on the way. The crop crosses the boundary as fractions 0…1 of the image the
+engine holds right before cutting, not as pixels of the page file - a pixel box measured on
+the old page cuts the wrong piece out of a newly derived one. And the levels keep their three
+channels across the bridge; collapsing them to one put the colour cast back.
+
+Julian's decision on the turn: it goes into the photo's EXIF orientation tag, because nothing
+else on disk could hold it. That is a stopgap - `ios/AGENTS.md` says so - and task 22 takes it
+back out once `state/NNNN.txt` exists.
+
+Next: tasks 20 to 23, the page state file. A crop, a turn and a moved slider still die at the
+next Apply.
+
 ## 2026-08-15 - the pages screen, drawn from the tokens and read from the cache
 
 Task 17. `ios/FreePDF/PagesView.swift` is new and carries flow 5: the carousel with pinch

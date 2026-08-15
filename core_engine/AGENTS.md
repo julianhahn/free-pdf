@@ -27,6 +27,15 @@ act half takes that same data as a parameter. `suggest_levels` / `apply_levels`,
 function that finds its own parameters and applies them leaves the user no point to look at
 the proposal and move it.
 
+## Every step has its own space
+
+The photo file is never written to: every tool takes an image and gives a new one back. The
+four corners `find_paper` finds in the photo are what says where the page is, and the app can
+move them. But there is no one boundary to move: straightening turns the picture inside a
+second rectangle nobody drags, the 3000 px cap resamples a third time, and a crop cuts into a
+picture that only exists after all of them. So each step's numbers are numbers of the image
+that step is handed, and a number measured on one image means nothing on the next.
+
 ## Refuse instead of guess
 
 - A measure function that is unsure returns the do-nothing answer, never a guess: `find_paper`

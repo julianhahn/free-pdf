@@ -212,8 +212,57 @@ actions and hands the screen numbers.
 - **"Shoot another page" deletes `scan.pdf` first.** The PDF is what this screen reads as
   finished, so a scan that still had one would answer the tap with the done screen and the
   new photo would never be drained.
-- **The menu has no Adjust entry until task 18.** An item that does nothing is worse than
-  a missing one.
+- **Adjust page** opens [`FreePDF/AdjustView.swift`](./FreePDF/AdjustView.swift) and hands
+  it the scan's Grey switch, because applying without it would quietly un-grey the page.
+
+### Adjusting a page
+
+One more branch of `ScanFlow`'s switch, like the camera - not a second destination. The
+view is dumb the way the pages are: values in, `onCancel`/`onApply` out, and `ScanFlow`
+owns every file move. Applying deletes `scan.pdf` first, exactly as **Change pages** does.
+
+Two things flow 7 draws that this screen does not, both deliberate and both **Julian's to
+overrule**:
+
+- **The bar is the system's.** Cancel, the title and Apply are toolbar items, not a drawn
+  52 px bar - the same trade the list makes.
+- **The handles may be dragged off the picture** - a corner outside it is read as the
+  edge, because the crop crosses as fractions 0…1 and nothing outside the picture can be
+  said.
+
+Every control opens on the engine's own answer: `freepdf_suggest_adjustments` asks what the
+automatic run would have done and hands back the corners, the angle, the two levels points
+and the three note flags ([`../ffi/AGENTS.md`](../ffi/AGENTS.md)). **Back to the suggestion**
+puts that tool's part of it back, so the label is true. Three rules fall out of it:
+
+- **Nothing can be moved before the answer arrives, and no page opens without one.** The
+  call runs in the screen's own `.task`, after the two files have been measured, because
+  the corners come back in photo pixels and are only a fraction of the picture once the
+  photo has been measured. If the engine refuses the photo, its sentence is the screen and
+  Apply stays dead - a page whose photo is gone cannot be adjusted at all, and the pages
+  screen already leaves **Adjust page** out of the menu for exactly those pages.
+- **Edges shows the photo, every other tool the page.** The sheet corners are photo pixels,
+  so drawing them over the page would put them in a space nothing maps back to. Crop stays
+  on the page, because the fraction the user drags there is the fraction the engine cuts
+  out of its own image. Both files are measured, and the block the handles live in is
+  given the shape of the file it draws: fitted inside a block of another shape the picture
+  gets bars, and a handle on a bar is a fraction the engine never sees.
+- **An all-pages run does not send this page's pixels to the others.** The corners are
+  asked of the engine again per page, and only when "Pull the sheet flat" is on. Everything
+  else - crop, angle, levels, sharpen, turn, grey - is the same number everywhere and
+  travels unchanged; the crop can, because it is a fraction and not pixels.
+- **The turn goes on the photo, not on the page.** `ScanFlow` moves the photo's
+  orientation tag - the compressed picture is untouched, so turning again costs nothing -
+  and then asks the engine for 0 turns. The page is rebuilt from the photo at every Apply
+  and nothing on disk remembers what the last run was told, so a turn baked into the page
+  would be lost while the screen still showed it. Because the photo has changed, the
+  corners are asked again, the same as for any other page. If the photo cannot be turned,
+  the engine turns the page as before.
+
+One page an all-pages run could not write shows the engine's own sentence with its page
+number in front; more than one missing photo shows the copy table's "Pages 4, 9 and 18 were
+not changed…", which is only ever about missing photos. There is no singular of that
+sentence in the tables, so none is invented.
 
 ### The camera
 

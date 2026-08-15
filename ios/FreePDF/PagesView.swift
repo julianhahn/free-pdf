@@ -17,6 +17,9 @@ struct PagesView: View {
     /// Every page number this scan has, whether it got as far as a page file or not.
     /// Cached in `ScanFlow`, never read off the disk here.
     let numbers: [Int]
+    /// The pages that still have their photo. Same cache, and it is what decides whether
+    /// Adjust is offered at all.
+    let photos: [Int]
     /// The pages the engine refused. They are on this carousel because this is the only
     /// place the user can do something about them.
     let failed: Set<Int>
@@ -28,6 +31,7 @@ struct PagesView: View {
     @Binding var showing: Int
     var onRetake: (Int) -> Void
     var onDelete: (Int) -> Void
+    var onAdjust: (Int, Bool) -> Void
     var onShootAnother: () -> Void
     var onMakePDF: () -> Void
 
@@ -275,8 +279,17 @@ struct PagesView: View {
             Menu {
                 Button("Retake this page", systemImage: "camera") { onRetake(showing) }
                     .accessibilityHint("Photographs page \(position) again.")
-                // Task 18 opens the Adjust screen here. Until then the entry stays out
-                // rather than being a button that does nothing.
+                // The scan's Grey switch goes with it: Adjust rewrites the page for real,
+                // and applying without it would quietly un-grey what this screen shows.
+                // Only where there is a photo left: Adjust re-runs the recipe from
+                // `photo/NNNN.jpg`, so a page whose photo was deleted cannot be adjusted
+                // at all ([`../../user-flows.md`](../../user-flows.md) section 7).
+                if photos.contains(showing) {
+                    Button("Adjust page", systemImage: "slider.horizontal.3") {
+                        onAdjust(showing, grey)
+                    }
+                    .accessibilityHint("Opens the tools for page \(position).")
+                }
                 if complete {
                     Button("Shoot another page", systemImage: "plus") { onShootAnother() }
                         .accessibilityHint("Photographs one more page at the end of this scan.")
@@ -299,7 +312,9 @@ struct PagesView: View {
 /// about three pages alive, and a full page decodes to some 34 MB. 1600 px is about 7 MB
 /// and still shows whether the small print survived, which is the only reason this screen
 /// exists; the rail's tiles ask for 200.
-private struct PageImage: View {
+/// Not private: the Adjust screen shows the same page the same way
+/// ([`AdjustView.swift`](./AdjustView.swift)).
+struct PageImage: View {
     let url: URL
     let grey: Bool
     var maxPixels = 1600

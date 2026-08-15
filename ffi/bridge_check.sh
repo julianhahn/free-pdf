@@ -115,8 +115,10 @@ let adjusted = work.appendingPathComponent("0002.jpg")
 var values = FreepdfAdjustments()
 values.straighten_degrees = 2.0
 values.sharpen_radius = 1.0
-values.crop_width = 1200
-values.crop_height = 800
+values.crop_x = 0.1
+values.crop_y = 0.1
+values.crop_width = 0.4
+values.crop_height = 0.6
 values.quarter_turns = 1
 values.grey = 1
 let turned = call { error, size in
@@ -124,8 +126,92 @@ let turned = call { error, size in
 }
 precondition(turned.status == 0, "adjusting the photo failed: \(turned.message)")
 let turnedSize = pixelSize(of: adjusted)
-precondition(turnedSize.width == 800 && turnedSize.height == 1200,
+// A quarter turn first, so the 3000x2250 page becomes 2250x3000, and the crop then takes
+// 0.4 of that width and 0.6 of that height.
+precondition(turnedSize.width == 900 && turnedSize.height == 1800,
              "the adjusted page is \(turnedSize.width)x\(turnedSize.height), so crop and turn did not happen")
+
+// 5c - the crop is a fraction, not pixels: the same values out of two photos of
+// different size have to cut the same relative piece. Pixels would cut a different
+// piece out of the smaller one, or be refused by it altogether.
+let small = work.appendingPathComponent("small.jpg")
+writePhoto(small, width: 1600, height: 1200)
+var sameCut = FreepdfAdjustments()
+sameCut.crop_x = 0.25
+sameCut.crop_y = 0.25
+sameCut.crop_width = 0.5
+sameCut.crop_height = 0.25
+func cutSize(_ from: URL, _ into: String) -> (width: Int, height: Int) {
+    let out = work.appendingPathComponent(into)
+    let done = call { error, size in
+        freepdf_adjust_page(from.path, out.path, &sameCut, error, size)
+    }
+    precondition(done.status == 0, "the fraction crop was refused: \(done.message)")
+    return pixelSize(of: out)
+}
+let bigCut = cutSize(photo, "0006.jpg")
+let smallCut = cutSize(small, "0007.jpg")
+precondition(abs(Double(bigCut.width) / Double(bigCut.height)
+                 - Double(smallCut.width) / Double(smallCut.height)) < 0.02,
+             "the same fraction cut \(bigCut.width)x\(bigCut.height) and \(smallCut.width)x\(smallCut.height), so it is not a fraction of each image")
+precondition(bigCut.width > smallCut.width,
+             "the bigger photo did not give the bigger cut: \(bigCut.width) vs \(smallCut.width)")
+
+// 5d - a box that reaches the far edge is not refused by rounding. Each edge rounds on
+// its own, so 1/3 and 2/3 can add up to one pixel past the image.
+var toTheEdge = FreepdfAdjustments()
+toTheEdge.crop_x = 1.0 / 3.0
+toTheEdge.crop_width = 2.0 / 3.0
+toTheEdge.crop_y = 1.0 / 3.0
+toTheEdge.crop_height = 2.0 / 3.0
+let atTheEdge = call { error, size in
+    freepdf_adjust_page(photo.path, work.appendingPathComponent("0008.jpg").path,
+                        &toTheEdge, error, size)
+}
+precondition(atTheEdge.status == 0, "a crop reaching the far edge was refused: \(atTheEdge.message)")
+
+// 5a - the three colours are kept apart. The same photo twice, black points that
+// differ only in the green channel: a page that came back byte for byte the same
+// would mean the struct carries one value onto all three, which is the copy that
+// puts the colour cast back.
+let evenly = work.appendingPathComponent("0004.jpg")
+let perChannel = work.appendingPathComponent("0005.jpg")
+var levels = FreepdfAdjustments()
+levels.adjust_the_tones = 1
+levels.black = (20, 20, 20)
+levels.white = (200, 200, 200)
+precondition(call { error, size in
+    freepdf_adjust_page(photo.path, evenly.path, &levels, error, size)
+}.status == 0, "the even levels were refused")
+levels.black = (20, 90, 20)
+precondition(call { error, size in
+    freepdf_adjust_page(photo.path, perChannel.path, &levels, error, size)
+}.status == 0, "the per channel levels were refused")
+precondition(try! Data(contentsOf: evenly) != Data(contentsOf: perChannel),
+             "one channel's black point changed nothing, so the three colours are not kept apart")
+
+// 5b - the suggestion. The generated photo is a sheet filling the frame, so the
+// engine has to say so, and the corners have to land inside the photo it was read
+// from - that is the whole claim the header makes about their pixel space.
+var suggestion = FreepdfSuggestion()
+let suggested = call { error, size in
+    freepdf_suggest_adjustments(photo.path, &suggestion, error, size)
+}
+precondition(suggested.status == 0, "suggesting failed: \(suggested.message)")
+precondition(suggestion.found_a_sheet != 0 && suggestion.fills_the_whole_photo != 0,
+             "the sheet fills the photo, but the engine did not say so")
+let corners = withUnsafeBytes(of: suggestion.values.corners) { Array($0.bindMemory(to: Float.self)) }
+for pair in 0..<4 {
+    precondition(corners[pair * 2] >= 0 && corners[pair * 2] <= 3200
+                 && corners[pair * 2 + 1] >= 0 && corners[pair * 2 + 1] <= 2400,
+                 "corner \(pair) is \(corners[pair * 2]),\(corners[pair * 2 + 1]), outside the 3200x2400 photo")
+}
+// And what it suggests is something freepdf_adjust_page accepts unchanged.
+let asSuggested = work.appendingPathComponent("0003.jpg")
+let reused = call { error, size in
+    freepdf_adjust_page(photo.path, asSuggested.path, &suggestion.values, error, size)
+}
+precondition(reused.status == 0, "the suggested values were refused: \(reused.message)")
 
 // 6 - and the pages become a PDF. Two of them, so the array really is walked.
 let pdf = work.appendingPathComponent("scan.pdf")
