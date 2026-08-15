@@ -8,6 +8,20 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-15 - the pages screen, drawn from the tokens and read from the cache
+
+Task 17. `ios/FreePDF/PagesView.swift` is new and carries flow 5: the carousel with pinch
+to zoom, the rail with its jump, the Grey switch, the Page menu, the delete question,
+Retry on a refused page and Make PDF hidden until every photo has a page. `ScanFlow` keeps
+the actions and the disk.
+
+The trap Julian spotted is closed: nothing on this screen lists a directory while it
+draws. `unscanned` and `finished` come out of the `@State` cache, the images decode in a
+`.task`. `makePDF()` still reads the disk on purpose - the comment there says why.
+
+Grey greys the screen only. The engine takes the flag through `freepdf_adjust_page`, which
+the app does not call before task 18; Julian chose the display-only switch today.
+
 ## 2026-08-15 - the camera, and the screen-level sentence gets its own screen
 
 TASKS.md task 15. `CameraView.swift` is flow 3 on the tokens: the dead shutter while the

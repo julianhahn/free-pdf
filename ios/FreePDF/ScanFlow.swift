@@ -4,10 +4,8 @@
 //  every time. Nothing here stores where the user got to, so a kill cannot leave this
 //  screen believing something the disk disagrees with ([`AGENTS.md`](../AGENTS.md)).
 
-import ImageIO
 import PDFKit
 import SwiftUI
-import UIKit
 
 struct ScanFlow: View {
     let scan: Scan
@@ -27,6 +25,10 @@ struct ScanFlow: View {
     @State private var pages: [Int] = []
     /// What the photos cost, read with them rather than on every redraw.
     @State private var photoBytes = 0
+    /// Whether `scan.pdf` was there the last time the files were read. Part of the same
+    /// cache and for the same reason: `scan.state` lists two directories, and a body that
+    /// lists a directory the drain is writing into answers differently twice in a frame.
+    @State private var finished = false
     /// The page the carousel is on, by its number.
     @State private var showing = 0
     @State private var message: String?
@@ -50,9 +52,9 @@ struct ScanFlow: View {
                     shooting = false
                     refresh()
                 }
-            } else if scan.state == .done {
+            } else if finished {
                 done
-            } else if scan.unscanned.allSatisfy(failed.contains) {
+            } else if unscanned.allSatisfy(failed.contains) {
                 // Nothing left the drain can do: either every photo has a page, or the
                 // ones without have already been refused. Both belong on the pages, not
                 // on a progress bar that would never move again.
@@ -138,9 +140,15 @@ struct ScanFlow: View {
     /// The task is cancelled when the screen goes away, but a page already in flight
     /// runs to the end - `Task.detached` does not inherit cancellation. That is what is
     /// wanted: a page either lands on disk whole or was never there.
+    /// The photos with no page yet, out of the cache above and never off the disk. This
+    /// is what decides the screen, what hides Make PDF, and what the drain picks from -
+    /// three answers that have to agree inside one frame, which a directory listing under
+    /// a running drain cannot promise.
+    private var unscanned: [Int] { photos.filter { !pages.contains($0) } }
+
     private func drain() async {
         while !Task.isCancelled,
-              let number = scan.unscanned.first(where: { !failed.contains($0) }) {
+              let number = unscanned.first(where: { !failed.contains($0) }) {
             do {
                 try await Task.detached(priority: .utility) {
                     try Engine.scanPage(scan.photoURL(number), into: scan.pageURL(number))
@@ -158,41 +166,22 @@ struct ScanFlow: View {
     // MARK: - Checking the pages
 
     private var check: some View {
-        VStack {
-            TabView(selection: $showing) {
-                ForEach(numbers, id: \.self) { number in
-                    page(number).tag(number)
-                }
-            }
-            .tabViewStyle(.page)
-
-            if let message {
-                Text(message).font(.footnote).foregroundStyle(.red)
-            }
-            // Hidden until every photo has a page, so a scan can never lose a page to a
-            // PDF the user thought was whole.
-            if scan.unscanned.isEmpty {
-                Button(making ? "Making the PDF…" : "Make PDF") {
-                    Task { await makePDF() }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .disabled(making)
-            }
-        }
-        .navigationTitle("Page \(position) of \(numbers.count)")
-        .navigationBarTitleDisplayMode(.inline)
+        PagesView(scan: scan,
+                  numbers: numbers,
+                  failed: failed,
+                  complete: unscanned.isEmpty,
+                  making: making,
+                  message: message,
+                  showing: $showing,
+                  onRetake: retake,
+                  onDelete: deletePage,
+                  onShootAnother: shootAnother,
+                  onMakePDF: { Task { await makePDF() } })
         // The second of the two lines the camera stand-in reaches out of its own file
         // with: it presses Make PDF for the check ([`FakeShoot.swift`](./FakeShoot.swift)).
         // The same condition the button carries, or a refused page would be left out of
         // a PDF nobody asked for.
-        .task { if FakeShoot.pagesWanted != nil, scan.unscanned.isEmpty, !making { await makePDF() } }
-        .toolbar {
-            Menu("Page", systemImage: "ellipsis.circle") {
-                Button("Retake this page") { retake(showing) }
-                Button("Delete page", role: .destructive) { deletePage(showing) }
-            }
-        }
+        .task { if FakeShoot.pagesWanted != nil, unscanned.isEmpty, !making { await makePDF() } }
     }
 
     /// Every page number this scan has, whether it got as far as a page file or not.
@@ -200,41 +189,14 @@ struct ScanFlow: View {
     /// the user can do something about it.
     private var numbers: [Int] { Array(Set(photos + pages)).sorted() }
 
-    /// Where in the carousel he is. Counted, not the page number: a page deleted in the
-    /// middle keeps its gap for ever, and "Page 7 of 6" would be the result.
-    private var position: Int { (numbers.firstIndex(of: showing) ?? 0) + 1 }
-
-    @ViewBuilder
-    private func page(_ number: Int) -> some View {
-        if let image = Self.thumbnail(scan.pageURL(number)) {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFit()
-        } else {
-            ContentUnavailableView("This page could not be scanned.",
-                                   systemImage: "exclamationmark.triangle")
-        }
-    }
-
-    /// One page, decoded small enough to look at.
-    ///
-    /// A full page decodes to about 34 MB and a paging carousel keeps roughly three
-    /// alive; at 1600 px they are about 7 MB each. 400 px would be too soft to see
-    /// whether the small print survived, which is the only reason this screen exists.
-    ///
-    /// ponytail: decoded while the view is being drawn, so paging costs about 40 ms of
-    /// main thread per page. Move it into a `.task` with a `@State` image if that ever
-    /// feels slow.
-    private static func thumbnail(_ url: URL) -> UIImage? {
-        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
-        let options: [CFString: Any] = [
-            kCGImageSourceCreateThumbnailFromImageIfAbsent: true,
-            kCGImageSourceCreateThumbnailWithTransform: true,
-            kCGImageSourceThumbnailMaxPixelSize: 1600,
-        ]
-        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
-        else { return nil }
-        return UIImage(cgImage: image)
+    /// One more page at the end of a scan that was already whole. The PDF goes first: it
+    /// is what the screen reads as finished, and a scan that still had one would send him
+    /// to the done screen instead of the camera, with the new photo never drained.
+    private func shootAnother() {
+        try? FileManager.default.removeItem(at: scan.pdf)
+        slot = nil
+        shooting = true
+        refresh()
     }
 
     private func retake(_ number: Int) {
@@ -344,6 +306,7 @@ struct ScanFlow: View {
         photos = scan.photos
         pages = scan.pages
         photoBytes = scan.photoBytes
+        finished = FileManager.default.fileExists(atPath: scan.pdf.path)
         if !numbers.contains(showing) { showing = numbers.first ?? 0 }
     }
 }

@@ -1,0 +1,354 @@
+//  PagesView.swift - the pages, one per swipe, before they become a PDF.
+//
+//  This screen shows what is already on disk and never lists it: every number it draws
+//  comes in from `ScanFlow`'s cache of the files. A directory listing inside a view body
+//  gives two answers in one frame while the drain writes into it, and SwiftUI then never
+//  settles - the drain screen was fixed for exactly that and this one is built that way
+//  from the start ([`../AGENTS.md`](../AGENTS.md)).
+//
+//  Every colour, size and step comes from `Token`. No number is written here.
+
+import ImageIO
+import SwiftUI
+import UIKit
+
+struct PagesView: View {
+    let scan: Scan
+    /// Every page number this scan has, whether it got as far as a page file or not.
+    /// Cached in `ScanFlow`, never read off the disk here.
+    let numbers: [Int]
+    /// The pages the engine refused. They are on this carousel because this is the only
+    /// place the user can do something about them.
+    let failed: Set<Int>
+    /// True when every photo has a page - which is both what makes Make PDF appear and
+    /// what puts "Shoot another page" in the menu.
+    let complete: Bool
+    let making: Bool
+    let message: String?
+    @Binding var showing: Int
+    var onRetake: (Int) -> Void
+    var onDelete: (Int) -> Void
+    var onShootAnother: () -> Void
+    var onMakePDF: () -> Void
+
+    /// Grey is one switch for the whole scan, not one per page: turning it on greys the
+    /// large page and every tile in the rail at once, which is the visible proof of that.
+    ///
+    /// ponytail: it greys what is on screen, not what is written. The engine takes a
+    /// `grey` flag only through `freepdf_adjust_page`, which the app does not call yet -
+    /// so the PDF stays as scanned. Julian's call on 2026-08-15: build the switch now,
+    /// let task 18 rewrite the pages for real when Adjust brings that function over.
+    @State private var grey = false
+    @State private var confirmingDelete = false
+    /// How far the page is pinched open, and where the pinch started. Reading small
+    /// print is the only reason this screen exists.
+    @State private var zoom: CGFloat = 1
+    @State private var zoomStart: CGFloat = 1
+    /// The jump: one field and a Go, open only while asked for. Nothing is remembered.
+    @State private var jumping = false
+    @State private var jumpTo = ""
+
+    var body: some View {
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: Token.Size.space4) {
+                if let message { ErrorLine(sentence: message) }
+                carousel
+                if failed.contains(showing) {
+                    Button("Scan this page again") { onRetake(showing) }
+                        .buttonStyle(SecondaryStyle())
+                        .accessibilityHint("Photographs page \(position) again.")
+                }
+                rail
+            }
+            .padding(Token.Size.screenPadding)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+            Rectangle()
+                .fill(Token.Palette.divider)
+                .frame(height: Token.Size.hairlineW)
+            footer
+        }
+        .background(Token.Palette.bg)
+        .tint(Token.Palette.accent)
+        .navigationTitle("Page \(position) of \(numbers.count)")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { menu }
+        .onChange(of: showing) {
+            // A new page starts unpinched, and the jump closes on the next swipe.
+            zoom = 1
+            zoomStart = 1
+            jumping = false
+        }
+        .confirmationDialog("Delete this page?",
+                            isPresented: $confirmingDelete,
+                            titleVisibility: .visible) {
+            Button("Delete page", role: .destructive) { onDelete(showing) }
+                .accessibilityHint("Deletes page \(position) and its photo.")
+            Button("Cancel", role: .cancel) {}
+                .accessibilityHint("Keeps the page.")
+        } message: {
+            Text("The photo goes too. This cannot be undone.")
+        }
+    }
+
+    /// Where in the carousel he is. Counted, not the page number: a page deleted in the
+    /// middle keeps its gap for ever, and "Page 7 of 6" would be the result.
+    private var position: Int { (numbers.firstIndex(of: showing) ?? 0) + 1 }
+
+    // MARK: - The page
+
+    private var carousel: some View {
+        TabView(selection: $showing) {
+            ForEach(numbers, id: \.self) { number in
+                page(number).tag(number)
+            }
+        }
+        // The rail is the indicator now, so the system's dots would be a second one.
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func page(_ number: Int) -> some View {
+        if failed.contains(number) {
+            VStack(spacing: Token.Size.space2) {
+                Image(systemName: "doc.badge.exclamationmark")
+                    .font(.system(size: Token.Size.iconEmpty))
+                Text("This page could not be scanned.")
+                    .font(Token.Face.body(Token.Size.textSub))
+                    .lineSpacing(Token.Size.textSub * (Token.Number.leadingBody - 1))
+                    .multilineTextAlignment(.center)
+            }
+            .foregroundStyle(Token.Palette.destructive)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Token.Palette.surface, in: RoundedRectangle(cornerRadius: Token.Size.radiusMd))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Page \(pos(number)) of \(numbers.count), could not be scanned.")
+        } else {
+            PageImage(url: scan.pageURL(number), grey: grey)
+                .scaleEffect(zoom)
+                .clipped()
+                .gesture(pinch)
+                .accessibilityLabel("Page \(pos(number)) of \(numbers.count)\(grey ? ", grey" : "")")
+        }
+    }
+
+    private func pos(_ number: Int) -> Int { (numbers.firstIndex(of: number) ?? 0) + 1 }
+
+    /// Pinch to zoom, held between 1 and 4. Skipped: panning while zoomed in - add it
+    /// when looking at the middle of a page turns out to be what he wants.
+    private var pinch: some Gesture {
+        MagnifyGesture()
+            .onChanged { zoom = min(max(zoomStart * $0.magnification, 1), 4) }
+            .onEnded { _ in zoomStart = zoom }
+    }
+
+    // MARK: - The rail
+
+    private var rail: some View {
+        VStack(alignment: .leading, spacing: Token.Size.space2) {
+            HStack(spacing: Token.Size.space2) {
+                ScrollViewReader { view in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: Token.Size.space2) {
+                            ForEach(numbers, id: \.self) { number in tile(number).id(number) }
+                        }
+                    }
+                    .onAppear { view.scrollTo(showing, anchor: .center) }
+                    .onChange(of: showing) { withAnimation { view.scrollTo(showing, anchor: .center) } }
+                }
+                Rectangle()
+                    .fill(Token.Palette.divider)
+                    .frame(width: Token.Size.hairlineW, height: Token.Size.touchMin)
+                // Words, not a glyph, and always in the same place at the rail's end.
+                Button("Go to page") { jumping.toggle() }
+                    .font(Token.Face.heading(Token.Size.textControl))
+                    .tracking(Token.Size.textControl * Token.Number.trackingHeading)
+                    .foregroundStyle(Token.Palette.accent)
+                    .frame(minHeight: Token.Size.touchMin)
+                    .accessibilityHint("Go to a page number. Page \(position) of \(numbers.count) shown.")
+            }
+            if jumping { jump }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Pages, \(position) of \(numbers.count) shown")
+    }
+
+    private var jump: some View {
+        HStack(spacing: Token.Size.space2) {
+            TextField("", text: $jumpTo)
+                .keyboardType(.numberPad)
+                .font(Token.Face.body(Token.Size.textControl))
+                .monospacedDigit()
+                .foregroundStyle(Token.Palette.text)
+                .padding(.horizontal, Token.Size.space2)
+                .frame(minHeight: Token.Size.inputMinH)
+                .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
+                    .stroke(Token.Palette.divider, lineWidth: Token.Size.hairlineW))
+                .accessibilityLabel("Page number, 1 to \(numbers.count)")
+            Button("Go") { go() }
+                .buttonStyle(SecondaryStyle())
+                .accessibilityHint("Goes to that page.")
+        }
+    }
+
+    /// The number typed is the page as the user counts it - the third page, not the file
+    /// called 0003. The two disagree the moment a page in the middle is deleted, and the
+    /// rail is what he read the number off.
+    private func go() {
+        if let typed = Int(jumpTo), numbers.indices.contains(typed - 1) {
+            showing = numbers[typed - 1]
+        }
+        jumping = false
+        jumpTo = ""
+    }
+
+    private func tile(_ number: Int) -> some View {
+        let chosen = number == showing
+        let refused = failed.contains(number)
+        return VStack(spacing: Token.Size.space1) {
+            Group {
+                if refused {
+                    Rectangle().fill(Token.Palette.surface)
+                } else {
+                    PageImage(url: scan.pageURL(number), grey: grey, maxPixels: 200)
+                }
+            }
+            .frame(width: Token.Size.iconEmpty,
+                   height: Token.Size.iconEmpty / Token.Number.pageRatio)
+            .clipShape(RoundedRectangle(cornerRadius: Token.Size.radiusSm))
+            .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusSm)
+                .stroke(refused ? Token.Palette.destructive
+                                : (chosen ? Token.Palette.accent : Token.Palette.divider),
+                        lineWidth: refused || chosen ? Token.Size.ruleStrong : Token.Size.hairlineW))
+            Text(String(number))
+                .font(Token.Face.body(Token.Size.textMeta))
+                .monospacedDigit()
+                .foregroundStyle(chosen ? Token.Palette.text : Token.Palette.textMuted)
+        }
+        .onTapGesture { showing = number }
+        .accessibilityElement(children: .combine)
+        // The refusal sentence does not fit on a 30 pt tile and is not shortened to fit,
+        // so the tile speaks it instead.
+        .accessibilityLabel("Page \(pos(number))"
+                            + (refused ? ", could not be scanned" : "")
+                            + (chosen ? ", shown" : ""))
+    }
+
+    // MARK: - The footer
+
+    private var footer: some View {
+        VStack(spacing: Token.Size.space2) {
+            Toggle(isOn: $grey) {
+                Text("Grey")
+                    .font(Token.Face.heading(Token.Size.textControl))
+                    .tracking(Token.Size.textControl * Token.Number.trackingHeading)
+                    .foregroundStyle(Token.Palette.text)
+            }
+            .toggleStyle(.switch)
+            .tint(Token.Palette.accent)
+            .frame(minHeight: Token.Size.touchMin)
+            .accessibilityHint("Shows every page of this scan in grey.")
+
+            // Hidden until every photo has a page, so a scan cannot quietly lose a page
+            // to a PDF the user thought was whole.
+            if complete {
+                Button(making ? "Making the PDF…" : "Make PDF", action: onMakePDF)
+                    .font(Token.Face.heading(Token.Size.textControl))
+                    .padding(.vertical, Token.Size.buttonPaddingY)
+                    .padding(.horizontal, Token.Size.buttonPaddingX)
+                    .frame(maxWidth: .infinity, minHeight: Token.Size.touchMin)
+                    .background(making ? Token.Palette.disabledBorder : Token.Palette.accent,
+                                in: RoundedRectangle(cornerRadius: Token.Size.radiusMd))
+                    .foregroundStyle(making ? Token.Palette.disabledText : Token.Palette.onAccent)
+                    .disabled(making)
+                    .accessibilityHint("Makes one PDF from the \(numbers.count) pages.")
+            }
+        }
+        .padding(Token.Size.screenPadding)
+    }
+
+    // MARK: - The page menu
+
+    private var menu: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Menu {
+                Button("Retake this page", systemImage: "camera") { onRetake(showing) }
+                    .accessibilityHint("Photographs page \(position) again.")
+                // Task 18 opens the Adjust screen here. Until then the entry stays out
+                // rather than being a button that does nothing.
+                if complete {
+                    Button("Shoot another page", systemImage: "plus") { onShootAnother() }
+                        .accessibilityHint("Photographs one more page at the end of this scan.")
+                }
+                Divider()
+                Button("Delete page", systemImage: "trash", role: .destructive) {
+                    confirmingDelete = true
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+            }
+            .accessibilityLabel("Page menu")
+        }
+    }
+}
+
+/// One page file, decoded small enough to look at and no bigger.
+///
+/// The decode happens in a `.task`, not while the view is drawn: a paging carousel keeps
+/// about three pages alive, and a full page decodes to some 34 MB. 1600 px is about 7 MB
+/// and still shows whether the small print survived, which is the only reason this screen
+/// exists; the rail's tiles ask for 200.
+private struct PageImage: View {
+    let url: URL
+    let grey: Bool
+    var maxPixels = 1600
+
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .grayscale(grey ? 1 : 0)
+            } else {
+                Token.Palette.paper
+            }
+        }
+        .task(id: url) { image = await Self.decode(url, maxPixels: maxPixels) }
+    }
+
+    private static func decode(_ url: URL, maxPixels: Int) async -> UIImage? {
+        await Task.detached(priority: .userInitiated) {
+            guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+            let options: [CFString: Any] = [
+                kCGImageSourceCreateThumbnailFromImageIfAbsent: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: maxPixels,
+            ]
+            guard let made = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
+            else { return nil }
+            return UIImage(cgImage: made)
+        }.value
+    }
+}
+
+/// The secondary button: the label in the heading face inside a hairline box. Two places
+/// on this screen use it - Retry and the jump's Go.
+private struct SecondaryStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Token.Face.heading(Token.Size.textControl))
+            .tracking(Token.Size.textControl * Token.Number.trackingHeading)
+            .padding(.vertical, Token.Size.buttonPaddingY)
+            .padding(.horizontal, Token.Size.buttonPaddingX)
+            .frame(maxWidth: .infinity, minHeight: Token.Size.touchMin)
+            .background(configuration.isPressed ? Token.Palette.pressNeutral : Token.Palette.bg,
+                        in: RoundedRectangle(cornerRadius: Token.Size.radiusMd))
+            .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
+                .stroke(Token.Palette.divider, lineWidth: Token.Size.hairlineW))
+            .foregroundStyle(Token.Palette.text)
+    }
+}

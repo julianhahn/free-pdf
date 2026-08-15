@@ -184,6 +184,37 @@ than a comment: sharpening one page peaks near 220 MB on its own
   `Task.detached` does not inherit cancellation, and that is what is wanted: a page
   either lands on disk whole or was never there.
 
+### The pages
+
+[`FreePDF/PagesView.swift`](./FreePDF/PagesView.swift): one page per swipe, pinch to zoom
+because reading small print is the only reason this screen exists, a rail of tiles that
+follows the swipe, and a jump for the scan that is forty pages long. `ScanFlow` keeps the
+actions and hands the screen numbers.
+
+- **Nothing on it lists a directory.** The page numbers, the refused ones, whether the
+  scan is whole and whether the PDF exists all come out of the `@State` cache of the
+  files. That is not tidiness: while the drain writes, a listing inside a body answers
+  differently twice in one frame and SwiftUI never settles - the screen sat in front of a
+  finished scan for ever. The drain was fixed for that first; this screen was built that
+  way. `makePDF()` is the one deliberate exception and reads the pages straight off the
+  disk, because a cache one refresh behind would leave a page out of the PDF.
+- **The position is counted, the number is printed.** "Page 3 of 12" counts the carousel;
+  the tile says the file's own number. A page deleted in the middle keeps its gap for
+  ever, so the two disagree from the first delete on, and the jump takes the counted one -
+  that is the number he read off the rail.
+- **The images decode in a `.task`, never in a body**, at 1600 px for the page and 200 for
+  a tile. A full page is about 34 MB decoded and a carousel keeps three alive.
+- **Grey greys the screen, not the file.** One switch for the whole scan, and it turns the
+  page and every tile at once, which is what makes it visibly per scan. The engine takes a
+  `grey` flag only through `freepdf_adjust_page`, which the app does not call yet, so the
+  PDF is unchanged - **Julian's call, 2026-08-15**: build the switch now, task 18 rewrites
+  the pages for real when Adjust brings that function over.
+- **"Shoot another page" deletes `scan.pdf` first.** The PDF is what this screen reads as
+  finished, so a scan that still had one would answer the tap with the done screen and the
+  new photo would never be drained.
+- **The menu has no Adjust entry until task 18.** An item that does nothing is worse than
+  a missing one.
+
 ### The camera
 
 `AVCaptureSession`, `.photo` preset, back wide angle, **video input only** - so the app
