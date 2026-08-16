@@ -50,11 +50,7 @@ pub fn images_to_pdf(images: &[DynamicImage], out_path: &Path) -> Result<(), Str
         return Err("No images given, so the PDF would have no pages.".to_string());
     }
 
-    let title = out_path
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-        .unwrap_or("FreePDF Document");
-    let mut doc = PdfDocument::new(title);
+    let mut doc = PdfDocument::new(title_of(out_path));
 
     let pages: Vec<PdfPage> = images.iter().map(|img| build_page(&mut doc, img)).collect();
 
@@ -136,11 +132,7 @@ pub fn pages_to_pdf(pages: &[PathBuf], out_path: &Path) -> Result<(), String> {
         return Err("No pages given, so the PDF would have no pages.".to_string());
     }
 
-    let title = out_path
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-        .unwrap_or("FreePDF Document");
-    let mut doc = PdfDocument::new(title);
+    let mut doc = PdfDocument::new(title_of(out_path));
 
     let mut built = Vec::with_capacity(pages.len());
     for page in pages {
@@ -185,6 +177,17 @@ pub fn pages_to_pdf(pages: &[PathBuf], out_path: &Path) -> Result<(), String> {
 
     file.sync_all().map_err(|e| failed(&part, e))?;
     std::fs::rename(&part, out_path).map_err(|e| failed(out_path, e))
+}
+
+/// The name the document carries inside itself: the file it is being written to,
+/// without its extension. Both ways into a PDF name it the same way, so the two
+/// cannot drift apart. A path with no readable stem falls back to a name rather
+/// than to nothing, because a reader shows this in its title bar.
+fn title_of(out_path: &Path) -> &str {
+    out_path
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or("FreePDF Document")
 }
 
 /// One shape for every write error, because the sentence goes on screen as it is.
