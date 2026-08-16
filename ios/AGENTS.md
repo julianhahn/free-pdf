@@ -297,6 +297,35 @@ number in front; more than one missing photo shows the copy table's "Pages 4, 9 
 not changed…", which is only ever about missing photos. There is no singular of that
 sentence in the tables, so none is invented.
 
+### The done screen
+
+[`FreePDF/ScanFlow.swift`](./FreePDF/ScanFlow.swift), the `done` branch: the name field,
+Open PDF, Share PDF, Change pages, and the photos block that names its own count and size.
+The words are the copy tables in [`../user-flows.md`](../user-flows.md) sections 9, 10 and 11.
+
+- **The name is for the copy that leaves and nothing else.** On disk the file is always
+  `scan.pdf`. What he types becomes a hard link in the temporary directory called
+  `<name>.pdf`, which is what `ShareLink` hands the system - a link rather than a copy,
+  because it costs no bytes and the temporary directory is on the same volume. Nothing is
+  stored, so reopening the scan shows an empty field, and a name that would not be one path
+  component (`/`, `:`) has those two characters replaced.
+- **The reader is the system's PDF view under the system's sheet**, and there is nothing
+  else on it - no share, no print, no page count. The close control is a glyph, so the copy
+  table's "Close the PDF" is the spoken label rather than a word on screen.
+- **The photos block is removed whole once the photos are gone**, never greyed: there is
+  nothing left to press, and nothing announces the absence. Its confirmation is the system's
+  dialog, for the reason the list section gives, and it is asked every time - doing nothing
+  is the other half of the choice, so "keep the photos" needs no button.
+- **The plural is the one `Scan.deleteBody` already carries.** The tables give the plural
+  only; a one-page scan would otherwise read "Delete the 1 photos", so `photo`/`photos`
+  follows the count and no new sentence is invented.
+
+Two things flow 7 draws that this screen does not, both deliberate and both **Julian's to
+overrule**: the PDF's first page at the top - `user-flows.md` section 9 has no picture
+there and nothing renders a PDF page back to an image today (TASKS.md open question 2) -
+and the line under Share, which is the designer's own placeholder and has no copy table
+entry.
+
 ### The camera
 
 `AVCaptureSession`, `.photo` preset, back wide angle, **video input only** - so the app
