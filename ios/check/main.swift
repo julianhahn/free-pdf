@@ -205,7 +205,21 @@ precondition(name.count == 22 && name[4] == "-" && name[7] == "-"
 // - and the pages are the work, so it is ready to check, not an empty scan. Nothing was
 // killed here; getting this wrong loses a finished scan on two taps.
 let photoless = newScan()
+shoot(photoless, [1, 2, 3])
 scanned(photoless, [1, 2, 3])
+write("%PDF-1.7 … %%EOF", to: photoless.pdf)
+precondition(photoless.finished, "the PDF is on disk and the scan reads unfinished")
+
+photoless.deletePhotos()
+precondition(photoless.state == .done,
+             "deleting the photos moved the scan to \(photoless.state)")
+
+// Change pages: the PDF goes and nothing else does, so the scan drops back to its pages.
+// That is what makes the tap safe - every page file is still there and rebuilding costs
+// two seconds.
+photoless.deletePDF()
+precondition(!photoless.finished, "the PDF survived Change pages")
+precondition(photoless.pages == [1, 2, 3], "Change pages took a page with it: \(photoless.pages)")
 precondition(photoless.state == .ready, "3 pages and no photos is \(photoless.state)")
 precondition(photoless.unscanned.isEmpty, "still to scan: \(photoless.unscanned)")
 

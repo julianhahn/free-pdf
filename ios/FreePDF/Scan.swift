@@ -48,6 +48,10 @@ struct Scan: Hashable {
     /// only - a half-written PDF is called `scan.part` and the sweep deletes it.
     var pdf: URL { url.appendingPathComponent("scan.pdf") }
 
+    /// Whether that file is there, which is what "finished" means. Written once, because
+    /// `state` below and the screen's own cache both have to answer it the same way.
+    var finished: Bool { FileManager.default.fileExists(atPath: pdf.path) }
+
     func photoURL(_ number: Int) -> URL {
         photoDirectory.appendingPathComponent(Self.fileName(number))
     }
@@ -100,7 +104,7 @@ struct Scan: Hashable {
     var nextPage: Int { ((photos + pages).max() ?? 0) + 1 }
 
     var state: State {
-        if FileManager.default.fileExists(atPath: pdf.path) { return .done }
+        if finished { return .done }
         // Both empty, not just the photos. Deleting the photos on the done screen and then
         // asking to change the pages leaves forty pages and no photo, and that scan is
         // ready to check - the pages are the work, the photos are only the raw material.
@@ -326,6 +330,16 @@ struct Scan: Hashable {
     /// and `Change pages` can still work on - the pages are the work.
     func deletePhotos() {
         for number in photos { try? FileManager.default.removeItem(at: photoURL(number)) }
+    }
+
+    /// Deletes the PDF and keeps everything else - the photos, the pages and their state.
+    ///
+    /// The PDF is derived from the pages, so anything that touches a page makes it wrong:
+    /// Apply, the Grey switch, Shoot another page and Change pages all call this, and each
+    /// of them calls it first. A kill after it costs a rebuild of two seconds; a kill
+    /// before it would leave a PDF holding a page the user has already replaced.
+    func deletePDF() {
+        try? FileManager.default.removeItem(at: pdf)
     }
 
     /// Throws the whole scan away - photos, pages and PDF.

@@ -245,10 +245,7 @@ struct ScanFlow: View {
         // count "Page 14 of 7" over the first one's pages.
         guard !applyingOne, applyingAll == nil else { return }
         message = nil
-        // The PDF is derived from the pages, so a rewritten page makes it wrong. Same
-        // move as Change pages and Shoot another page, and it goes first: a kill after it
-        // costs a rebuild, never a PDF holding a page the user replaced.
-        try? FileManager.default.removeItem(at: scan.pdf)
+        scan.deletePDF()
         if allPages {
             await everyPage { one in await write(one, values, on: one == number) }
             adjusting = nil
@@ -304,7 +301,7 @@ struct ScanFlow: View {
     private func flipGrey(to wanted: Bool) async {
         guard !applyingOne, applyingAll == nil, wanted != grey else { return }
         message = nil
-        try? FileManager.default.removeItem(at: scan.pdf)
+        scan.deletePDF()
         await everyPage { one in
             guard var values = await asked(one) else { return false }
             values.grey = wanted
@@ -416,7 +413,7 @@ struct ScanFlow: View {
     /// is what the screen reads as finished, and a scan that still had one would send him
     /// to the done screen instead of the camera, with the new photo never drained.
     private func shootAnother() {
-        try? FileManager.default.removeItem(at: scan.pdf)
+        scan.deletePDF()
         slot = nil
         shooting = true
         refresh()
@@ -485,7 +482,7 @@ struct ScanFlow: View {
                         // Safe precisely because the PDF is derived: every page file is
                         // still there and rebuilding costs two seconds. Without it, a bad
                         // page spotted only after Make PDF would cost the whole scan.
-                        try? FileManager.default.removeItem(at: scan.pdf)
+                        scan.deletePDF()
                         refresh()
                     }
                     .buttonStyle(OutlineStyle(ink: Token.Palette.accent, edge: .clear))
@@ -652,7 +649,7 @@ struct ScanFlow: View {
         photos = scan.photos
         pages = scan.pages
         photoBytes = scan.photoBytes
-        finished = FileManager.default.fileExists(atPath: scan.pdf.path)
+        finished = scan.finished
         // The lowest-numbered page that has a state file answers for the scan.
         grey = Array(Set(photos + pages)).sorted().lazy.compactMap(scan.readState).first?.grey ?? false
         if !numbers.contains(showing) { showing = numbers.first ?? 0 }

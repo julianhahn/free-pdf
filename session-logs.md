@@ -8,6 +8,26 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-16 - the PDF is a file the scan owns
+
+`ARCHITECTURE.md` item 4. `try? FileManager.default.removeItem(at: scan.pdf)` stood four
+times in `ScanFlow.swift` - Apply, the Grey switch, Shoot another page, Change pages - three
+of them with their own comment saying the same thing. It is `Scan.deletePDF()` now, beside
+`delete()`, `deletePhotos()` and `deleteState()`, and the shared reason is written once in
+its doc; each call site keeps only what is about that site. "Finished" was spelled twice, a
+`fileExists` in `Scan.state` and another in the router's `refresh()`; both read `Scan.finished`
+now. Section 11 of `check/main.swift` stops building the after-state by hand and presses the
+two buttons: the PDF is written, the photos deleted, then `deletePDF()`, and the scan has to
+drop from `.done` back to `.ready` with its three pages intact. Mutated `deletePDF` to a
+no-op and it aborts on "the PDF survived Change pages". Behaviour unchanged: `run.sh`,
+`scan_check.sh` and the whole-app typecheck pass unedited.
+
+Not true after this, so not written anywhere: item 4's claim that `ScanFlow` would then name
+`FileManager` only for the share hard-link. `retake` and `deletePage` still remove a page and
+a photo file directly, and moving those would add two members to `Scan` to delete three lines,
+with a `Scan.deletePage` that deletes one file sitting beside a `ScanFlow.deletePage` that
+deletes three. Left alone.
+
 ## 2026-08-16 - items 2 and 3 ticked, and the counts they moved
 
 `ARCHITECTURE.md` items 2 and 3 are done and ticked; item 1's three leftover pointers are
