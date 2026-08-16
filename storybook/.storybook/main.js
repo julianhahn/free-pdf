@@ -18,10 +18,7 @@ const kitAsModules = {
     const file = id.split("?")[0];
     if (!file.startsWith(kit) || !file.endsWith(".jsx")) return null;
     const names = [...code.matchAll(/^function (\w+)/gm)].map((m) => m[1]);
-    const chrome = file.endsWith("Chrome.jsx")
-      ? ""
-      : `import { AppBar, Screen, StatusLine } from "${path.join(kit, "Chrome.jsx")}";\n`;
-    const head = `import React from "react";\nimport * as __DS from "${path.resolve(here, "../ds.js")}";\n${chrome}`;
+    const head = `import React from "react";\nimport * as __DS from "${path.resolve(here, "../ds.js")}";\n`;
     const body = code.replaceAll("window.FreePDFDesignSystem_43ff31", "__DS");
     return `${head}${body}\nexport { ${names.join(", ")} };\n`;
   },

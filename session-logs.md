@@ -8,6 +8,19 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-16 - the three pointers the deletion left dangling
+
+Cleaning up after the frozen-copy deletion. `design/AGENTS.md` still sent every agent to
+`gallery/_ds/<theme>/readme.md`, which teaches `var(--color-*)`; the live tokens are
+`--accent-500`, `--bg` and so on, so that row was a second, incompatible source of truth in
+the one table that names the first. Row cut. `Flow1Scans.stories.jsx` pointed its phone
+frame at `Screens.stories.jsx`, which no longer exists - it is the frame the six other flow
+stories copy, and now says so. `.storybook/main.js` lost the `chrome` ternary: it injected
+an import into every kit `.jsx` that is not `Chrome.jsx`, and `Chrome.jsx` is the only one
+left, so that branch could never fire. The window-global rewrite and the generated export
+stay - the flow stories need both, and `npx storybook build` still resolves
+`AppBar`/`Screen`/`StatusLine` from the Chrome chunk.
+
 ## 2026-08-16 - the design system exists once, not twice
 
 `design/system/` held itself twice: the live `tokens/*.css` and 22 `.jsx` components, and a

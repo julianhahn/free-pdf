@@ -8,7 +8,6 @@ here - the iPhone client is rebuilt natively from this, it never loads any of it
 | `claude-design-prompt.md` | The brief. Every screen, every component, every constraint, written for a designer who has never seen this repository. |
 | `gallery/FreePDF Components.dc.html` | The component gallery that came back. Open it in a browser - it is one self-contained page. |
 | `system/tokens/*.css` | The design system itself: every colour, font, spacing step, radius and shadow as a CSS variable. This is the source of truth for any number a component uses, and `system/tokens/build-tokens.mjs` is what carries it to `../ios/FreePDF/Tokens.swift`. |
-| `gallery/_ds/<theme>/readme.md` | How that system is meant to be used, class by class. |
 
 The flows those screens serve are [`../user-flows.md`](../user-flows.md), and that document
 is the one that decides behaviour. Where the gallery and the flows disagree, the flows win -

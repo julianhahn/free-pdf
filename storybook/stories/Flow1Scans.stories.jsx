@@ -3,7 +3,7 @@ import { AppBar, StatusLine } from "@ds/ui_kits/iphone/Chrome.jsx";
 import { Button, ConfirmDialog, EmptyState, ErrorLine, ScanRow } from "../ds.js";
 
 /* Flows 1 and 2, the scans list: S1, S2, S4, S5 of
-   "FreePDF Flows 1-2 Scans.dc.html". Same phone frame as Screens.stories.jsx. */
+   "FreePDF Flows 1-2 Scans.dc.html". This is the phone frame the other flow stories copy. */
 const Phone = ({ children }) => (
   <div
     style={{
