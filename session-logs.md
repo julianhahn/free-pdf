@@ -47,6 +47,10 @@ was compared against `design/system/tokens/*.css` first - colours, ramps, type s
 radii, shadows all agree - so it now names that one source. That was the last line in the repo
 naming `classical-fee6c86c`, which unblocks item 17.
 
+Two the list did not name and the code did: all five task 3 titles name a deleted
+`*Screen.jsx`, not two, and task 3.3 still ordered "Adjust page" into the menu only, which
+task 24 reversed and says is deleted, not argued with.
+
 Left standing on purpose: `tokens.md`'s "Provisional, do not treat as approved" preface. Its
 numbers are true, but whether they are *approved* is Julian's word, not a fact I can read off
 the code. Docs only, no behaviour: `npx storybook build` passes unedited.

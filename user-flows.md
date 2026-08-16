@@ -252,7 +252,7 @@ only lives in memory today and a relaunch is the only retry there is.
 3. **Page** menu → **Retake this page** → the camera opens on that slot, one shot, back to
    the pages.
 4. **Page** menu → **Delete page** → confirm → page file first, photo second.
-5. **Page** menu → **Adjust page** → section 7.
+5. **Adjust page** → section 7.
 6. **Make PDF** appears only when every photo has a page.
 
 ```
@@ -288,7 +288,7 @@ only lives in memory today and a relaunch is the only retry there is.
 | Delete confirm title | Delete this page? | Diese Seite löschen? |
 | Delete confirm body | The photo goes too. This cannot be undone. | Das Foto wird ebenfalls gelöscht. Das lässt sich nicht rückgängig machen. |
 | Skipped after apply-to-all | Pages 4, 9 and 18 were not changed, because their photos are missing. | Seite 4, 9 und 18 wurden nicht geändert, weil ihre Fotos fehlen. |
-| Jump | Choose a page | Seite wählen |
+| Jump | Go to page | Seite wählen |
 | Jump, confirm | Go | Los |
 ```
 
@@ -330,7 +330,7 @@ a real engine run of the current values into a scratch file, so what is on scree
 Apply would write. Only Apply writes the page. (Julian, 2026-08-16, reversing the earlier
 "no live preview".)
 
-1. From the pages: **Page ⋯ → Adjust page**.
+1. From the pages: **Adjust page**.
 2. The photo is re-read from `photo/NNNN.jpg`. Adjust needs the photo: a page whose photo
    has been deleted cannot be adjusted at all.
 3. A control strip picks one tool at a time. The picture follows the values; nothing is

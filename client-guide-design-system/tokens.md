@@ -9,10 +9,8 @@
 > [`../design/claude-design-components-prompt.md`](../design/claude-design-components-prompt.md).
 > Until that lands, use this table to keep the interim consistent, not to settle an argument.
 
-Every number a client is allowed to use. Taken from
-`../design/gallery/_ds/classical-fee6c86c-b348-4033-b8e7-e8f35de9f737/styles.css` (light) and
-`../storybook/styles.css` (the dark override and the app-only pieces). Do not
-re-derive them from either file - copy from this table, so all clients read one list.
+Every number a client is allowed to use, the same values as `../design/system/tokens/*.css`.
+Do not re-derive them from those files - copy from this table, so all clients read one list.
 
 The **direction** is decided - paper and archive, serif titles, hairlines, one accent, see
 [`vision.md`](./vision.md). The numbers below are not.
@@ -63,7 +61,7 @@ Interaction tints, because a native control must not fall back to its platform d
 | pressed, neutral control | text at 14% |
 | row pressed | accent at 14% |
 | focus ring | 2 px accent, 2 px outside the control |
-| disabled | 45% opacity, nothing else changes |
+| disabled | disabled text colour and a hairline border, never opacity |
 | destructive text and border | accent-700 light, accent-300 dark |
 ```
 

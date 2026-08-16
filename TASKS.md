@@ -9,10 +9,9 @@ task's check passes, tick it off here in the same commit as the work. Do not sta
 whose "Blocked by" line is not ticked off.
 
 Every path below is absolute. The delivered design lives in
-`/Users/julianhahn/free-pdf/design/flows/`. Open the `.dc.html` documents in a browser - they
-are self-contained pages and they render. The pictures in
-`/Users/julianhahn/free-pdf/design/flows/shots/` are the same screens as PNGs, for an agent
-that cannot open a browser.
+`/Users/julianhahn/free-pdf/design/flows/`. The pictures in
+`/Users/julianhahn/free-pdf/design/flows/shots/` are the same screens as PNGs; the components
+themselves are drawn by Storybook.
 
 ## The rules that hold for every task
 
@@ -148,28 +147,26 @@ is a change list, screen by screen - work through it literally.
 
 **Build.** One screen per sub-task.
 
-- **3.1 `ScansScreen.jsx`** - seven subtitles, not three; a pressed row state; an `ErrorLine`
+- **3.1 The scans list** - seven subtitles, not three; a pressed row state; an `ErrorLine`
   slot above the list; rows newest first.
-- **3.2 `CameraScreen.jsx`** - the shutter can be `disabled`; the counter at 1, 7 and 40 and the
+- **3.2 The camera** - the shutter can be `disabled`; the counter at 1, 7 and 40 and the
   before-the-first-shot state; an `ErrorLine` over the viewfinder; the simulator note on
   `Viewfinder`; the shutter names the page.
-- **3.3 `PagesScreen.jsx`** - the inline rail becomes `PageStrip`; "Adjust page" lives in the
-  menu only, the ghost button goes; the refused page gets "Scan this page again"; the menu is
-  three items while checking and four on a finished scan; "Make PDF" is hidden, not disabled;
-  the counter reads "Page 3 of 12" in both places.
-- **3.4 `AdjustScreen.jsx`** - the inline tool row becomes `ToolStrip`; corner dragging becomes
+- **3.3 The pages** - the inline rail becomes `PageStrip`; the refused page gets "Scan this
+  page again"; the menu is three items while checking and four on a finished scan; "Make PDF"
+  is hidden, not disabled; the counter reads "Page 3 of 12" in both places.
+- **3.4 Adjust** - the inline tool row becomes `ToolStrip`; corner dragging becomes
   `PageHandles`; "Back to the suggestion" on every tool that has one; the Edges note line has
   three states; Sharpen can sit at 0.
-- **3.5 `DoneScreen.jsx`** - `TextField` focused and typed in; the two buttons stay clear of the
+- **3.5 Done** - `TextField` focused and typed in; the two buttons stay clear of the
   keyboard; the photos-already-deleted state removes the block, not greys it; "Open PDF" opens
   the `Sheet`; the footnote belongs to the block, not the button.
 
 **Blocked by.** 1 and 2 - these screens use the new disabled role and three of the four new
 components.
 
-**Done when.** `npx storybook build` passes and the five stories in
-`/Users/julianhahn/free-pdf/storybook/stories/Screens.stories.jsx` show every point of the F6
-list.
+**Done when.** `npx storybook build` passes and the flow stories in
+`/Users/julianhahn/free-pdf/storybook/stories/` show every point of the F6 list.
 
 ---
 
@@ -531,14 +528,14 @@ page.
 **Build.** In `/Users/julianhahn/free-pdf/ios/FreePDF/Scan.swift`:
 
 - `stateDirectory` = `<scan>/state`, `stateURL(_ number: Int)` = `state/NNNN.txt`.
-- `writeState(_ number: Int, _ values: Engine.Adjustments)`: one ASCII line, newline-terminated, `1` then 24 space-separated numbers in this order - `c0x c0y c1x c1y c2x c2y c3x c3y flat angle bR bG bB wR wG wB tones sharpen cx cy cw ch turns grey`. Corners are fractions 0…1 of the photo, one decimal for the angle and the sharpen, four for the crop, integers for the rest. Written to `state/NNNN.part` and renamed - the same earn-your-name rule the engine uses in `core_engine/src/pdf.rs`.
+- `writeState(_ number: Int, _ values: Engine.Adjustments)`: one ASCII line, newline-terminated, `1` then 24 space-separated numbers in this order - `c0x c0y c1x c1y c2x c2y c3x c3y flat angle bR bG bB wR wG wB tones sharpen cx cy cw ch turns grey`. Corners are the photo's own pixels, four decimals for them and for the crop, one for the angle and the sharpen, integers for the rest. Written to `state/NNNN.part` and renamed - the same earn-your-name rule the engine uses in `core_engine/src/pdf.rs`.
 - `readState(_ number: Int) -> Engine.Adjustments?`: `nil` unless the first token is `1` and exactly 24 further tokens all parse. No error sentence - absent state is a normal case, not a failure.
 - `deleteState(_ number: Int)`.
 - `sweep()`: add `"state"` to the root allow-list (today `["photo","page","scan.pdf"]`), create `state/` if missing, and delete every entry inside it that is not `NNNN.txt`, plus any `NNNN.txt` with neither a photo nor a page.
 - In `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift`, `drain()`: call `scan.deleteState(number)` right after `Engine.scanPage` returns, before the list refresh. This is the retake rule - a page the engine just built from a photo carries the engine's own recipe, and any older sidecar described a photo that is gone.
 - In `deletePage`, delete the sidecar with the page.
 
-Nothing new is added to `Engine.Adjustments`; corners stay fractions and are multiplied by `photoSize` at the call, as `AdjustView` does today.
+Nothing new is added to `Engine.Adjustments`; corners stay the photo's own pixels, as `AdjustView` hands them over today.
 
 **Docs.** `/Users/julianhahn/free-pdf/ios/AGENTS.md`: a new paragraph under the storage model saying `state/NNNN.txt` holds what the user last asked for, never where the work got to, and that it is deleted by the drain, by `deletePage` and by `sweep()`. The sentence in "The manifest that isn't" stays true and must be left standing - say in one line why this file is not that file. `/Users/julianhahn/free-pdf/core_engine/AGENTS.md`: unchanged, no engine code moves.
 

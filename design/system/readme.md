@@ -165,7 +165,7 @@ press, and only the shutter scales — 0.94, because a thumb covers it and mass 
 feedback left.
 
 **Focus.** 2 px accent, 2 px outside the control, for anything a keyboard or switch control can
-reach. Disabled is 45% opacity and nothing else changes.
+reach. Disabled takes the `--disabled-*` colour roles, never opacity.
 
 **Transparency and blur.** Almost never. Two places: the dialog's scrim (neutral-900 at 38%),
 and the page counter over a viewfinder (viewfinder at 66% with a 6 px blur), because text over
@@ -230,20 +230,24 @@ Exactly the families `components.md` defines, plus the additions listed under it
 | `SectionLabel` | core | h6 uppercase group label |
 | `Tag` | core | radius-sm chip for a page's state |
 | `Icon` | core | Lucide glyph, recoloured by CSS mask |
+| `ToolStrip` | core | The adjust tools in a row, one chosen, an accent underline under it |
 | `Switch` | forms | 42 × 24 outlined switch row (Grey, Apply to all pages) |
 | `Slider` | forms | Hairline track, 17 px thumb, value in tabular figures, suggestion tick |
 | `TextField` | forms | The name for the shared copy — the app's one input |
 | `PageImage` | document | A scanned page in its paper frame; placeholder, grey and refused states |
 | `PageCounter` | document | "Page 3 of 12" on a solid ground, light or over a viewfinder |
 | `Viewfinder` | document | 3:4 dark preview stage with accent corner marks |
+| `PageStrip` | document | The rail of page thumbnails, plus a jump to a page number |
+| `PageHandles` | document | Drag handles over a page: four corners on Edges, eight grips on Crop |
 | `ScanRow` | lists | One scan: date, derived subtitle, chevron, hairline, swipe-to-delete |
 | `MenuList` | lists | The Page menu |
 | `ConfirmDialog` | feedback | The one raised surface; all three deletions ask, always |
 | `ErrorLine` | feedback | The engine's own sentence, above the content |
 | `ProgressLine` | feedback | A line, a 3 px bar, a note (the drain and apply-to-all) |
 | `EmptyState` | feedback | No scans yet |
+| `Sheet` | feedback | The raised surface the PDF reader opens on: a title, one close, the pages |
 
-Each directory holds `<Name>.jsx`, `<Name>.d.ts`, `<Name>.prompt.md` and one card HTML.
+Each directory holds `<Name>.jsx`, `<Name>.d.ts` and `<Name>.prompt.md`.
 
 ### Intentional additions
 
@@ -257,6 +261,8 @@ Not in `components.md`; each earns its place and none introduces a new visual ru
 - `SectionLabel`, `Tag` — the h6 label and radius-sm chip exist in `tokens.md` with nothing to
   put them in.
 - `TextField` — the done screen has a name field with no component entry.
+- `PageStrip`, `ToolStrip`, `PageHandles`, `Sheet` — the four the flows asked for and this kit
+  did not have: the page rail, the tool row, the drag handles and the PDF reader's surface.
 - `Chrome.jsx` in the UI kit (app bar, screen scaffold, status line) — kit-local, not a
   primitive, because the guide leaves presentation to the platform.
 
@@ -275,7 +281,7 @@ Nothing else was added: no toast, no avatar, no tabs, no card. The app has no su
 | `tokens/fonts.css`, `tokens/base.css` | Font stacks; body and link resets |
 | `guidelines/*.html` | 19 specimen cards: colours, type, spacing, brand |
 | `guidelines/copy.md` | Every string, English and German, from `components.md` |
-| `components/{core,forms,document,lists,feedback}/` | The 18 components above |
+| `components/{core,forms,document,lists,feedback}/` | The 22 components above |
 | `ui_kits/iphone/Chrome.jsx` | App bar, screen scaffold and status line the flow stories build on |
 | `thumbnail.html` | The system's tile |
 | `SKILL.md` | Agent-skill wrapper for use outside this project |
