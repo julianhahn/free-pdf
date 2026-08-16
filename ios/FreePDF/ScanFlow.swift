@@ -34,10 +34,12 @@ struct ScanFlow: View {
     @State private var message: String?
     @State private var making = false
     @State private var reading = false
-    /// The page the Adjust screen is open on, and the scan's Grey switch as it stood
-    /// when it was opened. `nil` means the screen is not up.
+    /// The page the Adjust screen is open on. `nil` means the screen is not up.
     @State private var adjusting: Int?
-    @State private var adjustGrey = false
+    /// Grey as the files say it: the lowest-numbered page that has a state file answers
+    /// for the whole scan. Part of the same cache as `photos` and `pages` and refreshed
+    /// with them, because a view body must not read the files itself.
+    @State private var grey = false
     /// True while one page is being written, so the Adjust screen can say so.
     @State private var applyingOne = false
     /// The pages an all-pages run still has to write, and how many it has done. Non-nil
@@ -68,7 +70,7 @@ struct ScanFlow: View {
                 AdjustView(photo: scan.photoURL(adjusting),
                            page: scan.pageURL(adjusting),
                            position: (numbers.firstIndex(of: adjusting) ?? 0) + 1,
-                           grey: adjustGrey,
+                           grey: grey,
                            stored: scan.readState(adjusting),
                            applying: applyingOne,
                            message: message,
@@ -236,39 +238,83 @@ struct ScanFlow: View {
         // costs a rebuild, never a PDF holding a page the user replaced.
         try? FileManager.default.removeItem(at: scan.pdf)
         if allPages {
-            // Straight off the disk, like `makePDF()`: the run has to cover every page,
-            // and the cache one refresh behind could leave one out. Both directories,
-            // because a page whose photo is gone has to be refused and named, not
-            // silently missed.
-            let numbers = Array(Set(scan.photos + scan.pages)).sorted()
-            let photos = Set(scan.photos)
-            applyingAll = numbers
-            applied = 0
-            var skipped: [Int] = []
-            for one in numbers {
-                if !photos.contains(one) { skipped.append(one) }
-                if !(await write(one, values, on: one == number)) {
-                    // Whatever went wrong, the engine's own sentence is on screen and it
-                    // has to say which page it was about.
-                    message = "Page \(one): " + (message ?? "")
-                }
-                applied += 1
-                refresh()
-            }
-            applyingAll = nil
+            await everyPage { one in await write(one, values, on: one == number) }
             adjusting = nil
-            // One missing photo already put the engine's own sentence on screen, named
-            // with its page. More than one needs the sentence that names them all - and
-            // that sentence is only ever about missing photos, which is its only cause.
-            if skipped.count > 1 {
-                let all = skipped.map(String.init).formatted(.list(type: .and))
-                message = "Pages \(all) were not changed, because their photos are missing."
-            }
         } else {
             applyingOne = true
             if await write(number, values, on: true) { adjusting = nil }
             applyingOne = false
             refresh()
+        }
+    }
+
+    /// Every page of the scan, one at a time, under the takeover. `each` writes one page
+    /// and says whether it worked. Two things reach it: Apply to all pages, and the Grey
+    /// switch.
+    ///
+    /// The numbers come straight off the disk, like `makePDF()`: the run has to cover
+    /// every page and the cache one refresh behind could leave one out. Both directories,
+    /// because a page whose photo is gone has to be refused and named, not silently
+    /// missed.
+    private func everyPage(_ each: (Int) async -> Bool) async {
+        let numbers = Array(Set(scan.photos + scan.pages)).sorted()
+        let photos = Set(scan.photos)
+        applyingAll = numbers
+        applied = 0
+        var skipped: [Int] = []
+        for one in numbers {
+            if !photos.contains(one) { skipped.append(one) }
+            if !(await each(one)) {
+                // Whatever went wrong, the engine's own sentence is on screen and it
+                // has to say which page it was about.
+                message = "Page \(one): " + (message ?? "")
+            }
+            applied += 1
+            refresh()
+        }
+        applyingAll = nil
+        // One missing photo already put the engine's own sentence on screen, named with
+        // its page. More than one needs the sentence that names them all - and that
+        // sentence is only ever about missing photos, which is its only cause.
+        if skipped.count > 1 {
+            let all = skipped.map(String.init).formatted(.list(type: .and))
+            message = "Pages \(all) were not changed, because their photos are missing."
+        }
+    }
+
+    /// Grey is a fact about the pages, not about the screen, so the switch rewrites all
+    /// of them: the same takeover, the same words, each page with its own stored values
+    /// and only `grey` moved. A page with no state file gets the engine's suggestion
+    /// plus the flipped switch, exactly as Adjust would open it.
+    ///
+    /// ponytail: the switch shows the lowest-numbered page's answer, so a scan whose
+    /// pages disagree shows one of them. Ceiling: reconcile when someone reports it.
+    private func flipGrey(to wanted: Bool) async {
+        guard !applyingOne, applyingAll == nil, wanted != grey else { return }
+        message = nil
+        try? FileManager.default.removeItem(at: scan.pdf)
+        await everyPage { one in
+            guard var values = await asked(one) else { return false }
+            values.grey = wanted
+            // `write` lays a new cut inside the stored one, and these *are* the stored
+            // values - so this run asks for no further cut and keeps the page as it is.
+            (values.cropX, values.cropY) = (0, 0)
+            (values.cropWidth, values.cropHeight) = (0, 0)
+            return await write(one, values, on: true)
+        }
+    }
+
+    /// What that page was last told, or what the engine would do to it by itself.
+    private func asked(_ number: Int) async -> Engine.Adjustments? {
+        if let stored = scan.readState(number) { return stored }
+        let photo = scan.photoURL(number)
+        do {
+            return try await Task.detached(priority: .userInitiated) {
+                try Engine.suggest(photo).values
+            }.value
+        } catch {
+            message = error.localizedDescription
+            return nil
         }
     }
 
@@ -365,11 +411,12 @@ struct ScanFlow: View {
                   complete: unscanned.isEmpty,
                   making: making,
                   message: message,
+                  grey: grey,
                   showing: $showing,
                   onRetake: retake,
                   onDelete: deletePage,
-                  onAdjust: { number, grey in
-                      adjustGrey = grey
+                  onGrey: { wanted in Task { await flipGrey(to: wanted) } },
+                  onAdjust: { number in
                       message = nil
                       adjusting = number
                   },
@@ -506,6 +553,8 @@ struct ScanFlow: View {
         pages = scan.pages
         photoBytes = scan.photoBytes
         finished = FileManager.default.fileExists(atPath: scan.pdf.path)
+        // The lowest-numbered page that has a state file answers for the scan.
+        grey = Array(Set(photos + pages)).sorted().lazy.compactMap(scan.readState).first?.grey ?? false
         if !numbers.contains(showing) { showing = numbers.first ?? 0 }
     }
 }

@@ -25,8 +25,8 @@ struct AdjustView: View {
     let page: URL
     /// The page as the user counts it - what the title says.
     let position: Int
-    /// The scan's Grey switch, carried through: applying without it would quietly
-    /// un-grey the page.
+    /// The scan's Grey switch as the files say it, carried through: applying without it
+    /// would quietly un-grey the page.
     let grey: Bool
     /// What the user last asked for on this page, read out of `state/NNNN.txt` by
     /// `ScanFlow`. `nil` the first time a page is adjusted, and then the engine's
@@ -162,7 +162,7 @@ struct AdjustView: View {
             // well - otherwise a crop box dragged onto the bottom is cut off the side.
             let upright = quarter % 2 == 0
             let inner = upright ? geo.size : CGSize(width: geo.size.height, height: geo.size.width)
-            PageImage(url: tool == .edges ? photo : page, grey: grey)
+            PageImage(url: tool == .edges ? photo : page)
                 .overlay {
                     switch tool {
                     case .edges: handles($sheet, colour: Token.Palette.accent)

@@ -226,11 +226,13 @@ actions and hands the screen numbers.
   that is the number he read off the rail.
 - **The images decode in a `.task`, never in a body**, at 1600 px for the page and 200 for
   a tile. A full page is about 34 MB decoded and a carousel keeps three alive.
-- **Grey greys the screen, not the file.** One switch for the whole scan, and it turns the
-  page and every tile at once, which is what makes it visibly per scan. The engine takes a
-  `grey` flag only through `freepdf_adjust_page`, which the app does not call yet, so the
-  PDF is unchanged - **Julian's call, 2026-08-15**: build the switch now, task 18 rewrites
-  the pages for real when Adjust brings that function over.
+- **Grey is a fact about the pages, not about the screen.** One switch for the whole scan,
+  and flipping it rewrites every page through `freepdf_adjust_page` - the same takeover
+  Apply to all pages uses, the same "Keep the app open.", the same skipped-pages sentence,
+  and each page keeps its own stored values with only `grey` moved. A page with no state
+  file gets the engine's suggestion plus the flipped switch. The switch itself reads the
+  lowest-numbered page that has a state file, so leaving the scan and coming back shows
+  what is on disk rather than what a screen remembered.
 - **"Shoot another page" deletes `scan.pdf` first.** The PDF is what this screen reads as
   finished, so a scan that still had one would answer the tap with the done screen and the
   new photo would never be drained.

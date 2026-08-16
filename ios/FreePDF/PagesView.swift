@@ -28,21 +28,18 @@ struct PagesView: View {
     let complete: Bool
     let making: Bool
     let message: String?
+    /// Grey as the files say it, read by `ScanFlow` off the lowest-numbered page that
+    /// has a state file. One switch for the whole scan, and flipping it rewrites every
+    /// page - so what is on screen is what is written.
+    let grey: Bool
     @Binding var showing: Int
     var onRetake: (Int) -> Void
     var onDelete: (Int) -> Void
-    var onAdjust: (Int, Bool) -> Void
+    var onGrey: (Bool) -> Void
+    var onAdjust: (Int) -> Void
     var onShootAnother: () -> Void
     var onMakePDF: () -> Void
 
-    /// Grey is one switch for the whole scan, not one per page: turning it on greys the
-    /// large page and every tile in the rail at once, which is the visible proof of that.
-    ///
-    /// ponytail: it greys what is on screen, not what is written. The engine takes a
-    /// `grey` flag only through `freepdf_adjust_page`, which the app does not call yet -
-    /// so the PDF stays as scanned. Julian's call on 2026-08-15: build the switch now,
-    /// let task 18 rewrite the pages for real when Adjust brings that function over.
-    @State private var grey = false
     @State private var confirmingDelete = false
     /// How far the page is pinched open, and where the pinch started. Reading small
     /// print is the only reason this screen exists.
@@ -129,7 +126,7 @@ struct PagesView: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Page \(pos(number)) of \(numbers.count), could not be scanned.")
         } else {
-            PageImage(url: scan.pageURL(number), grey: grey)
+            PageImage(url: scan.pageURL(number))
                 .scaleEffect(zoom)
                 .clipped()
                 .gesture(pinch)
@@ -215,7 +212,7 @@ struct PagesView: View {
                 if refused {
                     Rectangle().fill(Token.Palette.surface)
                 } else {
-                    PageImage(url: scan.pageURL(number), grey: grey, maxPixels: 200)
+                    PageImage(url: scan.pageURL(number), maxPixels: 200)
                 }
             }
             .frame(width: Token.Size.iconEmpty,
@@ -243,7 +240,7 @@ struct PagesView: View {
 
     private var footer: some View {
         VStack(spacing: Token.Size.space2) {
-            Toggle(isOn: $grey) {
+            Toggle(isOn: Binding(get: { grey }, set: { onGrey($0) })) {
                 Text("Grey")
                     .font(Token.Face.heading(Token.Size.textControl))
                     .tracking(Token.Size.textControl * Token.Number.trackingHeading)
@@ -252,7 +249,7 @@ struct PagesView: View {
             .toggleStyle(.switch)
             .tint(Token.Palette.accent)
             .frame(minHeight: Token.Size.touchMin)
-            .accessibilityHint("Shows every page of this scan in grey.")
+            .accessibilityHint("Rewrites every page of this scan in grey.")
 
             // Hidden until every photo has a page, so a scan cannot quietly lose a page
             // to a PDF the user thought was whole.
@@ -279,14 +276,12 @@ struct PagesView: View {
             Menu {
                 Button("Retake this page", systemImage: "camera") { onRetake(showing) }
                     .accessibilityHint("Photographs page \(position) again.")
-                // The scan's Grey switch goes with it: Adjust rewrites the page for real,
-                // and applying without it would quietly un-grey what this screen shows.
                 // Only where there is a photo left: Adjust re-runs the recipe from
                 // `photo/NNNN.jpg`, so a page whose photo was deleted cannot be adjusted
                 // at all ([`../../user-flows.md`](../../user-flows.md) section 7).
                 if photos.contains(showing) {
                     Button("Adjust page", systemImage: "slider.horizontal.3") {
-                        onAdjust(showing, grey)
+                        onAdjust(showing)
                     }
                     .accessibilityHint("Opens the tools for page \(position).")
                 }
@@ -316,7 +311,6 @@ struct PagesView: View {
 /// ([`AdjustView.swift`](./AdjustView.swift)).
 struct PageImage: View {
     let url: URL
-    let grey: Bool
     var maxPixels = 1600
 
     @State private var image: UIImage?
@@ -327,7 +321,6 @@ struct PageImage: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
-                    .grayscale(grey ? 1 : 0)
             } else {
                 Token.Palette.paper
             }
