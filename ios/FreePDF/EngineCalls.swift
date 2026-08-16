@@ -20,9 +20,22 @@ extension Engine {
 
     /// Asks the engine what it would do by itself. Writes no file. It costs about as much
     /// as one scan, so it belongs in a detached task like the drain's.
-    static func suggest(_ photo: URL) throws -> Suggestion {
+    ///
+    /// `chosen` is the caller's own sheet, and only the straightening angle and the two
+    /// levels points come back measured against it - the corners and the three notes are
+    /// the engine's own answer either way, which is what "Back to the suggestion" reads.
+    /// Nothing hands one in on open; the Adjust screen does it when the corners move.
+    static func suggest(_ photo: URL, for chosen: Adjustments? = nil) throws -> Suggestion {
         var out = FreepdfSuggestion()
-        try call { error, size in freepdf_suggest_adjustments(photo.path, &out, error, size) }
+        if var mine = chosen.map(cValues) {
+            try call { error, size in
+                freepdf_suggest_adjustments(photo.path, &mine, &out, error, size)
+            }
+        } else {
+            try call { error, size in
+                freepdf_suggest_adjustments(photo.path, nil, &out, error, size)
+            }
+        }
         let c = out.values.corners
         return Suggestion(
             values: Adjustments(corners: [c.0, c.1, c.2, c.3, c.4, c.5, c.6, c.7],
@@ -45,8 +58,18 @@ extension Engine {
     /// The same recipe as `scanPage`, with the user's values, written the same way: the
     /// page file is replaced whole by rename, or nothing is written at all.
     static func adjustPage(_ photo: URL, into page: URL, _ a: Adjustments) throws {
+        var values = cValues(a)
+        try call { error, size in
+            freepdf_adjust_page(photo.path, page.path, &values, error, size)
+        }
+    }
+
+    /// The screen's values as the one read-only struct C takes. Nothing is converted
+    /// here - the corners are already the photo's pixels - the eight numbers and the
+    /// switches only change shape.
+    private static func cValues(_ a: Adjustments) -> FreepdfAdjustments {
         let c = a.corners
-        var values = FreepdfAdjustments(
+        return FreepdfAdjustments(
             corners: (c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7]),
             pull_the_sheet_flat: a.pullTheSheetFlat ? 1 : 0,
             straighten_degrees: a.straightenDegrees,
@@ -58,9 +81,6 @@ extension Engine {
             crop_width: a.cropWidth, crop_height: a.cropHeight,
             quarter_turns: a.quarterTurns,
             grey: a.grey ? 1 : 0)
-        try call { error, size in
-            freepdf_adjust_page(photo.path, page.path, &values, error, size)
-        }
     }
 
     /// The finished pages as one PDF, in the order given.

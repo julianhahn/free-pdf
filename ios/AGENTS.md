@@ -260,8 +260,12 @@ the corners, the angle, the two levels points and the three note flags
 ([`../ffi/AGENTS.md`](../ffi/AGENTS.md)), and the page's `state/NNNN.txt` wins over it
 wherever there is one. The suggestion is still asked for on every open, because its two
 notes are about the photo rather than about the values, and **Back to the suggestion**
-puts that tool's part of the engine's answer back, so the label is true. Three rules fall
-out of it:
+puts that tool's part of the engine's answer back, so the label is true. There is one
+exception, and it is the angle: an angle only means something against one set of corners,
+because the engine reads the tilt off the picture **after** it was pulled flat. So while
+the number on the slider is still the engine's, moving the sheet corners asks the engine
+for the angle again, against those corners - a number the user set by hand is his and is
+never overwritten. Three rules fall out of it:
 
 - **Nothing can be moved before the answer arrives, and no page opens without one.** The
   call runs in the screen's own `.task`, after the two files have been measured, because

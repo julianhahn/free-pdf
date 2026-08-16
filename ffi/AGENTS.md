@@ -60,7 +60,11 @@ redo the deskew and the straightening rather than only measure them, because the
 points are read off the sheet **after** it was pulled flat - a suggestion measured on
 another image is another suggestion. Two things it carries that the app cannot work
 out for itself: whether the sheet fills the whole photo and whether it runs off the
-frame, which are the two lines section 7a puts under the Edges control.
+frame, which are the two lines section 7a puts under the Edges control. For that same
+reason the caller may hand in **its own sheet** instead of null: the picture is then
+pulled flat with those corners before the tilt and the tone points are read off it, and
+what comes back - the found corners and the three notes - is still the engine's own
+answer, so **Back to the suggestion** reads the same numbers either way.
 
 **The corners are in the photo's own upright full size pixels** - the photo after its
 EXIF orientation was applied. That is the space the app draws the photo in, and the

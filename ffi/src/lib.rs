@@ -130,21 +130,35 @@ pub struct FreepdfSuggestion {
 /// They are not page pixels: the finished page has been pulled flat, straightened
 /// and capped, and none of that is a straight scaling.
 ///
+/// `values` is the caller's own sheet, or null for "your own sheet". It changes one
+/// thing: which corners the picture is pulled flat with before the tilt and the tone
+/// points are read off it. Everything handed back - the corners and the three notes -
+/// is still the engine's own answer, so "Back to the suggestion" reads the same
+/// numbers whichever way it was asked. A straightening angle is only meaningful
+/// against a particular set of corners, which is why the caller can hand its own in.
+///
 /// Returns 0 on success. Anything else means nothing was written and `error` holds a
 /// sentence for the user.
 ///
 /// # Safety
-/// `photo_path` is either null or a NUL-terminated C string, `out_suggestion` is
-/// either null or one writable [`FreepdfSuggestion`], and `error` is either null or
-/// `error_size` bytes the caller owns.
+/// `photo_path` is either null or a NUL-terminated C string, `values` is either null
+/// or one readable [`FreepdfAdjustments`], `out_suggestion` is either null or one
+/// writable [`FreepdfSuggestion`], and `error` is either null or `error_size` bytes
+/// the caller owns.
 #[no_mangle]
 pub unsafe extern "C" fn freepdf_suggest_adjustments(
     photo_path: *const c_char,
+    values: *const FreepdfAdjustments,
     out_suggestion: *mut FreepdfSuggestion,
     error: *mut c_char,
     error_size: usize,
 ) -> i32 {
     let photo = unsafe { path_from(photo_path, "The photo") };
+    let chosen = if values.is_null() {
+        None
+    } else {
+        Some(unsafe { *values })
+    };
     let out = if out_suggestion.is_null() {
         Err("The app gave nowhere to put the suggestion.".to_string())
     } else {
@@ -152,7 +166,7 @@ pub unsafe extern "C" fn freepdf_suggest_adjustments(
     };
 
     guard(error, error_size, move || {
-        let suggestion = suggest_adjustments(&photo?)?;
+        let suggestion = suggest_adjustments(&photo?, chosen)?;
         unsafe { *out? = suggestion };
         Ok(())
     })
@@ -260,7 +274,15 @@ fn scan_page(photo: &Path, page: &Path) -> Result<(), String> {
 /// different image is a different suggestion: the tone points are read off the sheet
 /// after it was pulled flat and straightened, exactly as the automatic run reads them.
 /// Only the steps that change what a later step sees are actually applied here.
-fn suggest_adjustments(photo: &Path) -> Result<FreepdfSuggestion, String> {
+///
+/// `chosen` is the caller's own sheet: the picture is pulled flat with those corners
+/// instead of the found ones before the tilt is measured, because an angle read off
+/// the engine's frame is the wrong angle for the user's. What comes back is still the
+/// engine's own answer - the found corners and the three notes are untouched.
+fn suggest_adjustments(
+    photo: &Path,
+    chosen: Option<FreepdfAdjustments>,
+) -> Result<FreepdfSuggestion, String> {
     let mut img = load_image(photo)?;
 
     let sheet = find_paper(&img);
@@ -271,8 +293,19 @@ fn suggest_adjustments(photo: &Path) -> Result<FreepdfSuggestion, String> {
             corners[slot * 2] = point.x;
             corners[slot * 2 + 1] = point.y;
         }
-        if !runs_off {
-            img = deskew(&img, sheet.corners())?;
+    }
+    match &chosen {
+        Some(values) => {
+            if values.pull_the_sheet_flat != 0 {
+                img = deskew(&img, corners_of(values))?;
+            }
+        }
+        None => {
+            if let Some(sheet) = &sheet {
+                if !runs_off {
+                    img = deskew(&img, sheet.corners())?;
+                }
+            }
         }
     }
 

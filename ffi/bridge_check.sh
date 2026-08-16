@@ -195,7 +195,7 @@ precondition(try! Data(contentsOf: evenly) != Data(contentsOf: perChannel),
 // from - that is the whole claim the header makes about their pixel space.
 var suggestion = FreepdfSuggestion()
 let suggested = call { error, size in
-    freepdf_suggest_adjustments(photo.path, &suggestion, error, size)
+    freepdf_suggest_adjustments(photo.path, nil, &suggestion, error, size)
 }
 precondition(suggested.status == 0, "suggesting failed: \(suggested.message)")
 precondition(suggestion.found_a_sheet != 0 && suggestion.fills_the_whole_photo != 0,
@@ -212,6 +212,40 @@ let reused = call { error, size in
     freepdf_adjust_page(photo.path, asSuggested.path, &suggestion.values, error, size)
 }
 precondition(reused.status == 0, "the suggested values were refused: \(reused.message)")
+
+// 5c - the angle is measured against the sheet it was handed. The same photo asked
+// twice: once with NULL, which is the engine's own sheet, and once with a sheet turned
+// a few degrees off it. Turned corners mean writing that comes out turned, so the two
+// answers cannot be the same number. If they are, the corners handed in were ignored,
+// and the app would put an angle on the slider that belongs to a page it never makes.
+var turnedSheet = suggestion.values
+turnedSheet.pull_the_sheet_flat = 1
+let middle = (x: (corners[0] + corners[2] + corners[4] + corners[6]) / 4,
+              y: (corners[1] + corners[3] + corners[5] + corners[7]) / 4)
+let byDegrees = Float(6) * .pi / 180
+withUnsafeMutableBytes(of: &turnedSheet.corners) { raw in
+    let point = raw.bindMemory(to: Float.self)
+    for pair in 0..<4 {
+        // Pulled in to four fifths first, so six degrees of turn cannot push a corner
+        // off a sheet that already fills the frame.
+        let dx = (point[pair * 2] - middle.x) * 0.8, dy = (point[pair * 2 + 1] - middle.y) * 0.8
+        point[pair * 2] = middle.x + dx * cos(byDegrees) - dy * sin(byDegrees)
+        point[pair * 2 + 1] = middle.y + dx * sin(byDegrees) + dy * cos(byDegrees)
+    }
+}
+var forTheirSheet = FreepdfSuggestion()
+let asked = call { error, size in
+    freepdf_suggest_adjustments(photo.path, &turnedSheet, &forTheirSheet, error, size)
+}
+precondition(asked.status == 0, "suggesting for the caller's own sheet failed: \(asked.message)")
+precondition(forTheirSheet.values.straighten_degrees != suggestion.values.straighten_degrees,
+             "a sheet turned six degrees came back with the same straightening angle "
+             + "(\(suggestion.values.straighten_degrees)), so the corners handed in were ignored")
+// And the corners handed back stay the engine's own, whichever sheet was asked about:
+// that is what "Back to the suggestion" reads.
+let theirCorners = withUnsafeBytes(of: forTheirSheet.values.corners) { Array($0.bindMemory(to: Float.self)) }
+precondition(theirCorners == corners,
+             "the corners handed back changed with the sheet that was asked about")
 
 // 6 - and the pages become a PDF. Two of them, so the array really is walked.
 let pdf = work.appendingPathComponent("scan.pdf")

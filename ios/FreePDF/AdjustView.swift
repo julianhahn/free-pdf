@@ -10,7 +10,9 @@
 //  The engine seeds a page once - `freepdf_suggest_adjustments`, what it would have done
 //  by itself - and after that the controls open on what was last applied, out of the
 //  page's `state/NNNN.txt`. "Back to the suggestion" puts the engine's own answer back on
-//  one tool, which is the only way back to it. A photo the engine cannot read means the
+//  one tool, which is the only way back to it. The one exception is the angle: it only
+//  means something against one set of corners, so moving the sheet re-measures it while the
+//  number on the slider is still the engine's. A photo the engine cannot read means the
 //  page cannot be adjusted at all, and the screen says so instead of opening on zeros.
 //
 //  Like the pages, this screen never lists a directory: the numbers come in from
@@ -81,6 +83,17 @@ struct AdjustView: View {
     /// Which corner is under the finger right now, and so where the magnifier is. `nil`
     /// between drags, which is when there is no magnifier at all.
     @State private var held: Int?
+    /// The angle as it was last put on the slider by the engine, and the sheet that
+    /// number was measured against.
+    ///
+    /// A straightening angle only means something against one set of corners - the
+    /// engine reads the tilt off the picture *after* it has been pulled flat - so an
+    /// angle measured on the engine's sheet is the wrong angle for the user's. While
+    /// `angle` is still `seededAngle`, moving a corner asks the engine again; a number
+    /// the user set by hand is his and nothing overwrites it. `nil` means the angle
+    /// belongs to no sheet on screen, so the next settle measures one.
+    @State private var seededAngle = 0.0
+    @State private var angleFor: ([CGPoint], Bool)?
 
     private static let wholePicture = [CGPoint(x: 0, y: 0), CGPoint(x: 1, y: 0),
                                        CGPoint(x: 1, y: 1), CGPoint(x: 0, y: 1)]
@@ -157,6 +170,14 @@ struct AdjustView: View {
         guard suggestion != nil else { return }
         try? await Task.sleep(for: .milliseconds(Self.settle))
         guard !Task.isCancelled else { return }
+        if angle == seededAngle, angleFor.map({ $0.0 != sheet || $0.1 != pullFlat }) ?? true {
+            let before = previewValues
+            await measureTheAngle()
+            // A new number re-keys `task(id:)` and that run draws the picture. If it came
+            // back the same number nothing was re-keyed, so this run draws it instead. A
+            // settled drag costs two engine passes at most, never one per frame.
+            if previewValues != before { return }
+        }
         let asked = previewValues, source = photo
         let scratch = FileManager.default.temporaryDirectory
             .appendingPathComponent("adjust-preview-\(UUID().uuidString).jpg")
@@ -179,6 +200,39 @@ struct AdjustView: View {
             try? FileManager.default.removeItem(at: scratch)
             // The engine's sentence, unchanged, exactly as Apply shows it. The last good
             // picture stays up.
+            previewFailure = error.localizedDescription
+        }
+    }
+
+    /// The straightening angle measured again, against the corners now on screen.
+    ///
+    /// Julian found this on a real phone: move the corners, tap Apply, and the page comes
+    /// back framed his way and still crooked. The angle he was sending was measured on the
+    /// engine's own sheet - usually 0.0° once auto-detection was good - which is a
+    /// measurement of a picture the app no longer makes.
+    ///
+    /// Only while the number on the slider is still the engine's: a number the user set by
+    /// hand is his, and this never touches it.
+    ///
+    /// ponytail: straighten only. The two levels points are stale in exactly the same way -
+    /// the engine reads them off the straightened picture - and the upgrade is this same
+    /// call, reading `black` and `white` out of the answer too.
+    private func measureTheAngle() async {
+        let source = photo, asked = values
+        do {
+            let fresh = try await Task.detached(priority: .userInitiated) {
+                try Engine.suggest(source, for: asked)
+            }.value
+            guard !Task.isCancelled else { return }
+            // Never into `suggestion`: `shiftedLevels` shifts from its two points and
+            // "Back to the suggestion" needs its corners, so it stays the engine's own
+            // answer about its own sheet.
+            angle = Double(fresh.values.straightenDegrees)
+            seededAngle = angle
+            angleFor = (sheet, pullFlat)
+        } catch {
+            // The engine's sentence, exactly as a failed preview shows it, last good
+            // picture up.
             previewFailure = error.localizedDescription
         }
     }
@@ -521,7 +575,14 @@ struct AdjustView: View {
             // picture it would send four corners the engine refuses, every time.
             pullFlat = all.pullTheSheetFlat && measured
         }
-        if only == nil || only == .straighten { angle = Double(all.straightenDegrees) }
+        if only == nil || only == .straighten {
+            angle = Double(all.straightenDegrees)
+            seededAngle = angle
+            // "Back to the suggestion" on Straighten puts back a number the engine
+            // measured against *its own* sheet, not the corners on screen, so it is
+            // marked as belonging to no sheet and the next settle measures it properly.
+            angleFor = only == .straighten ? nil : (sheet, pullFlat)
+        }
         if only == nil || only == .brightness {
             black = Self.percent(all.black)
             white = Self.percent(all.white)

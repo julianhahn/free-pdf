@@ -319,7 +319,9 @@ instead of guessing settings for a page you have not seen.
 The principle from the engine docs holds: **suggest, then apply**. The engine seeds a
 page once, and after that the tools open on what was last applied. The user moves a
 value or leaves it, and **Back to the suggestion** is the way back to the engine's own
-answer.
+answer. One value is measured again rather than seeded once: the straightening angle
+only means something against one set of corners, so moving the sheet re-measures it —
+but only while the number shown is still the engine's, never one the user set himself.
 
 Every tool **shows what it would do**: a moment after a value moves, the picture becomes
 a real engine run of the current values into a scratch file, so what is on screen is what
