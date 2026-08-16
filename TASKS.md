@@ -57,7 +57,7 @@ that cannot open a browser.
 | 19 | iOS: done, share, delete the photos | 17 | bash ios/check/scan_check.sh, by hand |
 | 20 | iOS: the page state file — DONE | 18 | bash ios/check/run.sh |
 | 21 | iOS: Adjust opens on the state and writes it — DONE | 20 | bash ios/check/scan_check.sh |
-| 22 | iOS: the turn and the crop come out of the state | 21 | bash ios/check/scan_check.sh |
+| 22 | iOS: the turn and the crop come out of the state — DONE | 21 | bash ios/check/scan_check.sh |
 | 23 | iOS: Grey becomes a fact about the pages | 21 | bash ios/check/scan_check.sh |
 ```
 

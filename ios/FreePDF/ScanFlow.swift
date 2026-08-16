@@ -4,7 +4,6 @@
 //  every time. Nothing here stores where the user got to, so a kill cannot leave this
 //  screen believing something the disk disagrees with ([`AGENTS.md`](../AGENTS.md)).
 
-import ImageIO
 import PDFKit
 import SwiftUI
 
@@ -288,21 +287,10 @@ struct ScanFlow: View {
     private func write(_ number: Int, _ values: Engine.Adjustments, on own: Bool) async -> Bool {
         let photo = scan.photoURL(number)
         let page = scan.pageURL(number)
+        let values = Self.composed(values, onto: scan.readState(number))
         do {
             let asked = try await Task.detached(priority: .userInitiated) { () -> Engine.Adjustments in
                 var mine = values
-                var own = own
-                // The turn goes on the photo, not on the page. The page is rebuilt from
-                // the photo every time and nothing on disk remembers what the last run
-                // was told, so a turn baked into the page would be lost at the next
-                // Apply while the screen still showed it. On the photo it is re-read
-                // for free, by the engine and by this screen alike. If the photo cannot
-                // be turned, the engine turns the page as before.
-                if mine.quarterTurns != 0, Self.turn(photo, by: Int(mine.quarterTurns)) {
-                    mine.quarterTurns = 0
-                    // The corners were measured on the photo as it stood before.
-                    own = false
-                }
                 if !own {
                     if mine.pullTheSheetFlat {
                         let its = try Engine.suggest(photo)
@@ -333,33 +321,39 @@ struct ScanFlow: View {
         }
     }
 
-    /// Turns the photo itself, by quarter turns clockwise, and says whether it worked.
+    /// The new drag laid **inside** the cut that is already stored, rather than replacing
+    /// it.
     ///
-    /// Only the orientation tag moves: the compressed picture is copied through
-    /// untouched, so turning a page again and again costs no quality. `load_image`
-    /// applies that tag, so the next run of the recipe produces the turned page by
-    /// itself - the file is the state, exactly as everywhere else in this app.
-    nonisolated private static func turn(_ photo: URL, by quarters: Int) -> Bool {
-        guard let source = CGImageSourceCreateWithURL(photo as CFURL, nil),
-              let type = CGImageSourceGetType(source),
-              let all = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
-        else { return false }
-        var tag = all[kCGImagePropertyOrientation] as? Int ?? 1
-        if !(1...8).contains(tag) { tag = 1 }
-        for _ in 0..<(quarters % 4) { tag = Self.clockwise[tag] }
-        let turned = NSMutableData()
-        guard let out = CGImageDestinationCreateWithData(turned, type, 1, nil) else { return false }
-        CGImageDestinationAddImageFromSource(out, source, 0,
-                                             [kCGImagePropertyOrientation: tag] as CFDictionary)
-        guard CGImageDestinationFinalize(out),
-              (try? turned.write(to: photo, options: .atomic)) != nil
-        else { return false }
-        return true
+    /// The crop is a fraction of an image that exists only mid-recipe - after the
+    /// corners, the straightening, the 3000 px cap and the turn - so it is neither the
+    /// photo nor the page ([`../../core_engine/AGENTS.md`](../../core_engine/AGENTS.md),
+    /// "Every step has its own space"). The screen therefore opens the box on the whole
+    /// picture, which is honest, because the page it draws is already the last cut and
+    /// there is no *further* cut yet. Apply composes the two.
+    ///
+    /// A turn changes the space the stored box was written in, so it is turned with it
+    /// first: one quarter clockwise maps `(x, y, w, h)` to `(1 - y - h, x, h, w)`.
+    ///
+    /// ponytail: composing means the user can only ever cut tighter, never widen.
+    /// Ceiling: widening is "Scan this page again", which is the undo for everything
+    /// else on this screen.
+    nonisolated private static func composed(_ values: Engine.Adjustments,
+                                             onto stored: Engine.Adjustments?) -> Engine.Adjustments {
+        guard let stored, stored.cropWidth > 0, stored.cropHeight > 0 else { return values }
+        var old = (x: stored.cropX, y: stored.cropY, w: stored.cropWidth, h: stored.cropHeight)
+        let quarters = (Int(values.quarterTurns) - Int(stored.quarterTurns) + 4) % 4
+        for _ in 0..<quarters { old = (1 - old.y - old.h, old.x, old.h, old.w) }
+        var mine = values
+        if values.cropWidth > 0, values.cropHeight > 0 {
+            mine.cropX = old.x + values.cropX * old.w
+            mine.cropY = old.y + values.cropY * old.h
+            mine.cropWidth = old.w * values.cropWidth
+            mine.cropHeight = old.h * values.cropHeight
+        } else {
+            (mine.cropX, mine.cropY, mine.cropWidth, mine.cropHeight) = old
+        }
+        return mine
     }
-
-    /// The EXIF orientation tag one quarter turn clockwise on, for each of the eight.
-    /// Index 0 is unused: the tags count from 1.
-    nonisolated private static let clockwise = [0, 6, 7, 8, 5, 2, 3, 4, 1]
 
     // MARK: - Checking the pages
 

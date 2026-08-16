@@ -179,9 +179,12 @@ struct AdjustView: View {
         .background(Token.Palette.paper, in: RoundedRectangle(cornerRadius: Token.Size.radiusLg))
     }
 
-    /// How far the picture on screen is turned. Edges draws the photo, which the turn does
-    /// not touch.
-    private var quarter: Int { tool == .edges ? 0 : turns }
+    /// How far the picture on screen is turned - only the turns added since the last
+    /// Apply, because the page file already carries the stored ones. Edges draws the
+    /// photo, which the turn does not touch.
+    private var quarter: Int {
+        tool == .edges ? 0 : (turns - Int(stored?.quarterTurns ?? 0) + 4) % 4
+    }
 
     /// The shape of the picture on screen, measured from the file that is drawn. It has
     /// to be the real one: `PageImage` fits the picture inside this block, so any other
@@ -392,15 +395,11 @@ struct AdjustView: View {
         }
         if only == nil || only == .sharpen { sharpen = Double(all.sharpenRadius) }
         if only == nil || only == .crop {
-            // A stored box is the cut the last Apply was told to make, so the handles
-            // come back where they were left. Without one there is no cut yet.
-            box = all.cropWidth > 0 && all.cropHeight > 0
-                ? [CGPoint(x: Double(all.cropX), y: Double(all.cropY)),
-                   CGPoint(x: Double(all.cropX + all.cropWidth), y: Double(all.cropY)),
-                   CGPoint(x: Double(all.cropX + all.cropWidth),
-                           y: Double(all.cropY + all.cropHeight)),
-                   CGPoint(x: Double(all.cropX), y: Double(all.cropY + all.cropHeight))]
-                : Self.wholePicture
+            // The box opens on the whole picture even where one is stored: the page on
+            // screen is already the last cut, so there is no *further* cut yet, and the
+            // engine's crop space is neither the photo nor the page. `ScanFlow` composes
+            // this drag onto the stored one at Apply.
+            box = Self.wholePicture
         }
         if only == nil || only == .turn { turns = Int(all.quarterTurns) }
     }

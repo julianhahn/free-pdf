@@ -36,6 +36,10 @@ second rectangle nobody drags, the 3000 px cap resamples a third time, and a cro
 picture that only exists after all of them. So each step's numbers are numbers of the image
 that step is handed, and a number measured on one image means nothing on the next.
 
+That is why the app composes a second crop onto the first instead of moving the handles to a
+different canvas: the crop's own image is neither the photo nor the page, so there is no
+picture on screen a stored crop box could be drawn on ([`../ios/AGENTS.md`](../ios/AGENTS.md)).
+
 ## Refuse instead of guess
 
 - A measure function that is unsure returns the do-nothing answer, never a guess: `find_paper`
