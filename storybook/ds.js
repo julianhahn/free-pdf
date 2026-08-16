@@ -4,7 +4,6 @@ export { Icon } from "@ds/components/core/Icon.jsx";
 export { IconButton } from "@ds/components/core/IconButton.jsx";
 export { SectionLabel } from "@ds/components/core/SectionLabel.jsx";
 export { Shutter } from "@ds/components/core/Shutter.jsx";
-export { Tag } from "@ds/components/core/Tag.jsx";
 export { ToolStrip } from "@ds/components/core/ToolStrip.jsx";
 export { Slider } from "@ds/components/forms/Slider.jsx";
 export { Switch } from "@ds/components/forms/Switch.jsx";

@@ -228,7 +228,6 @@ Exactly the families `components.md` defines, plus the additions listed under it
 | `IconButton` | core | 36 px drawn, 44 pt tappable glyph button |
 | `Shutter` | core | 72 px accent ring around a solid paper disc; disabled while writing |
 | `SectionLabel` | core | h6 uppercase group label |
-| `Tag` | core | radius-sm chip for a page's state |
 | `Icon` | core | Lucide glyph, recoloured by CSS mask |
 | `ToolStrip` | core | The adjust tools in a row, one chosen, an accent underline under it |
 | `Switch` | forms | 42 × 24 outlined switch row (Grey, Apply to all pages) |
@@ -258,8 +257,7 @@ Not in `components.md`; each earns its place and none introduces a new visual ru
   in prose; they are drawn once here so every client frames the preview identically.
 - `PageImage` — the guide describes page images and the refused-page card but names no
   component. The app is mostly pictures; this is the shape they live in.
-- `SectionLabel`, `Tag` — the h6 label and radius-sm chip exist in `tokens.md` with nothing to
-  put them in.
+- `SectionLabel` — the h6 label exists in `tokens.md` with nothing to put it in.
 - `TextField` — the done screen has a name field with no component entry.
 - `PageStrip`, `ToolStrip`, `PageHandles`, `Sheet` — the four the flows asked for and this kit
   did not have: the page rail, the tool row, the drag handles and the PDF reader's surface.
@@ -281,7 +279,7 @@ Nothing else was added: no toast, no avatar, no tabs, no card. The app has no su
 | `tokens/fonts.css`, `tokens/base.css` | Font stacks; body and link resets |
 | `guidelines/*.html` | 19 specimen cards: colours, type, spacing, brand |
 | `guidelines/copy.md` | Every string, English and German, from `components.md` |
-| `components/{core,forms,document,lists,feedback}/` | The 22 components above |
+| `components/{core,forms,document,lists,feedback}/` | The 21 components above |
 | `ui_kits/iphone/Chrome.jsx` | App bar, screen scaffold and status line the flow stories build on |
 | `thumbnail.html` | The system's tile |
 | `SKILL.md` | Agent-skill wrapper for use outside this project |
