@@ -12,12 +12,11 @@ npm run storybook
 ```
 
 Opens on http://localhost:6006. Every story renders at iPhone size (390x844 portrait) by default —
-the app is iPhone-portrait-only — and the toolbar has a Light / Dark switch, which sets
-`data-theme` the way the design system expects.
+the app is iPhone-portrait-only.
 
 ## What is in here
 
-- All 18 delivered components, grouped as the system groups them: Core, Forms, Document, Lists,
+- All 21 delivered components, grouped as the system groups them: Core, Forms, Document, Lists,
   Feedback. Every state named in a component's `.prompt.md` / `.d.ts` is its own story.
 - **Flows** — the seven flow stories, each a whole screen of the app built from those components
   and the kit's chrome (`design/system/ui_kits/iphone/Chrome.jsx`).
@@ -25,7 +24,7 @@ the app is iPhone-portrait-only — and the toolbar has a Light / Dark switch, w
 ## The components are imported, not copied
 
 `ds.js` re-exports the components straight from `../design/system/components/`, and the stylesheet
-`../design/system/styles.css` (which imports all tokens) is loaded in `.storybook/preview.jsx`.
+`../design/system/styles.css` (which imports all tokens) is loaded in `.storybook/preview.js`.
 Nothing is re-implemented here, so this Storybook cannot drift from what the designer delivered —
 edit the design system and the stories change with it.
 

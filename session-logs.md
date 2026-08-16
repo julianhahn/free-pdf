@@ -8,6 +8,28 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-16 - the loop closes, and the map is true again
+
+Last iteration of the architecture loop. `ARCHITECTURE.md` items 9, 11, 12, 13, 14, 15 and 16
+are ticked; the picture says 21 components, not 22, and now names `Engine.swift`, which item 3
+turned into the app's only checkable arithmetic. Three dangling pointers the loop created are
+gone: `ios/AGENTS.md:452` named the deleted `FakeShoot.isDrawFailure`, `storybook/README.md`
+pointed at the deleted `.storybook/preview.jsx` and promised a Light/Dark toolbar that item 13
+proved never ran. In `ffi/src/lib.rs` the last `values` binding inside `suggest_adjustments`
+became `chosen`, finishing item 15 in the one place it mattered.
+
+Two items were refused today with reasons, and both refusals are written into their entries so
+nobody re-proposes them: item 8's `Scan.numbers` property adds a fourth spelling rather than
+removing three, and item 16's "Crop refused" copy row is drawn live by `PageHandles.jsx`. Two
+new items were raised from what the verifiers found - 19, the eight flow specimens loading a
+bundle that has never been in git, and 20, a registered worktree holding a pre-item-5 copy of
+the app that repo-wide grep cannot tell from the real one.
+
+A new closing section, **Where this loop stopped**, holds the handover: item 6 is the only
+thing blocked, and the question is whether Julian wants three filled buttons to go outlined.
+It also records the biggest hole in the checks - nothing asserts which sink an error sentence
+reaches, so `scan_check.sh` prints "scan ok" even when a failure is routed to the wrong screen.
+
 ## 2026-08-16 - four things the engine and its boundary stopped carrying
 
 `ARCHITECTURE.md` items 11, 14, 15 and 16. `sharpen` lost its `threshold` parameter: all seven

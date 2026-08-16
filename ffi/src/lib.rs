@@ -298,9 +298,9 @@ fn suggest_adjustments(
         }
     }
     match &chosen {
-        Some(values) => {
-            if values.pull_the_sheet_flat != 0 {
-                img = deskew(&img, corners_of(values))?;
+        Some(chosen) => {
+            if chosen.pull_the_sheet_flat != 0 {
+                img = deskew(&img, corners_of(chosen))?;
             }
         }
         None => {

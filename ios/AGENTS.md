@@ -449,7 +449,8 @@ drawn." / "Seite 7 konnte nicht gezeichnet werden."
 Two sentences and a screen, told apart by where they are drawn: a page that missed the
 disk is the error line over the viewfinder, and the three above are the whole screen -
 same shape as the permission takeover, with no button, because there is nothing to press.
-The stand-in's two are split the same way, by `FakeShoot.isDrawFailure`.
+The stand-in's two are split the same way, by `FakeShoot.Failure`: `.notSaved` is the error
+line, `.notDrawn` is the whole screen.
 
 Three things flow 3 draws that this screen does not, all deliberate and all
 **Julian's to overrule**:

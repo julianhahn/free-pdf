@@ -33,6 +33,8 @@ them. Read the AGENTS.md beside a file before you touch it.
                                                      (no SwiftUI in any of it)
                                  │  paths and plain numbers in
                                  ▼
+   ios/FreePDF/Engine.swift       the values a page keeps, and composed() - the app's only
+                                  arithmetic. Foundation only, so run.sh checks it in 2 s.
    ios/FreePDF/EngineCalls.swift  ──▶  ffi/include/freepdf.h
                                  │     0 = it worked. Anything else = one sentence,
                                  │     copied into the caller's buffer, shown unchanged.
@@ -49,7 +51,7 @@ them. Read the AGENTS.md beside a file before you touch it.
       every tool is a pair:  measure (cannot fail)  /  act (refuses, never clamps)
 
    design/system/  tokens/*.css ──build-tokens.mjs──▶ ios/FreePDF/Tokens.swift
-                   22 components (.jsx) ──▶ storybook/stories/*
+                   21 components (.jsx) ──▶ storybook/stories/*
                    the declared source of truth for every future client
 ```
 
@@ -247,18 +249,27 @@ headers, `ffi/src/lib.rs:9`, and the second `5c` in `bridge_check.sh`.
   shutter row, which is a 2 px accent ring and a 4 px gap, not "1 px divider border … 1 px
   accent ring".
 
-### 8. [ ] `Scan.numbers`
+### 8. [ ] `Scan.numbers` - **refused as written, one line of it is worth doing**
 
-"Every number this scan has ever had" is written four times in three spellings:
-`Scan.swift:301`, `Scan.swift:104`, `ScanFlow.swift:275` and `:478`
-(`Array(Set(photos + pages)).sorted()`). `ios/AGENTS.md:86` already describes the concept in
-prose.
+"Every number this scan has ever had" is written at `Scan.swift:104` and `:301`,
+`ScanFlow.swift:275`, `:416` and `:478` - five sites, not four.
 
-- **Removes:** three spellings of one concept; `nextPage` reads `(numbers.max() ?? 0) + 1`.
-- **Costs:** none. `ScanFlow.numbers:416` stays as it is - it reads the cache on purpose.
+- **Refused** (this loop, nothing committed): a `Scan.numbers` property is `+3` lines and
+  deletes nothing at the two `Scan.swift` sites, because both throw away exactly what it
+  would add. `:104` is `((photos + pages).max() ?? 0) + 1` - `max()` does not care about order
+  or duplicates. `:301` is `Set(photos + pages)`, which would re-hash what `numbers` had just
+  sorted and de-duplicated. Adding it would make a fourth spelling, not one fewer. Leave both
+  as they are.
+- **The list was wrong about `:478`,** and this is the part worth doing: it needs no new
+  property at all. `ScanFlow.swift:478` spells out `Array(Set(photos + pages)).sorted()` over
+  the cache `refresh()` has just filled - character for character what `ScanFlow.numbers:416`
+  computes, and `:479`, the very next line, already calls `numbers`. That is a one-word change
+  inside `ScanFlow`, pure deletion, no dependency on `Scan`.
+- **What is left after that:** only `ScanFlow.swift:275` (`everyPage`) genuinely wants the
+  sorted de-duplicated union read off the disk. One caller does not earn a property on `Scan`.
 - **Check:** `bash ios/check/run.sh`.
 
-### 9. [ ] `FakeShoot` returns the failure kind instead of a sentence to sniff
+### 9. [x] `FakeShoot` returns the failure kind instead of a sentence to sniff
 
 `FakeShoot.write` (`FakeShoot.swift:43-59`) knows which kind of failure it had, returns a
 sentence, and `CameraView.say:259` works the kind back out by calling `FakeShoot.isDrawFailure`,
@@ -269,17 +280,32 @@ which is `hasSuffix("could not be drawn.")`.
   printed unchanged.
 - **Costs:** ~6 lines changed in a file that only the check reaches.
 - **Check:** `bash ios/check/scan_check.sh`.
+- **What the check does not prove** (35647b1): `scan_check.sh` drives `write` twelve times, but
+  nothing in the repo asserts which *sink* a failure reaches. Swapping `.notDrawn` for
+  `.notSaved` on the draw failure still prints "scan ok". The equivalence was read, not
+  measured - `nil → message = nil`, `.notDrawn → blocked`, `.notSaved → message`, matching the
+  three old branches exactly. Whoever wants that guarded needs a check case on `blocked` vs
+  `message`, which no check has today.
 
-### 10. [ ] `photoCount()` beside `pageCount()`
+### 10. [ ] `photoCount()` beside `pageCount()` - **worth doing, needs both files in one hand**
 
 `"photo\(n == 1 ? "" : "s")"` is written at `Scan.swift:143`, `DoneView.swift:150` and `:154`.
-`pageCount(_:)` at `Scan.swift:13` is the shape to copy, and `ios/AGENTS.md:344` already claims
-this plural is not duplicated.
+`pageCount(_:)` at `Scan.swift:13` is the shape to copy. `DoneView.swift:147` already admits the
+duplication in a comment.
 
-- **Removes:** three ternaries, and makes that sentence in AGENTS.md true.
-- **Check:** `bash ios/check/run.sh`.
+- **Removes:** three ternaries. One function, three call sites, no new concept.
+- **Refused this loop for a reason that is not about the item:** it was handed to an agent who
+  could write `Scan.swift` but not `DoneView.swift`, so all it could land was a free function
+  with one caller - the one-implementation abstraction the bar rejects. Split across two agents,
+  each half is a pure addition. Give it to one.
+- **Two claims of the original item were wrong.** The AGENTS.md sentence is at
+  `ios/AGENTS.md:355`, not `:344`, and it reads "The plural is the one `Scan.deleteBody` already
+  carries" - a rule about the copy table's wording, which is true today. What is duplicated is
+  the code, not the sentence, so this item does not make a false line true.
+- **Check:** `bash ios/check/run.sh`. No new case needed - `ios/check/main.swift:290-301` already
+  covers `Scan.deleteBody`'s 0-photo and 1-photo wording.
 
-### 11. [ ] `sharpen`'s `threshold` parameter becomes a const
+### 11. [x] `sharpen`'s `threshold` parameter becomes a const
 
 `core_engine/src/tools.rs:56`. All seven call sites in the repo pass `0` - `ffi/src/lib.rs:267`
 and `:377`, `backend-core-runner/src/main.rs:227`, four in `tests/engine.rs`. `user-flows.md:406`
@@ -290,7 +316,7 @@ turned.
   that describe it. Reversible in one line the day a second value exists.
 - **Check:** `cargo test --workspace`, `bash ffi/bridge_check.sh`.
 
-### 12. [ ] Delete `Tag`
+### 12. [x] Delete `Tag`
 
 `design/system/components/core/Tag.jsx` + `.d.ts` + `.prompt.md`, its export in `storybook/ds.js`
 and `stories/Tag.stories.jsx`. No flow draws it, no kit screen uses it, no story but its own
@@ -301,7 +327,7 @@ invented to give a token a home, which the same readme forbids two lines later.
 - **Removes:** five files. `--radius-sm` stays; `PagesView.swift:235` uses it for the rail tiles.
 - **Check:** `npx storybook build`.
 
-### 13. [ ] Delete `storybook/.storybook/preview.jsx`
+### 13. [x] Delete `storybook/.storybook/preview.jsx`
 
 Two preview files exist; Storybook loads `preview.js`. I built it and grepped the output:
 `iPhone (390x844)` is in the bundle, "Light or dark ground" is nowhere. The Light/Dark toolbar
@@ -313,7 +339,7 @@ and the `data-theme` switch in `preview.jsx` have never run.
   `preview.js` and say so. Either way one file goes.
 - **Check:** `npx storybook build`.
 
-### 14. [ ] `pdf.rs`: the document's name written once
+### 14. [x] `pdf.rs`: the document's name written once
 
 `core_engine/src/pdf.rs:53-57` and `:139-143` are byte-identical: the `file_stem` title and its
 `"FreePDF Document"` fallback.
@@ -322,7 +348,7 @@ and the `data-theme` switch in `preview.jsx` have never run.
   maths is written once, `failed()` so the write sentence is.
 - **Check:** `cargo test --workspace`.
 
-### 15. [ ] `freepdf_suggest_adjustments`'s `values` parameter is called `sheet`
+### 15. [x] `freepdf_suggest_adjustments`'s `values` parameter is called `sheet`
 
 `ffi/include/freepdf.h:48` takes the whole 24-value `FreepdfAdjustments`, but only `corners` and
 `pull_the_sheet_flat` are read (`ffi/src/lib.rs:297-302`, where it is already named `chosen`).
@@ -330,16 +356,30 @@ The header uses the same word, "values", that means "everything the user set" ev
 
 - **Removes:** a reader wondering whether the sharpen radius he passed changed the answer. Safe:
   C arguments are positional and Swift imports these without labels.
+- **The weakest thing this loop landed, and worth saying so** (ee40e10): it deletes no line. It is
+  a rename that pays for itself in three lines of new prose explaining why the parameter is not
+  called "values". It stands because the word it removes was actively misleading at the one
+  boundary a second client reads, not because it met the bar.
+- **Finished afterwards:** ee40e10 renamed the C boundary but left `Some(values) =>` inside
+  `suggest_adjustments` itself - the exact word, in the exact function. That binding is `chosen`
+  now, matching the parameter above it.
 - **Check:** `bash ffi/bridge_check.sh`.
 
-### 16. [ ] Strike the crop error that cannot happen
+### 16. [x] Strike the crop error that cannot happen
 
 `ffi/src/lib.rs:402` says "`crop` still refuses a box that is genuinely impossible". It cannot:
 `crop_box` clamps every edge (`at.min(size)`, then `long.min(size - at)`), so no box reaching
 `crop` is ever outside the image. `user-flows.md:383` therefore lists a sentence - "Crop refused
 | The crop falls outside the page." - with no producer anywhere, and no Swift file has it.
 
-- **Removes:** one false comment and one dead copy-table row. The clamping stays; it is correct.
+- **Removes:** one false comment. The clamping stays; it is correct.
+- **Half of it was refused** (ee40e10): the "Crop refused" row at `user-flows.md:383` is *not*
+  dead. `design/system/components/document/PageHandles.jsx:44` has a `refused` state and three
+  stories draw that exact sentence - `PageHandles.stories.jsx:55` and `:68`,
+  `Flow6Adjust.stories.jsx:253`. That row is where the German copy for it lives. The engine has
+  no producer, true; the design system does. Whether a component should keep a state the app
+  cannot reach is a design call, not a refactor - it is Julian's, and until he makes it the row
+  stays.
 - **Check:** `bash ffi/bridge_check.sh`.
 
 ### 17. [ ] Delete the last root of the classical theme
@@ -374,6 +414,77 @@ one file, and this one needs someone who knows which tasks are actually finished
 - **Removes:** the last doc line in the repo that describes an older app, and the reason a reader
   cannot trust the one paragraph the README tells him to trust.
 - **Check:** none - it is one paragraph of prose.
+
+### 19. [ ] The eight flow specimens load a bundle that has never been in this repo
+
+Every `design/flows/*.dc.html` opens with
+`_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/_ds_bundle.js`. There is no
+`design/flows/_ds/` directory and there never has been one in git. So from a clean checkout all
+eight render as unstyled HTML. This is older than this loop - item 1 deleted the frozen copy that
+`design/system/`'s own cards loaded, and item 17 is about the one under `design/gallery/`; this is
+a third address, and the only one pointing at nothing at all.
+
+- **Removes:** either eight dead files, or eight broken references. Storybook's seven flow stories
+  already draw the same seven flows from the live components, which is the thing item 1 was
+  decided on.
+- **What it needs first:** whether these `.dc.html` files are a designer's deliverable Julian wants
+  kept as an artefact, or leftovers. That is his call, not a fact readable off the code - which is
+  why this is an item and not a fix.
+- **Check:** `npx storybook build`; `grep -rn 43ff3180 .` returns nothing.
+
+### 20. [ ] A registered git worktree holds a pre-item-5 copy of the app
+
+`git worktree list` shows `/Users/julianhahn/free-pdf/.claude/worktrees/wf_a94ba19f-ae2-2` at
+`b819e78`. `.git/info/exclude` hides it from `git status`, but **not** from grep. It still answers
+for `isDrawFailure`, `OutlineStyle` in `ScanFlow.swift`, `preview.jsx` and `classical-fee6c86c` -
+every name this loop deleted. An agent grepping the repo for a deleted symbol finds it alive there
+and can edit the stale copy believing it is the app.
+
+- **Removes:** a second, older copy of the whole repo that repo-wide search cannot tell from the
+  real one. This is the same failure the storage model exists to prevent, one directory up.
+- **Why it is an item and not a fix:** it belongs to another agent's session, and no agent should
+  delete another's worktree. `git worktree remove` when Julian says so.
+- **Check:** none. `git worktree list` shows one line afterwards.
+
+## Where this loop stopped
+
+The loop ran on 2026-08-16 and ended here. Items 1-5, 7, 9, 11-16 landed. What is left:
+
+**Blocked on Julian - one question, item 6.** Every other open item is work. This one is a
+decision, and nothing should touch `OutlineStyle`, `SecondaryStyle` or the six inline button
+copies until it is made. The question is: **adopting the design system's one rule, "Outlined,
+never filled", turns three filled buttons outlined - Make PDF, the empty state's New scan, and
+the chosen tool chip. Is that what you want to see?** The tool chip has a delivered component
+of its own (`ToolStrip.jsx`) which is transparent with an accent underline, so the answer for it
+may be "that component", not "that style". Say yes and it is a mechanical change; say no and the
+rule in section 2, "a client mirrors the design system, it never invents a variant of its own",
+needs its exception written down instead.
+
+**Open and unblocked**, in the order they are worth doing: 10 (`photoCount`, one agent holding
+both `Scan.swift` and `DoneView.swift`), the one line of 8 (`ScanFlow.swift:478`), 18 (the README
+paragraph, needs someone who knows what runs on the phone), 17, 19, 20.
+
+**Refused today - do not re-propose these as written.** Both refusals were the right call and
+both are recorded above in full:
+
+- **Item 8's `Scan.numbers` property.** At `Scan.swift:104` and `:301` it adds three lines and
+  two allocations and deletes nothing, because `max()` and `Set(...)` both discard the sorting
+  and de-duplication it would do. It would be a fourth spelling. The item also miscounted: five
+  sites, not four, and `:478` needs no property at all.
+- **Item 16's `user-flows.md:383` "Crop refused" row.** Called dead; it is not. `PageHandles.jsx`
+  has a `refused` state and three stories draw that sentence. Deleting it deletes live German
+  copy.
+
+**Known drift left standing, judged not worth a change.** `design/claude-design-flows-prompt.md`
+still names `Tag` at `:23`, `:39`, `:375` and `:573`. It is a dated brief for a round that closed
+on 2026-08-13, nothing in the repo links to it, and its component count was already wrong before
+`Tag` went. It is a record of a decision, not a claim about today's app - the same reason item 7
+left task 3's **Why** and **Read** alone.
+
+**One thing the loop learned about its own checks.** `scan_check.sh` compiles and drives the
+whole camera screen, but nothing in the repo asserts which sink an error reaches - see the note
+under item 9. A refactor that moves a sentence between `blocked` and `message` passes every check
+in this repo. That is the biggest hole in the checks today.
 
 ## Considered and rejected
 
