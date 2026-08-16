@@ -362,7 +362,10 @@ struct AdjustView: View {
         GeometryReader { geo in
             ForEach(0..<4, id: \.self) { i in
                 Circle()
-                    .stroke(colour, lineWidth: Token.Size.ruleStrong)
+                    // While a corner is held, the other three stop being painted - the
+                    // screen is tight enough. Their targets, labels and hit testing stay.
+                    .stroke(held == nil || held == i ? colour : Color.clear,
+                            lineWidth: Token.Size.ruleStrong)
                     .frame(width: Token.Size.touchMin, height: Token.Size.touchMin)
                     .contentShape(Circle())
                     .position(x: points.wrappedValue[i].x * geo.size.width,
@@ -382,9 +385,13 @@ struct AdjustView: View {
         }
     }
 
-    /// The picture under the held corner, blown up beside the finger with a crosshair on
-    /// the corner itself - a handle sits under the fingertip that drags it, so without
-    /// this the user aims at what he cannot see. Julian's decision, 2026-08-16.
+    /// The picture under the held corner, blown up on the far side of the picture from
+    /// the finger, with a crosshair on the corner itself - a handle sits under the
+    /// fingertip that drags it, so without this the user aims at what he cannot see. One
+    /// accent rule runs level from under the fingertip into the disc and stops at the rim,
+    /// the way a leader line in a printed diagram says "this circle is that spot".
+    /// Julian's decision, 2026-08-16, after using it on the phone: the loupe sat right
+    /// next to the thumb and the screen felt crowded.
     ///
     /// It is the same file the picture draws, drawn again at the same size and scaled
     /// about the corner, so it can never disagree with what is underneath. It is
@@ -393,34 +400,58 @@ struct AdjustView: View {
     private func magnifier(at corner: CGPoint, in size: CGSize) -> some View {
         let at = CGPoint(x: corner.x * size.width, y: corner.y * size.height)
         let zoom = Token.Number.magnifierZoom
-        let lift = Token.Size.magnifierLift
-        // Above the finger, unless the finger is at the top of the picture and there is
-        // no room - then below it, which is the only other side that is never covered.
-        let side: CGFloat = at.y > lift ? -1 : 1
-        return Circle()
-            .fill(Token.Palette.paper)
-            .overlay {
-                PageImage(url: drawn)
-                    .frame(width: size.width, height: size.height)
-                    .scaleEffect(zoom)
-                    .offset(x: (size.width / 2 - at.x) * zoom,
-                            y: (size.height / 2 - at.y) * zoom)
-            }
-            .overlay {
-                Group {
-                    Rectangle().frame(width: Token.Size.magnifierCross,
-                                      height: Token.Size.ruleStrong)
-                    Rectangle().frame(width: Token.Size.ruleStrong,
-                                      height: Token.Size.magnifierCross)
+        let radius = Token.Size.magnifier / 2
+        // The disc is inset one step from the picture's edge, so it clears the rounded
+        // corner; its centre is therefore that step plus its radius.
+        let padR = Token.Size.space2 + radius
+        let padCross = Token.Size.space2 + Token.Size.magnifierCross
+        // The dock is a place, not a distance: the far edge from the hand, at the
+        // finger's own height. A finger exactly on the middle docks left, so it never
+        // flickers.
+        let farRight = at.x < size.width / 2
+        let cx = farRight ? size.width - padR : padR
+        // The disc is clamped so the circle never leaves the picture; the magnified point
+        // rides a far looser clamp, so near the top or bottom the disc slides inward while
+        // the leader stays dead level and still lands on the cross.
+        let cy = min(max(at.y, padR), max(padR, size.height - padR))
+        let ay = min(max(at.y, padCross), max(padCross, size.height - padCross))
+        return ZStack {
+            // The leader, drawn first so the magnified copy paints over its far end and
+            // the line visibly runs into the circle. It carries a hairline of paper, the
+            // trick the grips use, so an accent rule survives a dark photo.
+            Rectangle()
+                .fill(Token.Palette.accent)
+                .frame(width: abs(cx - at.x), height: Token.Size.ruleStrong)
+                .padding(Token.Size.hairlineW)
+                .background(Token.Palette.paper)
+                .position(x: (at.x + cx) / 2, y: ay)
+            Circle()
+                .fill(Token.Palette.paper)
+                .overlay {
+                    PageImage(url: drawn)
+                        .frame(width: size.width, height: size.height)
+                        .scaleEffect(zoom)
+                        .offset(x: (size.width / 2 - at.x) * zoom,
+                                y: (size.height / 2 - at.y) * zoom + ay - cy)
                 }
-                .foregroundStyle(Token.Palette.accent)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Token.Palette.divider,
+                                         lineWidth: Token.Size.hairlineW))
+                .frame(width: Token.Size.magnifier, height: Token.Size.magnifier)
+                .position(x: cx, y: cy)
+            // The crosshair sits on the magnified point, not on the disc's geometric
+            // centre - which is why it rides ay and not cy.
+            Group {
+                Rectangle().frame(width: Token.Size.magnifierCross,
+                                  height: Token.Size.ruleStrong)
+                Rectangle().frame(width: Token.Size.ruleStrong,
+                                  height: Token.Size.magnifierCross)
             }
-            .clipShape(Circle())
-            .overlay(Circle().stroke(Token.Palette.divider, lineWidth: Token.Size.hairlineW))
-            .frame(width: Token.Size.magnifier, height: Token.Size.magnifier)
-            .position(x: at.x, y: at.y + side * lift)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
+            .foregroundStyle(Token.Palette.accent)
+            .position(x: cx, y: ay)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     private static let cornerNames = ["Top left corner", "Top right corner",
