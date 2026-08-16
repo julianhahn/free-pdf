@@ -8,6 +8,49 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-16 - the done screen is a file, like every other screen
+
+`ARCHITECTURE.md` item 5. The finished screen - name field, Open PDF, Share PDF, Change
+pages, the photos block, the reader sheet and `OutlineStyle` - lived inside `ScanFlow`, which
+is a router. It is `FreePDF/DoneView.swift` now, the same shape `PagesView` and `AdjustView`
+have: `pdf`, the photo count and what the photos cost go in, `onChangePages` and
+`onDeletePhotos` come out, and `ScanFlow` still makes every file move. Nothing was rewritten
+and no comment was shortened; `ScanFlow` is 238 lines shorter and no longer imports PDFKit.
+
+One of the six state properties could not move: `focusTaken`. `Change pages` destroys the
+done screen and Make PDF builds it again, so `@State` over there would raise the keyboard a
+second time over a screen the user came back to read - a behaviour change. It stays in
+`ScanFlow` and goes back as a `Binding`, the way `PagesView` takes `showing`. Five moved.
+
+Two claims from item 5 are still not true and were left alone rather than written down:
+`ios/AGENTS.md:121` ("one piece of view state that decides a screen") - `shooting`,
+`applyingAll` and `adjusting` still decide screens, and moving a screen out did not change
+that, so it stays item 7's line. And `ios/` is thirteen Swift files now, not the twelve
+`ARCHITECTURE.md:19` draws; item 6 also points `OutlineStyle` at `ScanFlow.swift:701`, which
+is `DoneView.swift` now.
+
+## 2026-08-16 - the docs stop describing an app that is gone
+
+`ARCHITECTURE.md` item 7, the four documents that are not code: `TASKS.md`, `user-flows.md`,
+`client-guide-design-system/tokens.md`, `design/system/readme.md`. Every line was read against
+the code first and then cut, never explained. The one that mattered: the copy table said
+"Choose a page" where the app, `PageStrip.jsx` and the story all say "Go to page" - the copy
+tables are where the words come from, so that was wrong in the one place meant to be right.
+Its German pair, "Seite wählen", is left for Julian: no German for "Go to page" exists anywhere
+in the repo and inventing one is his call, not mine.
+
+`design/system/readme.md` listed 18 components and 22 exist. `ToolStrip`, `PageStrip`,
+`PageHandles` and `Sheet` are in the table now, because a census that is short makes the next
+client agent ship a kit with no rail and no handles. `tokens.md` pointed at the retired
+classical stylesheet and at `storybook/styles.css`, which no longer exists; every table in it
+was compared against `design/system/tokens/*.css` first - colours, ramps, type steps, spacing,
+radii, shadows all agree - so it now names that one source. That was the last line in the repo
+naming `classical-fee6c86c`, which unblocks item 17.
+
+Left standing on purpose: `tokens.md`'s "Provisional, do not treat as approved" preface. Its
+numbers are true, but whether they are *approved* is Julian's word, not a fact I can read off
+the code. Docs only, no behaviour: `npx storybook build` passes unedited.
+
 ## 2026-08-16 - the PDF is a file the scan owns
 
 `ARCHITECTURE.md` item 4. `try? FileManager.default.removeItem(at: scan.pdf)` stood four

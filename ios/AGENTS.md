@@ -315,9 +315,14 @@ sentence in the tables, so none is invented.
 
 ### The done screen
 
-[`FreePDF/ScanFlow.swift`](./FreePDF/ScanFlow.swift), the `done` branch: the name field,
-Open PDF, Share PDF, Change pages, and the photos block that names its own count and size.
-The words are the copy tables in [`../user-flows.md`](../user-flows.md) sections 9, 10 and 11.
+[`FreePDF/DoneView.swift`](./FreePDF/DoneView.swift): the name field, Open PDF, Share PDF,
+Change pages, and the photos block that names its own count and size. The words are the copy
+tables in [`../user-flows.md`](../user-flows.md) sections 9, 10 and 11.
+
+It is one more branch of `ScanFlow`'s switch and is dumb the way the pages and Adjust screens
+are: the PDF's URL, the photo count and what the photos cost go in, `onChangePages` and
+`onDeletePhotos` come out, and `ScanFlow` makes every file move. The keyboard flag is the one
+thing it cannot hold itself - see below.
 
 - **The name is for the copy that leaves and nothing else.** On disk the file is always
   `scan.pdf`. What he types becomes a hard link in the temporary directory called
@@ -330,7 +335,9 @@ The words are the copy tables in [`../user-flows.md`](../user-flows.md) sections
   there instead of on the first tap - which is the wait Julian felt on the phone
   (2026-08-16, his call). Once is the whole subtlety: the sheets present over this screen
   and cost nothing, but `Change pages` destroys the branch and Make PDF builds it again,
-  and raising the keyboard a second time would cover a screen he came back to read. The
+  and raising the keyboard a second time would cover a screen he came back to read. So the
+  flag is the one piece of this screen's state that sits in `ScanFlow` and comes back as a
+  binding: this screen is what Change pages destroys, and `ScanFlow` is what survives it. The
   price is that VoiceOver reads the field instead of the "PDF ready" title on opening.
   The block below stays reachable because the screen is a `ScrollView`: the keyboard is a
   bottom safe-area inset, which a scroll view turns into content it can scroll to.
