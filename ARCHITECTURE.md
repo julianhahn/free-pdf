@@ -102,7 +102,7 @@ something. Checks: `cargo test --workspace`; `bash ffi/bridge_check.sh` (~1 s);
 `bash ios/check/run.sh` (~2 s, no Xcode); `bash ios/check/scan_check.sh` (~3 min, simulator);
 `cd storybook && npx storybook build`; `node design/system/tokens/build-tokens.mjs --check`.
 
-### 1. [ ] Delete the frozen second copy of the design system
+### 1. [x] Delete the frozen second copy of the design system
 
 `design/system/` contains itself twice. The live half - `tokens/*.css` and the 22 `.jsx`
 components - is current with the app. The frozen half describes the app of two weeks ago and

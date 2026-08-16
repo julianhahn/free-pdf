@@ -19,8 +19,8 @@ the app is iPhone-portrait-only — and the toolbar has a Light / Dark switch, w
 
 - All 18 delivered components, grouped as the system groups them: Core, Forms, Document, Lists,
   Feedback. Every state named in a component's `.prompt.md` / `.d.ts` is its own story.
-- **Screens** — the five screens of the delivered iPhone kit (`design/system/ui_kits/iphone/`):
-  Scans, Camera, Pages, Adjust, Done.
+- **Flows** — the seven flow stories, each a whole screen of the app built from those components
+  and the kit's chrome (`design/system/ui_kits/iphone/Chrome.jsx`).
 
 ## The components are imported, not copied
 

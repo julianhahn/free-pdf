@@ -276,7 +276,7 @@ Nothing else was added: no toast, no avatar, no tabs, no card. The app has no su
 | `guidelines/*.html` | 19 specimen cards: colours, type, spacing, brand |
 | `guidelines/copy.md` | Every string, English and German, from `components.md` |
 | `components/{core,forms,document,lists,feedback}/` | The 18 components above |
-| `ui_kits/iphone/` | The click-through iPhone app — start at `index.html` |
+| `ui_kits/iphone/Chrome.jsx` | App bar, screen scaffold and status line the flow stories build on |
 | `thumbnail.html` | The system's tile |
 | `SKILL.md` | Agent-skill wrapper for use outside this project |
 

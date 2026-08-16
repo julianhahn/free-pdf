@@ -8,6 +8,20 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-16 - the design system exists once, not twice
+
+`design/system/` held itself twice: the live `tokens/*.css` and 22 `.jsx` components, and a
+frozen bundle from two weeks earlier that the specimen cards and the iPhone kit actually
+loaded. The frozen half still wrote `var(--disabled-opacity)` (retired), had no `PageStrip`,
+`ToolStrip`, `PageHandles` or `Sheet`, and its `AdjustScreen`/`PagesScreen` still showed the
+two things tasks 24 and 26 reversed. Deleted: `_ds_bundle.js`, `_ds_manifest.json`,
+`_adherence.oxlintrc.json`, the five `*.card.html`, the five `ui_kits/iphone/*Screen.jsx`,
+`App.jsx`, `index.html` and `storybook/stories/Screens.stories.jsx` - 3,108 lines.
+`ui_kits/iphone/Chrome.jsx` stays: the seven flow stories import `AppBar`/`Screen`/
+`StatusLine` from it. `design/AGENTS.md` pointed at `gallery/_ds/<theme>/styles.css` as the
+source of truth for every number; it now points at `system/tokens/*.css` and names
+`build-tokens.mjs`. `ARCHITECTURE.md` item 1 is ticked; item 2 is next.
+
 ## 2026-08-15 - Adjust, and the engine learns to suggest
 
 TASKS.md task 18. `ios/FreePDF/AdjustView.swift` is new and carries flow 7: the six tools one
