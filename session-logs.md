@@ -8,6 +8,25 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-16 - four things the engine and its boundary stopped carrying
+
+`ARCHITECTURE.md` items 11, 14, 15 and 16. `sharpen` lost its `threshold` parameter: all seven
+callers passed zero, so it is `SHARPEN_THRESHOLD` in `tools.rs` now and reversible in one line.
+`pdf.rs` works the document's name out in `title_of()` instead of twice. At the C surface,
+`freepdf_suggest_adjustments`'s second argument is `sheet` and not `values` - only the corners
+and their switch are read, and the header says so on both sides; C arguments are positional, so
+no caller changed. And `crop_box`'s comment stopped promising that `crop` still refuses an
+impossible box: it clamps both ends, so nothing it returns can be refused.
+
+**Refused:** striking the "Crop refused" row from `user-flows.md:383`, which item 16 asks for.
+It has no producer in the engine, but it is not dead copy: `PageHandles.jsx` draws a `refused`
+state, `PageHandles.stories.jsx:55` and `:68` and `Flow6Adjust.stories.jsx:253` render it, and
+two `design/flows/*.dc.html` name it as the placeholder they used. That row is where its German
+lives. Whether the component keeps a state the app cannot reach is a design-system question, not
+a line to delete on the way past.
+
+`cargo test --workspace` 38 + 3 + 5 passed, `bridge ok`, and the Swift typecheck clean.
+
 ## 2026-08-16 - the stand-in says which failure it had, instead of a sentence to sniff
 
 `ARCHITECTURE.md` item 9. `FakeShoot.write` knew which of its two failures it had and threw

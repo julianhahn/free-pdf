@@ -224,7 +224,7 @@ fn apply_tools(img: DynamicImage, args: &Args) -> Result<DynamicImage, String> {
         img = apply_levels(&img, suggestion);
     }
     if let Some(radius) = args.sharpen {
-        img = sharpen(&img, radius, 0)?;
+        img = sharpen(&img, radius)?;
     }
     if args.gray {
         img = to_grayscale(&img);

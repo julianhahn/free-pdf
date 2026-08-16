@@ -42,7 +42,7 @@ every session leaves it correct.
 | `straighten(img, degrees)` | Turns the picture by that much, cutting in slightly so no empty corners are left. |
 | `suggest_levels(img)` | Measures where the paper and the writing sit, and proposes a brightness stretch. Measures the sheet only, not the table around it. |
 | `apply_levels(img, l)` | Carries out that stretch: paper becomes white, writing black, colour cast gone. |
-| `sharpen(img, r, t)` | Makes edges crisper. |
+| `sharpen(img, r)` | Makes edges crisper. |
 | `rotate(img, degrees)` | Quarter turns. |
 | `crop(img, x, y, w, h)` | Cuts to the box the user drew. Refuses a box that does not fit. |
 | `to_grayscale(img)` | Drops the colour. |

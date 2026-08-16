@@ -377,7 +377,7 @@ fn sharpening_makes_edges_stronger() {
     let document = photographed_document();
     let edge_before = edge_strength(&document);
 
-    let sharpened = sharpen(&document, 1.0, 0).expect("sharpening failed");
+    let sharpened = sharpen(&document, 1.0).expect("sharpening failed");
 
     assert!(
         edge_strength(&sharpened) > edge_before,
@@ -391,9 +391,9 @@ fn sharpening_makes_edges_stronger() {
 fn a_useless_sharpening_radius_is_refused() {
     let document = photographed_document();
 
-    assert!(sharpen(&document, 0.0, 0).is_err(), "radius zero");
-    assert!(sharpen(&document, -1.0, 0).is_err(), "negative radius");
-    assert!(sharpen(&document, 50.0, 0).is_err(), "radius past any use");
+    assert!(sharpen(&document, 0.0).is_err(), "radius zero");
+    assert!(sharpen(&document, -1.0).is_err(), "negative radius");
+    assert!(sharpen(&document, 50.0).is_err(), "radius past any use");
 }
 
 /// How hard the brightness jumps across the top edge of the writing.

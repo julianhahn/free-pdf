@@ -49,20 +49,27 @@ pub fn to_grayscale(img: &DynamicImage) -> DynamicImage {
 /// - Parameters:
 ///   img: The image to sharpen.
 ///   radius: How far the effect reaches, in pixels. Around 1 suits text.
-///   threshold: How large a brightness difference has to be before it is
-///   touched at all. Above zero this leaves paper grain and sensor noise alone.
 /// - Returns:
 ///   The sharpened image, or a message if the radius is outside a useful range.
-pub fn sharpen(img: &DynamicImage, radius: f32, threshold: i32) -> Result<DynamicImage, String> {
+pub fn sharpen(img: &DynamicImage, radius: f32) -> Result<DynamicImage, String> {
     if !(radius > 0.0 && radius <= 20.0) {
         return Err(format!(
             "The sharpening radius must be greater than 0 and at most 20 pixels, but was {radius}."
         ));
     }
 
-    let sharpened = image::imageops::unsharpen(&img.to_rgb8(), radius, threshold);
+    let sharpened = image::imageops::unsharpen(&img.to_rgb8(), radius, SHARPEN_THRESHOLD);
     Ok(DynamicImage::ImageRgb8(sharpened))
 }
+
+/// How large a brightness difference has to be before sharpening touches it at
+/// all. Above zero this would leave paper grain and sensor noise alone.
+///
+/// It was a parameter until 2026-08-16 and every caller in the repository passed
+/// zero: the runner, both recipes in the FFI crate, and the tests. The user is
+/// given a radius slider and nothing else (`user-flows.md`), so it is written
+/// here until a second value exists.
+const SHARPEN_THRESHOLD: i32 = 0;
 
 /// The two ends of a brightness stretch, per colour channel.
 ///

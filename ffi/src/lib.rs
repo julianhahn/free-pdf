@@ -131,8 +131,10 @@ pub struct FreepdfSuggestion {
 /// They are not page pixels: the finished page has been pulled flat, straightened
 /// and capped, and none of that is a straight scaling.
 ///
-/// `values` is the caller's own sheet, or null for "your own sheet". It changes one
-/// thing: which corners the picture is pulled flat with before the tilt and the tone
+/// `sheet` is the caller's own sheet, or null for "your own sheet". Only two of its
+/// fields are read - the corners and their switch - which is why it is not called
+/// `values`: nothing else the user set changes the answer. It changes one thing:
+/// which corners the picture is pulled flat with before the tilt and the tone
 /// points are read off it. Everything handed back - the corners and the three notes -
 /// is still the engine's own answer, so "Back to the suggestion" reads the same
 /// numbers whichever way it was asked. A straightening angle is only meaningful
@@ -142,23 +144,23 @@ pub struct FreepdfSuggestion {
 /// sentence for the user.
 ///
 /// # Safety
-/// `photo_path` is either null or a NUL-terminated C string, `values` is either null
+/// `photo_path` is either null or a NUL-terminated C string, `sheet` is either null
 /// or one readable [`FreepdfAdjustments`], `out_suggestion` is either null or one
 /// writable [`FreepdfSuggestion`], and `error` is either null or `error_size` bytes
 /// the caller owns.
 #[no_mangle]
 pub unsafe extern "C" fn freepdf_suggest_adjustments(
     photo_path: *const c_char,
-    values: *const FreepdfAdjustments,
+    sheet: *const FreepdfAdjustments,
     out_suggestion: *mut FreepdfSuggestion,
     error: *mut c_char,
     error_size: usize,
 ) -> i32 {
     let photo = unsafe { path_from(photo_path, "The photo") };
-    let chosen = if values.is_null() {
+    let chosen = if sheet.is_null() {
         None
     } else {
-        Some(unsafe { *values })
+        Some(unsafe { *sheet })
     };
     let out = if out_suggestion.is_null() {
         Err("The app gave nowhere to put the suggestion.".to_string())
@@ -265,7 +267,7 @@ fn scan_page(photo: &Path, page: &Path) -> Result<(), String> {
         img = img.thumbnail(LONGEST_EDGE, LONGEST_EDGE);
     }
 
-    img = sharpen(&img, SCAN_SHARPEN, 0)?;
+    img = sharpen(&img, SCAN_SHARPEN)?;
     save_page(&img, page)
 }
 
@@ -375,7 +377,7 @@ fn adjust_page(photo: &Path, page: &Path, values: &FreepdfAdjustments) -> Result
     }
 
     if values.sharpen_radius > 0.0 {
-        img = sharpen(&img, values.sharpen_radius, 0)?;
+        img = sharpen(&img, values.sharpen_radius)?;
     }
 
     // The turn comes first, so the fractions are of the picture the user drew the box
@@ -399,8 +401,9 @@ fn adjust_page(photo: &Path, page: &Path, values: &FreepdfAdjustments) -> Result
 /// nothing to cut.
 ///
 /// Each edge is rounded and then held inside the image, so a box the app already keeps
-/// inside the picture can never be refused for one pixel of rounding; `crop` still
-/// refuses a box that is genuinely impossible. A box too thin to reach one pixel cuts
+/// inside the picture can never be refused for one pixel of rounding. Held on both
+/// ends - the start against the size, the length against what is left - so no box that
+/// comes out of here is one `crop` can refuse. A box too thin to reach one pixel cuts
 /// nothing, which is what a zero width already means.
 fn crop_box(width: u32, height: u32, values: &FreepdfAdjustments) -> Option<(u32, u32, u32, u32)> {
     let edge = |start: f32, length: f32, size: u32| {

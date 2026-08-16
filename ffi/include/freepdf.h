@@ -40,12 +40,13 @@ typedef struct {
    out_suggestion->values.corners are in the photo's own upright full size pixels - the
    photo after its EXIF orientation was applied, which is the space the app draws it in.
    They are NOT page pixels: the page is pulled flat, straightened and capped first.
-   `values` is the caller's own sheet, or NULL for "your own sheet": it only decides
-   which corners the picture is pulled flat with before the tilt and the tone points are
+   `sheet` is the caller's own sheet, or NULL for "your own sheet": only its corners and
+   their switch are read, which is why it is not called `values`. It only decides which
+   corners the picture is pulled flat with before the tilt and the tone points are
    read off it, because an angle measured against another sheet is the wrong angle. The
    corners and the three notes handed back are the engine's own either way. */
 int32_t freepdf_suggest_adjustments(const char *photo_path,
-                                    const FreepdfAdjustments *values,
+                                    const FreepdfAdjustments *sheet,
                                     FreepdfSuggestion *out_suggestion,
                                     char *error, size_t error_size);
 
