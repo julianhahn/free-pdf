@@ -294,7 +294,7 @@ only lives in memory today and a relaunch is the only retry there is.
 
 Changes to today: pinch-to-zoom on the page (this screen exists to check small print, and
 1600 px flat is too little), a **Retry** on a refused page, a confirmation on delete, and
-a page-jump so a 40-page scan is not 40 swipes.
+a page-jump so a 40-page scan is not 40 swipes, shown only from ten pages up.
 
 Adding a page to a finished scan is built: **Shoot another page** in the Page menu. It
 deletes `scan.pdf` first, exactly as **Change pages** does, then opens the camera at

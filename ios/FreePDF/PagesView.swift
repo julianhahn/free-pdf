@@ -146,6 +146,11 @@ struct PagesView: View {
 
     // MARK: - The rail
 
+    /// From ten pages up the rail carries the jump. Julian's number, decided on
+    /// 2026-08-16 because "Go to page" on a one page scan has nowhere to go - it is not
+    /// measured off anything.
+    private static let jumpFrom = 10
+
     private var rail: some View {
         VStack(alignment: .leading, spacing: Token.Size.space2) {
             HStack(spacing: Token.Size.space2) {
@@ -158,16 +163,18 @@ struct PagesView: View {
                     .onAppear { view.scrollTo(showing, anchor: .center) }
                     .onChange(of: showing) { withAnimation { view.scrollTo(showing, anchor: .center) } }
                 }
-                Rectangle()
-                    .fill(Token.Palette.divider)
-                    .frame(width: Token.Size.hairlineW, height: Token.Size.touchMin)
-                // Words, not a glyph, and always in the same place at the rail's end.
-                Button("Go to page") { jumping.toggle() }
-                    .font(Token.Face.heading(Token.Size.textControl))
-                    .tracking(Token.Size.textControl * Token.Number.trackingHeading)
-                    .foregroundStyle(Token.Palette.accent)
-                    .frame(minHeight: Token.Size.touchMin)
-                    .accessibilityHint("Go to a page number. Page \(position) of \(numbers.count) shown.")
+                if numbers.count >= Self.jumpFrom {
+                    Rectangle()
+                        .fill(Token.Palette.divider)
+                        .frame(width: Token.Size.hairlineW, height: Token.Size.touchMin)
+                    // Words, not a glyph, and always in the same place at the rail's end.
+                    Button("Go to page") { jumping.toggle() }
+                        .font(Token.Face.heading(Token.Size.textControl))
+                        .tracking(Token.Size.textControl * Token.Number.trackingHeading)
+                        .foregroundStyle(Token.Palette.accent)
+                        .frame(minHeight: Token.Size.touchMin)
+                        .accessibilityHint("Go to a page number. Page \(position) of \(numbers.count) shown.")
+                }
             }
             if jumping { jump }
         }
