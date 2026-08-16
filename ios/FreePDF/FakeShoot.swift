@@ -37,14 +37,25 @@ enum FakeShoot {
         return Scan.all().first { $0.state != .done } ?? (try? Scan.create())
     }
 
+    /// A shot that did not land, and which kind it is, so the screen can put it where it
+    /// belongs without reading the sentence. Each carries its sentence, written in one
+    /// place in `write` below and shown unchanged.
+    enum Failure {
+        /// A page that missed the disk.
+        case notSaved(String)
+        /// The one kind that is about the screen rather than about a page: nothing was
+        /// photographed and nothing can be, so the screen says so and offers nothing.
+        case notDrawn(String)
+    }
+
     /// Draws one page and writes it exactly the way the camera writes a real one.
     ///
-    /// - Returns: nil when the file is on disk, or the sentence for the screen.
-    static func write(page number: Int, into scan: Scan) -> String? {
+    /// - Returns: nil when the file is on disk, or the failure for the screen.
+    static func write(page number: Int, into scan: Scan) -> Failure? {
         // A pool per shot: the drawing is a 48 MB bitmap, and twelve of them left to
         // pile up would be the one thing on this screen that could get the app killed.
         guard let jpeg = autoreleasepool(invoking: { draw(page: number) }) else {
-            return "Page \(number) could not be drawn."
+            return .notDrawn("Page \(number) could not be drawn.")
         }
         do {
             // `.atomic`, so a kill mid-write leaves an aux file the sweep takes, never
@@ -54,38 +65,31 @@ enum FakeShoot {
         } catch {
             // Never swallowed. A full disk at page 25 would otherwise keep the shutter
             // clicking and produce a 24 page PDF of a 40 page contract.
-            return pageNotSaved(number, error.localizedDescription)
+            return .notSaved(pageNotSaved(number, error.localizedDescription))
         }
-    }
-
-    /// True for the one sentence `write` makes that is about the screen rather than
-    /// about a page: nothing was photographed and nothing can be, so the screen says so
-    /// and offers nothing. The sentence itself is still written in one place, above.
-    static func isDrawFailure(_ sentence: String) -> Bool {
-        sentence.hasSuffix("could not be drawn.")
     }
 
     /// Shoots until the wanted number is on disk, then asks for them to be scanned.
     ///
-    /// It stops on the first failure rather than trying for ever, and hands the sentence
+    /// It stops on the first failure rather than trying for ever, and hands the failure
     /// back for the screen to show.
     ///
-    /// - Returns: the sentence that stopped it, or nil - which also means "nothing to
+    /// - Returns: the failure that stopped it, or nil - which also means "nothing to
     ///   do here", because on a phone `pagesWanted` is nil.
-    static func autoShoot(_ scan: Scan, finished: () -> Void) -> String? {
+    static func autoShoot(_ scan: Scan, finished: () -> Void) -> Failure? {
         guard let wanted = pagesWanted else { return nil }
         // A scan that already has pages belongs on the progress line, not in the
         // viewfinder. Pressing on from here would hide exactly that bug from the check,
         // which cannot see which screen the app is on - only the files it writes. So it
         // does nothing instead, and the check runs out of pages and says so.
         guard scan.pages.isEmpty else { return nil }
-        var message: String?
+        var failure: Failure?
         // Counted off the disk, so shooting one page too many cannot happen.
-        while scan.photos.count < wanted, message == nil {
-            message = write(page: scan.nextPage, into: scan)
+        while scan.photos.count < wanted, failure == nil {
+            failure = write(page: scan.nextPage, into: scan)
         }
-        if message == nil { finished() }
-        return message
+        if failure == nil { finished() }
+        return failure
     }
 
     /// A sheet of paper on a table, drawn rather than photographed, at the size a 12 MP

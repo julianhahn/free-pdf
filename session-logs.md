@@ -8,6 +8,36 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-16 - the stand-in says which failure it had, instead of a sentence to sniff
+
+`ARCHITECTURE.md` item 9. `FakeShoot.write` knew which of its two failures it had and threw
+that away, returning a sentence; `CameraView.say` got the kind back out with
+`FakeShoot.isDrawFailure`, which was `hasSuffix("could not be drawn.")`. So a copy edit in
+`ios/AGENTS.md`'s error table would have sent a failure to the wrong sink in silence. `write`
+and `autoShoot` now return `FakeShoot.Failure` - `.notSaved` for a page that missed the disk,
+`.notDrawn` for the one failure that is about the screen - and `say` switches on the kind. The
+sentences are unchanged, still written in one place, still printed as they are; `isDrawFailure`
+is gone. Left for whoever owns the docs: `ios/AGENTS.md:452` still names `isDrawFailure`.
+`resume ok`, `scan ok`, and the typecheck clean.
+
+## 2026-08-16 - the chip nothing draws and the preview file nothing loads
+
+`ARCHITECTURE.md` items 12 and 13. `Tag` is gone - `Tag.jsx`, `.d.ts`, `.prompt.md`, its story
+and its `ds.js` export. `<Tag` appears nowhere in the repo but its own `.prompt.md` example: no
+flow, no kit screen, no card, and no chip in the app. The readme's census is 21 rows and says 21,
+and the "intentional additions" bullet that paired it with `SectionLabel` now names only
+`SectionLabel`. `--radius-sm` stays - `PageCounter.jsx:13`, `PageHandles.jsx:87` and
+`PagesView.swift:235` use it.
+
+`storybook/.storybook/preview.jsx` is gone, proved by building before and after rather than by
+reading the config: `Light or dark ground`, its theme toolbar's own string, is in neither bundle,
+while `preview.js`'s `iPhone (390x844)` is in both. The two builds' story lists differ by exactly
+one line, `Core/Tag`. Left standing on purpose: `storybook/README.md:28` still says the stylesheet
+is loaded in `preview.jsx`, and `:15` still promises a Light / Dark switch - both were already
+false before this commit, and that file was not mine to edit. `ARCHITECTURE.md:52` and
+`design/claude-design-flows-prompt.md` still count the old components; the prompt is a dated brief
+for a round that is finished, the picture is a later agent's line.
+
 ## 2026-08-16 - items 4, 5 and 7 are ticked, and the last false lines go with them
 
 `ARCHITECTURE.md` items 4, 5 and 7 are `[x]`. Item 7's document half had landed (a855f8b); its

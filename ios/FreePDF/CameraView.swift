@@ -228,8 +228,8 @@ struct CameraView: View {
             blocked = "This iPhone has no camera to photograph with."
             #endif
         }
-        if slot == nil, let sentence = FakeShoot.autoShoot(scan, finished: finished) {
-            say(sentence)
+        if slot == nil, let failure = FakeShoot.autoShoot(scan, finished: finished) {
+            say(failure)
         }
         photos = scan.photos
     }
@@ -239,9 +239,9 @@ struct CameraView: View {
     private func shoot() {
         let page = number
         guard Camera.device != nil else {
-            let sentence = FakeShoot.write(page: page, into: scan)
-            say(sentence)
-            if sentence == nil { landed() }
+            let failure = FakeShoot.write(page: page, into: scan)
+            say(failure)
+            if failure == nil { landed() }
             return
         }
         busy = true
@@ -256,11 +256,11 @@ struct CameraView: View {
     /// Puts a sentence where it belongs. The stand-in has one of each kind: a page that
     /// missed the disk is the line over the viewfinder, a page it could not draw at all
     /// is the screen.
-    private func say(_ sentence: String?) {
-        if let sentence, FakeShoot.isDrawFailure(sentence) {
-            blocked = sentence
-        } else {
-            message = sentence
+    private func say(_ failure: FakeShoot.Failure?) {
+        switch failure {
+        case .notDrawn(let sentence)?: blocked = sentence
+        case .notSaved(let sentence)?: message = sentence
+        case nil: message = nil
         }
     }
 
