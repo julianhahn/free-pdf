@@ -4,8 +4,13 @@ export interface TextFieldProps {
   value: string;
   placeholder?: string;
   onChange?: (next: string) => void;
-  /** Trailing static text, e.g. ".pdf". */
+  /** Trailing static text. The done screen sets none: the name field is the label and the placeholder only. */
   suffix?: React.ReactNode;
+  /**
+   * Takes focus when the field is created, and only then — a redraw never re-focuses, so
+   * coming back from a sheet or another screen does not raise the keyboard again.
+   */
+  autoFocus?: boolean;
   disabled?: boolean;
   style?: React.CSSProperties;
 }

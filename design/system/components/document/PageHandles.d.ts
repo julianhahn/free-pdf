@@ -16,7 +16,11 @@ export interface PageHandlesProps {
   refused?: boolean;
   /** The sentence under the picture when refused. */
   refusedText?: string;
-  /** Index of the grip being dragged — it grows 11 to 13px, no colour change. */
+  /**
+   * Index of the grip being dragged — it grows 11 to 13px, no colour change, and
+   * the magnifier appears beside it with a crosshair on the grip. Not drawn while
+   * `refused`.
+   */
   held?: number;
   style?: React.CSSProperties;
 }

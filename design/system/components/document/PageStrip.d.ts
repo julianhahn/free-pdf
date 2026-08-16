@@ -10,11 +10,12 @@ export interface PageStripProps {
   selected: number;
   /** Called with the page number of a tapped tile. */
   onSelect?: (n: number) => void;
-  /** How many pages the scan has. */
+  /** How many pages the scan has. Under ten, the jump is not drawn at all. */
   total: number;
   /** Grey mode, as the pages screen switch sets it. */
   grey?: boolean;
-  /** Whether the jump field is open. Default "closed". The parent owns it. */
+  /** Whether the jump field is open. Default "closed". The parent owns it, and
+   *  under ten pages it is ignored. */
   jump?: "closed" | "open";
   /** Called when "Go to page" is pressed; the parent flips `jump`. */
   onJumpToggle?: () => void;

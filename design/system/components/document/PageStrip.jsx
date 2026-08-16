@@ -7,6 +7,12 @@ import { TextField } from "../forms/TextField.jsx";
    It sits on top of PageImage - every tile is a PageImage, nothing about the
    page frame is redrawn here. The jump control lives in the same row, behind a
    hairline, so the rail keeps the whole width when it is closed. */
+
+/* From ten pages up the rail carries the jump. Julian's number, decided on
+   2026-08-16 because "Go to page" on a one page scan has nowhere to go - it is
+   not measured off anything. */
+const JUMP_FROM = 10;
+
 export function PageStrip({
   pages = [],
   selected,
@@ -30,7 +36,10 @@ export function PageStrip({
     if (rail && tile) rail.scrollLeft = tile.offsetLeft - (rail.clientWidth - tile.offsetWidth) / 2;
   }, [selected]);
 
-  const open = jump === "open";
+  /* Below ten pages the rail is the rail and nothing else: no button, and no
+     field either, so a parent still holding jump="open" cannot bring it back. */
+  const jumpable = total >= JUMP_FROM;
+  const open = jumpable && jump === "open";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", minWidth: 0, ...style }} {...rest}>
@@ -69,15 +78,17 @@ export function PageStrip({
             />
           ))}
         </div>
-        <div style={{ borderLeft: "1px solid var(--divider)", padding: "var(--space-2)" }}>
-          <Button
-            variant="secondary"
-            aria-label={`Go to page. Go to a page number. Page ${selected} of ${total} shown`}
-            onClick={onJumpToggle}
-          >
-            Go to page
-          </Button>
-        </div>
+        {jumpable ? (
+          <div style={{ borderLeft: "1px solid var(--divider)", padding: "var(--space-2)" }}>
+            <Button
+              variant="secondary"
+              aria-label={`Go to page. Go to a page number. Page ${selected} of ${total} shown`}
+              onClick={onJumpToggle}
+            >
+              Go to page
+            </Button>
+          </div>
+        ) : null}
       </div>
       {open ? (
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", padding: "0 var(--space-2)" }}>

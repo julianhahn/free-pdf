@@ -6,8 +6,10 @@ import {
   ErrorLine,
   IconButton,
   MenuList,
+  PageCounter,
   PageImage,
   PageStrip,
+  ProgressLine,
   Switch,
 } from "../ds.js";
 
@@ -42,7 +44,10 @@ const bar = (title) => (
 );
 
 /* The footer is the same on every state of this screen: Grey, then Make PDF.
-   Grey is one switch for the whole scan, and never appears inside Adjust. */
+   Grey is one switch for the whole scan, and never appears inside Adjust. It is
+   a fact about the pages, not about the screen: flipping it rewrites every page
+   under the same takeover Apply to all pages uses, and the switch afterwards
+   reads what the pages are. */
 const Footer = ({ grey = false, busy = false }) => (
   <>
     <Switch label="Grey" checked={grey} />
@@ -52,14 +57,34 @@ const Footer = ({ grey = false, busy = false }) => (
   </>
 );
 
-/* One page screen: bar, body, footer. Children go between page and rail. */
-const Pages = ({ title, grey = false, busy = false, error, page, rail, overlay }) => (
+/* One page screen: bar, body, footer. The body is the page, then Adjust, then
+   whatever `extra` that state adds, then the rail.
+
+   Adjust is a control of its own here, not a glyph inside the "…" menu - it was
+   the hardest thing in the app to find (Julian, 2026-08-16). It is in the same
+   slot on every page, and where the page's photo is gone it is disabled, never
+   hidden, so it does not move: the disabled colour role, not an opacity. */
+const Pages = ({
+  title,
+  grey = false,
+  busy = false,
+  error,
+  page,
+  photo = true,
+  rail,
+  extra,
+  overlay,
+}) => (
   <Phone>
     <div style={{ display: "grid", gridTemplateRows: "auto 1fr", height: "100%", minHeight: 0 }}>
       {bar(title)}
       <Screen footer={<Footer grey={grey} busy={busy} />}>
         {error ? <ErrorLine>{error}</ErrorLine> : null}
         {page}
+        <Button variant="secondary" fullWidth disabled={!photo}>
+          Adjust page
+        </Button>
+        {extra}
         {rail}
       </Screen>
     </div>
@@ -104,23 +129,51 @@ export const S16bRailAt40 = {
 
 export const S17RefusedPage = {
   name: "S17 — a refused page",
-  /* Secondary, not primary: the screen's action is still Make PDF in the footer. */
+  /* Secondary, not primary: the screen's action is still Make PDF in the footer.
+     The photo is still there - the engine refused it - so Adjust is live. */
   render: () => (
     <Pages
       title="Page 5 of 12"
       page={
-        <>
-          <PageImage
-            state="refused"
-            refusedText="This page could not be scanned."
-            alt="Page 5 of 12, could not be scanned"
-          />
-          <Button variant="secondary" fullWidth style={{ marginTop: "var(--space-4)" }}>
-            Scan this page again
-          </Button>
-        </>
+        <PageImage
+          state="refused"
+          refusedText="This page could not be scanned."
+          alt="Page 5 of 12, could not be scanned"
+        />
+      }
+      extra={
+        <Button variant="secondary" fullWidth>
+          Scan this page again
+        </Button>
       }
       rail={<PageStrip pages={pages(12, [5])} selected={5} total={12} />}
+    />
+  ),
+};
+
+export const AdjustWithoutPhoto = {
+  name: "Adjust, on a page whose photo is gone",
+  /* Adjust re-runs the recipe from the photo, so a page whose photo went with
+     the share cannot be adjusted. The control stays where it is and refuses. */
+  render: () => (
+    <Pages
+      title="Page 3 of 12"
+      photo={false}
+      page={<PageImage alt="Page 3 of 12" />}
+      rail={<PageStrip pages={pages(12)} selected={3} total={12} />}
+    />
+  ),
+};
+
+export const ThreePagesNoJump = {
+  name: "A three page scan — the rail carries no jump",
+  /* Under ten pages the rail is the rail and nothing else. Ten is Julian's
+     number, 2026-08-16: "Go to page" on a one page scan has nowhere to go. */
+  render: () => (
+    <Pages
+      title="Page 2 of 3"
+      page={<PageImage alt="Page 2 of 3" />}
+      rail={<PageStrip pages={pages(3)} selected={2} total={3} />}
     />
   ),
 };
@@ -206,6 +259,47 @@ export const S21MakePdfBusy = {
       busy
       page={<PageImage alt="Page 3 of 12" />}
       rail={<PageStrip pages={pages(12)} selected={3} total={12} />}
+    />
+  ),
+};
+
+export const GreyRewritingEveryPage = {
+  name: "Grey — rewriting every page",
+  /* Flipping Grey is the all-pages run, so it takes the phone over exactly as
+     Apply to all pages does: no app bar, no way back, and the note turned round
+     - this one cannot resume. Same furniture as flow 6's S31. */
+  render: () => (
+    <Phone>
+      <Screen>
+        <div
+          style={{
+            display: "grid",
+            alignContent: "center",
+            justifyItems: "start",
+            height: "100%",
+            gap: "var(--space-4)",
+          }}
+        >
+          <PageCounter>Page 5 of 12</PageCounter>
+          <ProgressLine line="Applying to 12 pages…" note="Keep the app open." value={5} max={12} />
+        </div>
+      </Screen>
+    </Phone>
+  ),
+};
+
+export const GreySkippedPages = {
+  name: "Grey — the pages it could not rewrite",
+  /* Back on the pages afterwards. A page whose photo is gone cannot be
+     rewritten; those pages are skipped and named, the same sentence the
+     all-pages Apply leaves behind. */
+  render: () => (
+    <Pages
+      title="Page 3 of 20"
+      grey
+      error="Pages 4, 9 and 18 were not changed, because their photos are missing."
+      page={<PageImage grey alt="Page 3 of 20" />}
+      rail={<PageStrip pages={pages(20)} selected={3} total={20} grey />}
     />
   ),
 };
