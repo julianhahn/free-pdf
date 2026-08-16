@@ -345,7 +345,7 @@ struct ScanFlow: View {
     private func write(_ number: Int, _ values: Engine.Adjustments, on own: Bool) async -> Bool {
         let photo = scan.photoURL(number)
         let page = scan.pageURL(number)
-        let values = Self.composed(values, onto: scan.readState(number))
+        let values = values.composed(onto: scan.readState(number))
         do {
             let asked = try await Task.detached(priority: .userInitiated) { () -> Engine.Adjustments in
                 var mine = values
@@ -377,42 +377,6 @@ struct ScanFlow: View {
             message = error.localizedDescription
             return false
         }
-    }
-
-    /// The new drag laid **inside** the cut that is already stored, rather than replacing
-    /// it.
-    ///
-    /// The crop is a fraction of an image that exists only mid-recipe - after the
-    /// corners, the straightening, the 3000 px cap and the turn - so it is neither the
-    /// photo nor the page ([`../../core_engine/AGENTS.md`](../../core_engine/AGENTS.md),
-    /// "Every step has its own space"). The screen therefore opens the box on the whole
-    /// picture, which is honest, because the page it draws is already the last cut and
-    /// there is no *further* cut yet. Apply composes the two.
-    ///
-    /// A turn changes the space the stored box was written in, so it is turned with it
-    /// first: one quarter clockwise maps `(x, y, w, h)` to `(1 - y - h, x, h, w)`.
-    ///
-    /// ponytail: composing means the user can only ever cut tighter, never widen.
-    /// Ceiling: widening is "Scan this page again", which is the undo for everything
-    /// else on this screen.
-    /// Not private: `AdjustView`'s preview has to run exactly what Apply sends, and that
-    /// is these values, not the screen's own.
-    nonisolated static func composed(_ values: Engine.Adjustments,
-                                             onto stored: Engine.Adjustments?) -> Engine.Adjustments {
-        guard let stored, stored.cropWidth > 0, stored.cropHeight > 0 else { return values }
-        var old = (x: stored.cropX, y: stored.cropY, w: stored.cropWidth, h: stored.cropHeight)
-        let quarters = (Int(values.quarterTurns) - Int(stored.quarterTurns) + 4) % 4
-        for _ in 0..<quarters { old = (1 - old.y - old.h, old.x, old.h, old.w) }
-        var mine = values
-        if values.cropWidth > 0, values.cropHeight > 0 {
-            mine.cropX = old.x + values.cropX * old.w
-            mine.cropY = old.y + values.cropY * old.h
-            mine.cropWidth = old.w * values.cropWidth
-            mine.cropHeight = old.h * values.cropHeight
-        } else {
-            (mine.cropX, mine.cropY, mine.cropWidth, mine.cropHeight) = old
-        }
-        return mine
     }
 
     // MARK: - Checking the pages

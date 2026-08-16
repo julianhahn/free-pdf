@@ -260,7 +260,7 @@ struct AdjustView: View {
     private static let settle = 300
 
     /// What the preview runs - the values Apply would send, composed onto what is stored
-    /// exactly as `ScanFlow` composes them.
+    /// by the same call Apply makes.
     ///
     /// Crop is the one difference, and it is not a second code path: the box the user is
     /// dragging is a fraction of the picture **before** the cut, so while that tool is up
@@ -271,7 +271,7 @@ struct AdjustView: View {
         if tool == .crop {
             (mine.cropX, mine.cropY, mine.cropWidth, mine.cropHeight) = (0, 0, 0, 0)
         }
-        return ScanFlow.composed(mine, onto: stored)
+        return mine.composed(onto: stored)
     }
 
     // MARK: - The bar

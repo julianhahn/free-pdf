@@ -386,3 +386,39 @@ precondition(kept.photos == [7] && kept.pages == [7] && kept.nextPage == 8,
 kept.deleteState(7)
 precondition(kept.readState(7) == nil, "the state survived deleteState")
 precondition(kept.pages == [7], "deleteState took the page with it")
+
+// MARK: - 17. A second crop is laid inside the first, and a turn moves the stored box
+
+// The only arithmetic the app does itself. It lives on `Engine.Adjustments`, so this
+// check reaches it: `Engine.swift` is Foundation only, like the rest of this file.
+func cut(_ values: Engine.Adjustments,
+         _ x: Float, _ y: Float, _ w: Float, _ h: Float,
+         turns: UInt32) -> Engine.Adjustments {
+    var mine = values
+    (mine.cropX, mine.cropY, mine.cropWidth, mine.cropHeight) = (x, y, w, h)
+    mine.quarterTurns = turns
+    return mine
+}
+
+func cropReads(_ values: Engine.Adjustments,
+               _ x: Float, _ y: Float, _ w: Float, _ h: Float, _ why: String) {
+    precondition(values.cropX == x && values.cropY == y
+                 && values.cropWidth == w && values.cropHeight == h,
+                 "\(why): \(values.cropX) \(values.cropY) \(values.cropWidth) \(values.cropHeight)")
+}
+
+// Halves and quarters only, so the numbers below are exact in a Float.
+let stored = cut(asked, 0.25, 0.5, 0.5, 0.25, turns: 0)
+
+// The new box is a fraction of the stored cut, not of the page: half of the stored
+// width starting halfway across it, a quarter of its height starting a quarter down.
+cropReads(cut(asked, 0.5, 0.25, 0.25, 0.5, turns: 0).composed(onto: stored),
+          0.5, 0.5625, 0.125, 0.125, "a crop inside a crop")
+
+// One quarter clockwise and no new cut: the stored box is turned with the picture.
+cropReads(cut(asked, 0, 0, 0, 0, turns: 1).composed(onto: stored),
+          0.25, 0.25, 0.25, 0.5, "the stored crop after a quarter turn")
+
+// Nothing stored is the first cut, kept as it is.
+cropReads(cut(asked, 0.5, 0.25, 0.25, 0.5, turns: 0).composed(onto: nil),
+          0.5, 0.25, 0.25, 0.5, "the first crop on a page with no state")

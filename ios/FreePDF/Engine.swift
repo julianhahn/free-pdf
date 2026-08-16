@@ -49,6 +49,39 @@ enum Engine {
         var cropHeight: Float
         var quarterTurns: UInt32
         var grey: Bool
+
+        /// This drag laid **inside** the cut that is already stored, rather than
+        /// replacing it.
+        ///
+        /// The crop is a fraction of an image that exists only mid-recipe - after the
+        /// corners, the straightening, the 3000 px cap and the turn - so it is neither the
+        /// photo nor the page ([`../../core_engine/AGENTS.md`](../../core_engine/AGENTS.md),
+        /// "Every step has its own space"). The screen therefore opens the box on the whole
+        /// picture, which is honest, because the page it draws is already the last cut and
+        /// there is no *further* cut yet. Apply composes the two.
+        ///
+        /// A turn changes the space the stored box was written in, so it is turned with it
+        /// first: one quarter clockwise maps `(x, y, w, h)` to `(1 - y - h, x, h, w)`.
+        ///
+        /// ponytail: composing means the user can only ever cut tighter, never widen.
+        /// Ceiling: widening is "Scan this page again", which is the undo for everything
+        /// else on the Adjust screen.
+        func composed(onto stored: Adjustments?) -> Adjustments {
+            guard let stored, stored.cropWidth > 0, stored.cropHeight > 0 else { return self }
+            var old = (x: stored.cropX, y: stored.cropY, w: stored.cropWidth, h: stored.cropHeight)
+            let quarters = (Int(quarterTurns) - Int(stored.quarterTurns) + 4) % 4
+            for _ in 0..<quarters { old = (1 - old.y - old.h, old.x, old.h, old.w) }
+            var mine = self
+            if cropWidth > 0, cropHeight > 0 {
+                mine.cropX = old.x + cropX * old.w
+                mine.cropY = old.y + cropY * old.h
+                mine.cropWidth = old.w * cropWidth
+                mine.cropHeight = old.h * cropHeight
+            } else {
+                (mine.cropX, mine.cropY, mine.cropWidth, mine.cropHeight) = old
+            }
+            return mine
+        }
     }
 
     /// What the engine would have done to this photo on its own, so every control on the

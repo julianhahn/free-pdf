@@ -8,6 +8,17 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-16 - the crop arithmetic sits on the values, not on a screen
+
+`ARCHITECTURE.md` item 3. `composed` was a `nonisolated static` on `ScanFlow`, a View, and
+`AdjustView` reached across for it - so the app's only real arithmetic lived on a screen and
+no check could see it. It is now `Engine.Adjustments.composed(onto:)`, a method on the values
+it was always about; both call sites read `values.composed(onto: stored)` and the note
+explaining why a screen exposed a static is gone. `Engine.swift` stays Foundation only, so
+`ios/check/run.sh` compiles it: `main.swift` section 17 now asserts a crop laid inside a
+stored crop, a stored crop turned a quarter clockwise, and the first crop on a page with no
+state. Behaviour is unchanged - `run.sh` and `scan_check.sh` pass unedited.
+
 ## 2026-08-16 - a page tilted ten degrees can be finished again
 
 `ARCHITECTURE.md` item 2. `suggest_straightening` measured a coarse peak, then refined a
