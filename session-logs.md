@@ -8,6 +8,17 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-16 - a page tilted ten degrees can be finished again
+
+`ARCHITECTURE.md` item 2. `suggest_straightening` measured a coarse peak, then refined a
+degree either side of it, so a page lying at the edge of the range came back past the range
+and `straighten` refused it - `-10.500006` for a 10.5 degree page. In `ffi/src/lib.rs` that
+`?` failed the whole page, and it failed the same way on every retry: the scan could never
+finish. The answer is now clamped where it is returned, so measure and act agree by
+construction. The filter above the peak went with it - it kept tilts inside a range the loop
+never left. New test `a_page_tilted_past_the_limit_is_told_an_angle_straighten_takes`; it
+fails on the old code with the engine's own refusal sentence.
+
 ## 2026-08-16 - the three pointers the deletion left dangling
 
 Cleaning up after the frozen-copy deletion. `design/AGENTS.md` still sent every agent to

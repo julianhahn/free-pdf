@@ -215,6 +215,7 @@ const CLEAR_LINES: f64 = 4.0;
 ///
 /// Returns zero when the picture has no clear lines to go by - a blank sheet, a
 /// photograph of something else - rather than turning it on the strength of noise.
+/// What comes back is always an angle [`straighten`] accepts.
 ///
 /// ponytail: this only measures turning, not perspective. A page photographed at an
 /// angle needs [`deskew`], and this cannot replace it - it can only make the more
@@ -235,7 +236,6 @@ pub fn suggest_straightening(img: &DynamicImage) -> f32 {
     }
 
     let peak = (0..sharpness.len())
-        .filter(|&at| sharpness[at].0.abs() <= MOST_TILT)
         .max_by(|&one, &other| sharpness[one].1.total_cmp(&sharpness[other].1))
         .unwrap_or(0);
 
@@ -251,8 +251,12 @@ pub fn suggest_straightening(img: &DynamicImage) -> f32 {
     );
 
     // The writing runs downhill to the right, so the picture has to go the other
-    // way to put it straight.
-    -tilt
+    // way to put it straight. Held to the range here, at the one place the answer
+    // leaves: the refining pass searches a degree either side of the peak, so a page
+    // lying at the very edge of the range is measured past it, and [`straighten`]
+    // refuses an angle past it. That refusal has nowhere to go - the page is
+    // automatic, so it would fail on every retry and the scan would never finish.
+    (-tilt).clamp(-MOST_TILT, MOST_TILT)
 }
 
 /// Turns the picture by a free angle, to put crooked writing straight.

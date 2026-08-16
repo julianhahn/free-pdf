@@ -784,6 +784,17 @@ fn crooked_writing_is_measured_from_the_writing_itself() {
 }
 
 #[test]
+fn a_page_tilted_past_the_limit_is_told_an_angle_straighten_takes() {
+    // The coarse pass can peak at the very edge of the range and the refinement
+    // then searches a degree past it, so the answer could come back further than
+    // `straighten` turns. That page would fail on every retry and never finish.
+    let crooked = crooked_page(10.5);
+
+    straighten(&crooked, suggest_straightening(&crooked))
+        .expect("the suggested angle was one straighten refuses");
+}
+
+#[test]
 fn straightening_puts_the_lines_of_writing_back_in_their_rows() {
     let crooked = crooked_page(3.0);
     let before = darkest_row_coverage(&crooked);
