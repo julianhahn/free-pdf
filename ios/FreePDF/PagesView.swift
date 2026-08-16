@@ -54,6 +54,14 @@ struct PagesView: View {
             VStack(alignment: .leading, spacing: Token.Size.space4) {
                 if let message { ErrorLine(sentence: message) }
                 carousel
+                // Adjust has its own control on the screen, in the same place for every
+                // page - it was the hardest thing in the app to find behind the "…"
+                // (Julian, 2026-08-16). Disabled, never hidden, where the photo is gone,
+                // so it does not move: Adjust re-runs the recipe from `photo/NNNN.jpg`.
+                Button("Adjust page") { onAdjust(showing) }
+                    .buttonStyle(SecondaryStyle(off: !photos.contains(showing)))
+                    .disabled(!photos.contains(showing))
+                    .accessibilityHint("Opens the tools for page \(position).")
                 if failed.contains(showing) {
                     Button("Scan this page again") { onRetake(showing) }
                         .buttonStyle(SecondaryStyle())
@@ -350,9 +358,14 @@ struct PageImage: View {
     }
 }
 
-/// The secondary button: the label in the heading face inside a hairline box. Two places
-/// on this screen use it - Retry and the jump's Go.
+/// The secondary button: the label in the heading face inside a hairline box. Three places
+/// on this screen use it - Adjust page, Retry and the jump's Go.
+///
+/// `off` is the dead look, and it is the `--disabled-*` colour role rather than an opacity:
+/// the shape stays at full strength and only the words go grey (task 1).
 private struct SecondaryStyle: ButtonStyle {
+    var off = false
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(Token.Face.heading(Token.Size.textControl))
@@ -363,7 +376,8 @@ private struct SecondaryStyle: ButtonStyle {
             .background(configuration.isPressed ? Token.Palette.pressNeutral : Token.Palette.bg,
                         in: RoundedRectangle(cornerRadius: Token.Size.radiusMd))
             .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
-                .stroke(Token.Palette.divider, lineWidth: Token.Size.hairlineW))
-            .foregroundStyle(Token.Palette.text)
+                .stroke(off ? Token.Palette.disabledBorder : Token.Palette.divider,
+                        lineWidth: Token.Size.hairlineW))
+            .foregroundStyle(off ? Token.Palette.disabledText : Token.Palette.text)
     }
 }
