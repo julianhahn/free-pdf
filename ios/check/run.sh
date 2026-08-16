@@ -2,8 +2,9 @@
 # The check for milestone 3: the resume rules. Ten moments the process could die, each
 # one built as real files and read back through the model the app itself uses.
 #
-# No Xcode, no simulator, no project file - `Scan.swift` is Foundation only, so swiftc
-# alone compiles the whole state machine.
+# No Xcode, no simulator, no project file - `Scan.swift` and `Engine.swift` are
+# Foundation only, so swiftc alone compiles the whole state machine and the values a
+# page keeps. The four C calls live in `EngineCalls.swift` and are not needed here.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -15,7 +16,7 @@ trap 'rm -rf "$work"' EXIT
 #
 # Swift 6 language mode, because that is what a new Xcode project defaults to: the model
 # has to survive strict concurrency here, not on the day it is dropped into the app.
-swiftc -swift-version 6 -o "$work/check" FreePDF/Scan.swift check/main.swift
+swiftc -swift-version 6 -o "$work/check" FreePDF/Scan.swift FreePDF/Engine.swift check/main.swift
 
 "$work/check" "$work"
 echo "resume ok"

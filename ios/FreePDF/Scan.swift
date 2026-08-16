@@ -40,6 +40,9 @@ struct Scan: Hashable {
 
     var photoDirectory: URL { url.appendingPathComponent("photo", isDirectory: true) }
     var pageDirectory: URL { url.appendingPathComponent("page", isDirectory: true) }
+    /// What the user last asked for, one small text file per page. Never where the work
+    /// got to - see `writeState` below.
+    var stateDirectory: URL { url.appendingPathComponent("state", isDirectory: true) }
 
     /// Its existence is the whole definition of "finished", so it arrives by rename
     /// only - a half-written PDF is called `scan.part` and the sweep deletes it.
@@ -51,6 +54,10 @@ struct Scan: Hashable {
 
     func pageURL(_ number: Int) -> URL {
         pageDirectory.appendingPathComponent(Self.fileName(number))
+    }
+
+    func stateURL(_ number: Int) -> URL {
+        stateDirectory.appendingPathComponent(String(format: "%04d.txt", number))
     }
 
     /// What the user reads on the row: `11 Aug 2026, 20:14`. The folder name is the
@@ -132,6 +139,77 @@ struct Scan: Hashable {
              + "\(photos) photo\(photos == 1 ? "" : "s") go. This cannot be undone."
     }
 
+    // MARK: - What the user asked for
+
+    /// One line per page, holding every value the Adjust screen can move, so a crop, a
+    /// turn or a nudged level survives Apply, leaving the screen and a kill.
+    ///
+    /// This is not the manifest the table above buried. It is never an input to `state`,
+    /// `photos`, `pages`, `unscanned` or `nextPage` - the step is still read off the two
+    /// directories every time - and it holds what the user asked for, never where the
+    /// work got to. So it cannot lag the files into a wrong screen: the worst a missing
+    /// or stale line costs is one nudge the user makes again.
+    ///
+    /// The format is one ASCII line: `1`, the version, then 24 numbers -
+    /// `c0x c0y c1x c1y c2x c2y c3x c3y flat angle bR bG bB wR wG wB tones sharpen
+    /// cx cy cw ch turns grey`. The corners are the photo pixels `Adjustments` carries;
+    /// everything else is exactly what crosses to the engine.
+    func writeState(_ number: Int, _ values: Engine.Adjustments) {
+        var fields = values.corners.map { String(format: "%.4f", $0) }
+        fields.append(values.pullTheSheetFlat ? "1" : "0")
+        fields.append(String(format: "%.1f", values.straightenDegrees))
+        fields += (values.black + values.white).map(String.init)
+        fields.append(values.adjustTheTones ? "1" : "0")
+        fields.append(String(format: "%.1f", values.sharpenRadius))
+        fields += [values.cropX, values.cropY, values.cropWidth, values.cropHeight]
+            .map { String(format: "%.4f", $0) }
+        fields.append(String(values.quarterTurns))
+        fields.append(values.grey ? "1" : "0")
+
+        let manager = FileManager.default
+        try? manager.createDirectory(at: stateDirectory, withIntermediateDirectories: true)
+        // The same earn-your-name rule the engine keeps: the bytes go down under a name
+        // no reader accepts, and the file becomes `NNNN.txt` only once they are all
+        // there. A kill in between leaves a `.part` the sweep takes, and no state at
+        // all, which is a normal case rather than a failure.
+        let part = stateDirectory.appendingPathComponent(String(format: "%04d.part", number))
+        let line = (["1"] + fields).joined(separator: " ") + "\n"
+        guard (try? Data(line.utf8).write(to: part, options: .atomic)) != nil else { return }
+        try? manager.removeItem(at: stateURL(number))
+        try? manager.moveItem(at: part, to: stateURL(number))
+    }
+
+    /// What the user last asked for on this page, or `nil` if there is nothing to read.
+    ///
+    /// No error sentence anywhere: an absent, truncated or unreadable line is a page that
+    /// opens on the engine's suggestion, which is what the first open does anyway.
+    func readState(_ number: Int) -> Engine.Adjustments? {
+        guard let text = try? String(contentsOf: stateURL(number), encoding: .utf8) else {
+            return nil
+        }
+        let tokens = text.split(whereSeparator: \.isWhitespace)
+        guard tokens.count == 25, tokens[0] == "1" else { return nil }
+        let numbers = tokens.dropFirst().compactMap { Double($0) }
+        guard numbers.count == 24 else { return nil }
+        func byte(_ value: Double) -> UInt8 { UInt8(min(255, max(0, value.rounded()))) }
+        return Engine.Adjustments(
+            corners: numbers[0..<8].map(Float.init),
+            pullTheSheetFlat: numbers[8] != 0,
+            straightenDegrees: Float(numbers[9]),
+            black: numbers[10..<13].map(byte),
+            white: numbers[13..<16].map(byte),
+            adjustTheTones: numbers[16] != 0,
+            sharpenRadius: Float(numbers[17]),
+            cropX: Float(numbers[18]), cropY: Float(numbers[19]),
+            cropWidth: Float(numbers[20]), cropHeight: Float(numbers[21]),
+            quarterTurns: UInt32(min(3, max(0, numbers[22]))),
+            grey: numbers[23] != 0)
+    }
+
+    func deleteState(_ number: Int) {
+        try? FileManager.default.removeItem(at: stateURL(number))
+    }
+
     // MARK: - Making and finding scans
 
     /// A new, empty scan.
@@ -210,8 +288,21 @@ struct Scan: Hashable {
                 try? manager.removeItem(at: directory.appendingPathComponent(name))
             }
         }
+        // The sidecars: `NNNN.txt` and nothing else, and only for a page number the disk
+        // still has. A sidecar left behind by a deleted page would otherwise seed the
+        // next page that happens to be shot into its number - and numbers are never
+        // handed out twice, so that can only happen after a retake, which is exactly
+        // what `deleteState` covers.
+        try? manager.createDirectory(at: stateDirectory, withIntermediateDirectories: true)
+        let known = Set(photos + pages)
+        for name in (try? manager.contentsOfDirectory(atPath: stateDirectory.path)) ?? [] {
+            let number = Self.number(name, suffix: ".txt")
+            if number == nil || !known.contains(number!) {
+                try? manager.removeItem(at: stateDirectory.appendingPathComponent(name))
+            }
+        }
         for name in (try? manager.contentsOfDirectory(atPath: url.path)) ?? []
-        where !["photo", "page", "scan.pdf"].contains(name) {
+        where !["photo", "page", "state", "scan.pdf"].contains(name) {
             try? manager.removeItem(at: url.appendingPathComponent(name))
         }
     }
@@ -266,7 +357,12 @@ struct Scan: Hashable {
     /// place after the bytes are down, so a name that gets past here cannot be half a file
     /// - which is what replaces checksums and a validation pass.
     private static func pageNumber(_ fileName: String) -> Int? {
-        guard fileName.count == 8, fileName.hasSuffix(".jpg") else { return nil }
+        number(fileName, suffix: ".jpg")
+    }
+
+    /// The same rule for the sidecars, whose suffix is `.txt`.
+    private static func number(_ fileName: String, suffix: String) -> Int? {
+        guard fileName.count == 8, fileName.hasSuffix(suffix) else { return nil }
         let digits = fileName.prefix(4)
         // ASCII digits only: `Int("-123")` would otherwise make `-123.jpg` a page.
         guard digits.allSatisfy({ $0.isASCII && $0.isNumber }) else { return nil }

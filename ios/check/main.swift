@@ -129,7 +129,7 @@ precondition(fileNames(in: messy.photoDirectory) == ["0001.jpg", "0002.jpg"],
              "photo/ after the sweep: \(fileNames(in: messy.photoDirectory))")
 precondition(fileNames(in: messy.pageDirectory) == ["0001.jpg", "0002.jpg"],
              "page/ after the sweep: \(fileNames(in: messy.pageDirectory))")
-precondition(fileNames(in: messy.url) == ["page", "photo"],
+precondition(fileNames(in: messy.url) == ["page", "photo", "state"],
              "the scan folder after the sweep: \(fileNames(in: messy.url))")
 
 // MARK: - 7. An orphan page file
@@ -303,3 +303,86 @@ scanned(doomed, [1])
 write("%PDF", to: doomed.pdf)
 doomed.delete()
 precondition(!exists(doomed.url), "the scan folder is still there after delete()")
+
+// MARK: - 16. What the user asked for, kept per page
+
+// One small text file per page holds every value the Adjust screen can move, so a crop,
+// a turn or a nudged level survives Apply, leaving the screen and a kill. It is not the
+// manifest: nothing below reads it to decide a step, and the last block here proves it.
+let kept = newScan(in: rows)
+shoot(kept, [7])
+scanned(kept, [7])
+
+// Every field, none of them a default, so a field written in the wrong order or dropped
+// on the way out cannot pass.
+let asked = Engine.Adjustments(
+    corners: [12.5, 34.25, 3010.75, 40, 3000, 4020.5, 8, 4000],
+    pullTheSheetFlat: true,
+    straightenDegrees: -3.2,
+    black: [4, 9, 14],
+    white: [240, 247, 251],
+    adjustTheTones: true,
+    sharpenRadius: 1.4,
+    cropX: 0.125, cropY: 0.25, cropWidth: 0.5, cropHeight: 0.625,
+    quarterTurns: 3,
+    grey: true)
+kept.writeState(7, asked)
+
+guard let read = kept.readState(7) else { fatalError("the state came back as nothing") }
+precondition(read.corners == asked.corners, "the corners came back \(read.corners)")
+precondition(read.pullTheSheetFlat == asked.pullTheSheetFlat, "the flat switch came back wrong")
+precondition(read.straightenDegrees == asked.straightenDegrees,
+             "the angle came back \(read.straightenDegrees)")
+precondition(read.black == asked.black && read.white == asked.white,
+             "the levels came back \(read.black) / \(read.white)")
+precondition(read.adjustTheTones == asked.adjustTheTones, "the tones switch came back wrong")
+precondition(read.sharpenRadius == asked.sharpenRadius,
+             "the sharpen came back \(read.sharpenRadius)")
+precondition(read.cropX == asked.cropX && read.cropY == asked.cropY
+             && read.cropWidth == asked.cropWidth && read.cropHeight == asked.cropHeight,
+             "the crop came back \(read.cropX) \(read.cropY) \(read.cropWidth) \(read.cropHeight)")
+precondition(read.quarterTurns == asked.quarterTurns, "the turns came back \(read.quarterTurns)")
+precondition(read.grey == asked.grey, "the grey flag came back wrong")
+
+// Writing again replaces the line rather than appending to it.
+kept.writeState(7, asked)
+precondition(kept.readState(7)?.quarterTurns == 3, "the second write did not replace the first")
+
+// A page that was never adjusted, and three broken files. None of them is a failure with
+// a sentence: a line that cannot be read is a page that opens on the engine's suggestion,
+// which is what the first open does anyway.
+precondition(kept.readState(1) == nil, "a page with no state file read something back")
+
+func unreadable(_ text: String, _ why: String) {
+    write(text, to: kept.stateURL(7))
+    precondition(kept.readState(7) == nil, "\(why) read back as a state")
+}
+unreadable("1 0.0000 0.0000 0.0000", "a truncated line")
+unreadable("1 " + Array(repeating: "x", count: 24).joined(separator: " "), "a garbage line")
+unreadable("", "an empty file")
+unreadable("2 " + Array(repeating: "0", count: 24).joined(separator: " "), "another version")
+
+// The sweep: `NNNN.txt` for a page number the disk still has, and nothing else. The
+// directory itself stays, because `writeState` is not the only thing that assumes it.
+kept.writeState(7, asked)
+write("half a line", to: kept.stateDirectory.appendingPathComponent("0007.part"))
+write("hand-copied", to: kept.stateDirectory.appendingPathComponent("foo"))
+write("a page that is gone", to: kept.stateURL(3))
+
+kept.sweep()
+precondition(fileNames(in: kept.stateDirectory) == ["0007.txt"],
+             "state/ after the sweep: \(fileNames(in: kept.stateDirectory))")
+precondition(exists(kept.stateDirectory), "the sweep took state/ itself")
+precondition(kept.readState(7) != nil, "the sweep ate the page's own state")
+
+// And none of it moved the two things the screens read. The state file is never an input
+// to the step - that is the whole reason it is not the manifest.
+precondition(kept.state == .ready, "the state file moved the scan to \(kept.state)")
+rowReads(kept, "1 page — ready to check")
+precondition(kept.photos == [7] && kept.pages == [7] && kept.nextPage == 8,
+             "the state file was counted as a page: \(kept.photos) \(kept.pages)")
+
+// Deleting it is one call, and the page keeps its files.
+kept.deleteState(7)
+precondition(kept.readState(7) == nil, "the state survived deleteState")
+precondition(kept.pages == [7], "deleteState took the page with it")

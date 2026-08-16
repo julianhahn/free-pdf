@@ -177,6 +177,10 @@ struct ScanFlow: View {
                 try await Task.detached(priority: .utility) {
                     try Engine.scanPage(scan.photoURL(number), into: scan.pageURL(number))
                 }.value
+                // The page the engine just built carries the engine's own recipe, so
+                // any older sidecar is about a photo that is gone - a retake. It goes
+                // with the page it no longer describes.
+                scan.deleteState(number)
             } catch {
                 // One photo the engine will not take must not wedge the scan: without
                 // this the loop would pick the same number for ever.
@@ -402,6 +406,7 @@ struct ScanFlow: View {
         // the deletion, never a page in the PDF he asked to be rid of.
         try? FileManager.default.removeItem(at: scan.pageURL(number))
         try? FileManager.default.removeItem(at: scan.photoURL(number))
+        scan.deleteState(number)
         failed.remove(number)
         refresh()
     }

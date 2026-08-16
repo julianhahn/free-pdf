@@ -13,6 +13,7 @@ Documents/Scans/
   2026-08-11_201403_8F3A/          <- the scan. Folder name = sort key + id + title.
     photo/0001.jpg 0002.jpg 0004.jpg   <- 0003 was deleted. Gaps stay. Never renumbered.
     page/ 0001.jpg 0002.jpg            <- 0004 unscanned = the resume point
+    state/0001.txt 0002.txt            <- what the user last asked for on that page
     scan.pdf                           <- exists => finished. Arrives only by rename.
   2026-08-09_093207_1C7D/ ...
 ```
@@ -39,11 +40,32 @@ order of two rows and no data.
    ([`../core_engine/AGENTS.md`](../core_engine/AGENTS.md)). A real name is proof of a
    complete file - that is what replaces checksums and a validation pass.
 3. **Debris is invisible and swept.** Readers accept `0007.jpg` and nothing else inside
-   `photo/` and `page/`, plus `scan.pdf`. `Scan.sweep()` deletes the rest - `.part` files,
+   `photo/` and `page/`, `0007.txt` and nothing else inside `state/`, plus `scan.pdf`.
+   `Scan.sweep()` deletes the rest - `.part` files,
    Foundation's `.dat.nosync…`, anything hand-copied in - and puts back a directory that is
    missing. Call it at launch, on every scan, before the list is shown: it is the only
    repair pass there is, and a scan whose `page/` is gone can never be scanned, because the
    engine does not make the folder it writes into.
+
+### `state/NNNN.txt` - what the user asked for
+
+One ASCII line per page: a version `1` and the 24 numbers of `Engine.Adjustments` -
+the four sheet corners, the flat switch, the angle, the two levels points, the tones
+switch, the sharpen radius, the crop box, the quarter turns and grey. It is written by
+`Scan.writeState` under `.part` and renamed, read by `Scan.readState`, and an absent,
+truncated or unreadable line is not a failure and gets no sentence: that page simply
+opens on the engine's suggestion, which is what the first open does anyway. It goes
+three ways - the drain deletes it the moment `Engine.scanPage` rebuilds that page from
+its photo (a retake's old sidecar describes a photo that is gone), `deletePage` deletes
+it with the page, and `sweep()` deletes anything in `state/` that is not `NNNN.txt` for
+a number the disk still has.
+
+**It is not the manifest the table below buries.** A manifest holds where the work got
+to, which can lag the files and send a screen to the wrong step; this holds what the user
+asked for, and nothing in `Scan.state`, `photos`, `pages`, `unscanned` or `nextPage`
+reads it. The page is renamed first and the sidecar second, so the worst a kill in
+between costs is one nudge made again - never a wrong page, and never a screen lying
+about done or not-done.
 
 ### The step is derived, never stored
 
