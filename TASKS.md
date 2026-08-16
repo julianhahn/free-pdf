@@ -59,6 +59,10 @@ that cannot open a browser.
 | 21 | iOS: Adjust opens on the state and writes it — DONE | 20 | bash ios/check/scan_check.sh |
 | 22 | iOS: the turn and the crop come out of the state — DONE | 21 | bash ios/check/scan_check.sh |
 | 23 | iOS: Grey becomes a fact about the pages — DONE | 21 | bash ios/check/scan_check.sh |
+| 24 | iOS: Adjust is visible in the overview | 19 | bash ios/check/scan_check.sh, by hand |
+| 25 | iOS: a magnifier for the corner drags | 22 | bash ios/check/scan_check.sh, by hand |
+| 26 | iOS: every tool shows what it would do | 22 | bash ios/check/scan_check.sh, by hand |
+| 27 | iOS: the jump appears from ten pages | 17 | bash ios/check/scan_check.sh, by hand |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -595,6 +599,144 @@ Nothing new is added to `Engine.Adjustments`; corners stay fractions and are mul
 **Docs.** `/Users/julianhahn/free-pdf/ios/AGENTS.md`: "**Grey greys the screen, not the file.**" becomes false - rewrite as one switch that rewrites every page. `/Users/julianhahn/free-pdf/user-flows.md` 7a: the words "Off today, unreachable in the app at all" become false and go.
 
 **Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by hand: a three page scan, flip Grey, watch the takeover, leave the scan, come back - all three are still grey.
+
+## 24 to 27. What the phone showed - Julian, 2026-08-16
+
+Four things Julian found the first time the finished app ran on a real phone. All four are his
+decisions, not a designer's; where one of them contradicts a rule written earlier in this file
+or in `/Users/julianhahn/free-pdf/ios/AGENTS.md`, his decision wins and the old rule is deleted,
+not argued with. Tasks 24 and 27 are the pages overview, tasks 25 and 26 the adjust screen -
+the two pairs touch different files and can run at the same time.
+
+## 24. Adjust is visible in the overview
+
+**Why.** Julian could not find Adjust on the phone. It is one item inside the "…" page menu in
+`/Users/julianhahn/free-pdf/ios/FreePDF/PagesView.swift` (`menu`), behind a glyph, next to
+Retake, Shoot another and Delete. The screen the whole of tasks 13, 18, 21, 22 and 25-26 exists
+for is the hardest one to reach in the app.
+
+**Read.** `/Users/julianhahn/free-pdf/ios/FreePDF/PagesView.swift` - `menu`, `pageActions` and
+whatever the flow 5 document draws under the carousel. The flow 5 document in
+`/Users/julianhahn/free-pdf/design/flows/`, and the approved Storybook story for it.
+
+**Build.** Adjust gets a control of its own on the pages overview, visible without opening a
+menu, in the same place for every page, and disabled - not hidden - where the photo is gone, so
+it never moves. It keeps its existing words ("Adjust page") and its existing hint, and it stays
+in the menu as well only if that costs nothing. No new colour, size or spacing: the disabled
+look is the `--disabled-*` colour role from task 1, not an opacity.
+
+**Do not.** Do not invent a word, a glyph meaning or a second entry point into Adjust from
+anywhere but the pages overview - Adjust is still reached from the pages, never from Done or
+from the camera.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by
+hand: a three page scan, Adjust reachable in one tap from the page on screen, and on a page
+whose photo was deleted the control is there and refuses.
+
+## 25. A magnifier for the corner drags
+
+**Why.** A corner handle is under the fingertip that drags it, so the user cannot see the thing
+he is aiming at. Julian's decision: the drag does not just move the corner, it shows a
+magnifier beside the finger - about a fingertip across - with a crosshair in it, and the
+crosshair is what is aimed with. The corner goes where the crosshair is, not where the finger
+is.
+
+**Read.** `/Users/julianhahn/free-pdf/ios/FreePDF/AdjustView.swift` - `handles(_:colour:)`, the
+four corner names, `sheet`, `box`, and the header comment. `/Users/julianhahn/free-pdf/ffi/src/lib.rs:318-360`
+- the recipe order: corners, straighten, the 3000 px cap, the turn, then the crop.
+`/Users/julianhahn/free-pdf/design/system/components/document/PageHandles.jsx` - the delivered
+component, including its refused state. `/Users/julianhahn/free-pdf/user-flows.md` section 7.
+
+**Build.**
+
+- While a handle is dragged, a round magnifier follows the finger, offset so the finger never
+  covers it, showing the picture under the crosshair at a magnification that makes a corner
+  aimable. Its size, radius and colours come from `Token`; a missing token is a token to add to
+  `/Users/julianhahn/free-pdf/design/system/tokens/*.css` and regenerate with
+  `node design/system/tokens/build-tokens.mjs`, never a number typed into the screen.
+- It appears for both handle sets - Edges on the photo and Crop on the page - and never when
+  the handles are refused.
+- Setting the corners re-runs everything to the right of that step in the recipe. Edges is the
+  first step, so a new corner means straighten, the cap, the turn and the crop are all applied
+  again on top of it, and the preview from task 26 shows that, not the old picture with new
+  dots. The stored crop composes as task 22 says; nothing about composition changes here.
+- VoiceOver is unchanged: the four corner names stay, and the magnifier is decoration a screen
+  reader never announces.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by
+hand: drag a sheet corner on Edges - the magnifier shows beside the finger and the corner lands
+under the crosshair; a page whose photo is gone still refuses with its sentence and shows no
+magnifier.
+
+## 26. Every tool shows what it would do
+
+**Why.** Today the adjust screen has no live preview at all - the header comment in
+`AdjustView.swift` says so and `/Users/julianhahn/free-pdf/ios/AGENTS.md` states it as a rule.
+Julian's decision on 2026-08-16 reverses it: a value that is changed and only visible after
+Apply is a value the user sets blind. Change-then-Apply stays - Apply is still what leaves the
+tool and writes the page - but every debounced value change shows what the new state would look
+like.
+
+**Read.** `/Users/julianhahn/free-pdf/ios/FreePDF/AdjustView.swift` in full - `values`,
+`suggestion`, `seed(_:)`, the controls, Apply. `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift`
+- `apply(_:_:allPages:)` and `write(_:_:on:)`, which is how a page is really written.
+`/Users/julianhahn/free-pdf/ios/AGENTS.md` - the paragraphs about the drain, about the app never
+holding what it has not written, and the "no live preview" rule, which is now false.
+
+**Build.**
+
+- On every value change, debounced, the picture on screen becomes the page the current values
+  would produce. The engine does the work - the preview is a real run of the recipe, not an
+  approximation drawn in SwiftUI, so what is shown is what Apply writes.
+- The preview never writes the real page and never touches `state/NNNN.txt`. It goes to a
+  scratch file that is not `photo/`, `page/`, `state/` or `scan.pdf`, and `sweep()` must still
+  be true afterwards - if that means the scratch lives outside the scan folder, it lives
+  outside the scan folder.
+- One run at a time, and a change while a run is going supersedes it. A preview that fails
+  shows the engine's sentence unchanged, exactly as Apply does, and leaves the last good
+  picture up.
+- Edges keeps showing the photo and every other tool the page, as today.
+
+**Do not.** Do not remove Apply, do not apply on change, and do not preview across all pages -
+"Apply to all pages" stays a takeover that happens on Apply only.
+
+**Docs.** `/Users/julianhahn/free-pdf/ios/AGENTS.md`: the "no live preview" rule becomes false
+and is deleted, replaced by one sentence saying the preview is a real engine run into a scratch
+file and that only Apply writes a page. The header comment in `AdjustView.swift` goes the same
+way. `/Users/julianhahn/free-pdf/user-flows.md` section 7: the sentence that promises no preview
+goes.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok" and
+`bash /Users/julianhahn/free-pdf/ios/check/run.sh` says "resume ok" - `sweep()` unchanged by the
+scratch file. By hand: drag the straighten control and see the page turn a moment later without
+Apply; Cancel and see the page on the pages overview unchanged; kill the app mid-preview and
+find nothing new in the scan folder.
+
+## 27. The jump appears from ten pages
+
+**Why.** "Go to page" shows on a one page scan, where there is nowhere to go. Julian's
+decision: the rail's jump appears from ten pages up.
+
+**Read.** `/Users/julianhahn/free-pdf/ios/FreePDF/PagesView.swift` - `rail`, `jump`, `jumping`,
+`jumpTo` and the go. `/Users/julianhahn/free-pdf/design/system/components/document/PageStrip.jsx`,
+which is the delivered component the rail is built from, and its story.
+
+**Build.** The "Go to page" button and its field are shown only when the scan has ten pages or
+more. Below that the rail is the rail and nothing else. Closing behaviour, the field, the go and
+what happens to a typed number that does not exist are all unchanged. The threshold is one
+named constant with a one-line comment saying it is Julian's number, not a measured one.
+
+**Do not.** Do not hide the rail itself, do not change the tile size, and do not invent a
+different way to reach page 40.
+
+**Docs.** If `/Users/julianhahn/free-pdf/user-flows.md` or the flow 5 document says the jump is
+always there, that sentence is now false - correct it in one line.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by
+hand: a three page scan shows no jump, a twelve page scan does and page 11 is still reachable
+by it.
+
+---
 
 ## What is deleted by this plan
 
