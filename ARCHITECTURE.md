@@ -81,9 +81,9 @@ and nothing else.
 - **Debris is invisible and swept.** `Scan.sweep()` at launch is the only repair pass.
 - **The engine offers single tools, the client owns the order** - [`AGENTS.md`](./AGENTS.md).
   Nothing runs by itself, so the user can skip, redo or correct any step.
-- **Measure and act are two functions.** The measure half cannot fail and answers
-  "do nothing" when unsure; the act half refuses input that does not fit rather than
-  clamping it - [`core_engine/AGENTS.md`](./core_engine/AGENTS.md).
+- **Measure and act are two functions.** The measure half cannot fail, answers "do nothing" when
+  unsure, and only ever proposes something the act half accepts; the act half refuses input that
+  does not fit rather than clamping it - [`core_engine/AGENTS.md`](./core_engine/AGENTS.md).
 - **One error sentence, printed unchanged.** Every fallible step returns `Result<_, String>`
   and the String is a finished English sentence the screen shows as it is.
 - **Offline only.** Local files in, local files out. One network call and the promise is gone.
@@ -121,8 +121,12 @@ still hides Adjust in the `⋯` menu (the exact complaint task 24 was written fo
   the `.jsx`, so nothing is lost that is not also drawn better elsewhere.
 - **Check:** `npx storybook build` still succeeds; `grep -rn _ds_bundle design/system` returns
   nothing.
+- **Left dangling, struck since** (443f878): the `gallery/_ds/<theme>/readme.md` row in
+  `design/AGENTS.md`, the now-unreachable `Chrome.jsx` branch in `.storybook/main.js`, and
+  Flow1's comment pointing at the deleted `Screens.stories.jsx`. Three more are still open -
+  the `TASKS.md` lines in item 7, and the folder in item 17.
 
-### 2. [ ] `suggest_straightening` hands `straighten` an angle it refuses
+### 2. [x] `suggest_straightening` hands `straighten` an angle it refuses
 
 `core_engine/src/deskew.rs:237-240` filters the coarse scores to `|tilt| <= MOST_TILT`, but the
 loop above only ever pushed tilts in that range - the filter filters nothing. The refine step
@@ -146,7 +150,7 @@ same answer, relaunch gives the same answer. That is the one thing
 - **Check:** `cargo test --workspace`, with one more case at 10.5° beside
   `crooked_writing_is_measured_from_the_writing_itself`.
 
-### 3. [ ] `composed` moves off the screen and onto `Engine.Adjustments`
+### 3. [x] `composed` moves off the screen and onto `Engine.Adjustments`
 
 `ScanFlow.swift:400-416` is `nonisolated static func composed` - pure arithmetic over
 `Engine.Adjustments` (the quarter-turn map `(x,y,w,h) -> (1-y-h, x, h, w)` and the nesting of a
@@ -215,6 +219,9 @@ does not have.
 
 Each is one line. All verified against the code today.
 
+- ~~`design/AGENTS.md:10`~~ - done by 50242b2 and 443f878: the stylesheet it pointed at is gone
+  and the row that taught its naming scheme went with it.
+
 - `ios/AGENTS.md:5` - "the **two** C functions in `../ffi`". There are four.
 - `ios/AGENTS.md:110-119` - the screens diagram draws four branches. The switch has six; the
   takeover and Adjust are missing.
@@ -230,9 +237,13 @@ Each is one line. All verified against the code today.
   the one place that is meant to be right.
 - `user-flows.md:255` and `:333` - both still route to Adjust through the `⋯` menu. Task 24
   gave it its own control. Correct by cutting the "⋯ →", not by adding a paragraph.
-- `design/AGENTS.md:10` - points every agent at `gallery/_ds/<theme>/styles.css` as "the source
-  of truth for any number a component uses". That is the retired classical theme. The truth is
-  `design/system/tokens/*.css`. An agent obeying this edits a stylesheet nothing reads.
+- `client-guide-design-system/tokens.md:13` - says every number a client may use is "Taken from"
+  `design/gallery/_ds/classical-…/styles.css`. That is the retired classical theme, and it is now
+  the only thing in the repo naming that folder (item 17). The truth is `design/system/tokens/*.css`.
+- `TASKS.md:171` - "the five stories in `storybook/stories/Screens.stories.jsx`". Item 1 deleted
+  that file; the flow stories are what shows those screens now.
+- `TASKS.md:156` and `:160` - tasks 3.3 and 3.4 are titled `PagesScreen.jsx` and `AdjustScreen.jsx`,
+  both deleted by item 1. Both tasks are done, so this is a title pointing at a gone file.
 - `design/system/readme.md:225-278` - lists 18 components; there are 22. `PageStrip`,
   `ToolStrip`, `PageHandles` and `Sheet` are missing, so a future client agent builds a kit with
   no rail and no handles. `:168` still teaches "Disabled is 45% opacity", which
@@ -240,8 +251,9 @@ Each is one line. All verified against the code today.
 - `TASKS.md:12` - "Open the `.dc.html` documents in a browser - they render." They do not: all
   seven load `_ds/freepdf-design-system-…/_ds_bundle.js` and that folder is gone. Point at
   `design/flows/shots/` and Storybook instead.
-- `ios/check/run.sh:2` says "Ten moments"; `check/main.swift:2` says twelve. Both headers still
-  say "milestone 3". `ffi/bridge_check.sh` numbers two different sections `5c`.
+- `ios/check/run.sh:2` says "Ten moments"; `check/main.swift:2` says twelve. There are seventeen
+  numbered sections. Both headers still say "milestone 3", and the file long ago stopped being
+  only about resume. `ffi/bridge_check.sh` numbers two different sections `5c`.
 - `ffi/src/lib.rs:9-10` - "**one** read-only struct". Two cross now, and the second is written
   to. `ffi/AGENTS.md` already says it correctly.
 
@@ -339,6 +351,24 @@ The header uses the same word, "values", that means "everything the user set" ev
 
 - **Removes:** one false comment and one dead copy-table row. The clamping stays; it is correct.
 - **Check:** `bash ffi/bridge_check.sh`.
+
+### 17. [ ] Delete the last root of the classical theme
+
+Item 1 deleted the frozen copy under `design/system/`. The older one is still there:
+`design/gallery/_ds/classical-fee6c86c-b348-4033-b8e7-e8f35de9f737/` - `_ds_bundle.js`,
+`styles.css`, `readme.md`, `_ds_manifest.json`, `_adherence.oxlintrc.json`. Nothing loads it:
+`design/gallery/FreePDF Components.dc.html` names only `./support.js`, which exists. One line in
+the whole repo points into it, `client-guide-design-system/tokens.md:13`, and it points there for
+provenance - "Taken from" - not to be read.
+
+- **Removes:** the second frozen stylesheet, and the last place an agent can find a colour that
+  no client uses. After it, `design/system/tokens/*.css` is the only stylesheet in the repo that
+  decides anything.
+- **Needs a decision first:** `tokens.md` is the client guide, and its numbers were copied from
+  that file. Either the numbers are re-sourced against `tokens/*.css` (they may have drifted -
+  the guide's own preface says the table and the pictures never agreed) or the provenance line is
+  cut. That is Julian's call, and it is why this is not part of item 7.
+- **Check:** `npx storybook build`; `grep -rn classical-fee6c86c .` returns nothing.
 
 ## Considered and rejected
 

@@ -27,7 +27,7 @@ Every command in this file runs from the repository root, `/Users/julianhahn/fre
 cargo test --workspace
 ```
 
-45 green on a Mac, 42 elsewhere - three tests need `sips` for HEIC. Then read
+46 green on a Mac, 43 elsewhere - three tests need `sips` for HEIC. Then read
 [Next steps](#next-steps): it is the one place that says what is being built right now, and
 every session leaves it correct.
 
@@ -112,16 +112,6 @@ own iCloud container is gone, and a `ShareLink` is the whole export
 
 Things noticed but not scheduled.
 
-- **Writing crooked by 10 degrees or more makes a page unscannable.** `suggest_straightening`
-  proposes an angle `straighten` then refuses, so `freepdf_scan_page` fails - and it fails the
-  same way every time, so resume would retry that photo for ever. The coarse pass keeps a peak
-  at `MOST_TILT` (10.0) and the fine search then runs to 11.0, so the proposal leaves the range
-  the act half accepts. Measured through the real C boundary: 3, 8, 9.5 degrees pass; 10, 10.5,
-  11, 11.5 and 12 all come back "was given -10.000004" and worse. The engine's own rule is that
-  a suggestion is something the act half accepts, so the fix belongs in
-  `core_engine/src/deskew.rs:255` - one line, `-tilt.clamp(-MOST_TILT, MOST_TILT)` - plus a test
-  at 10.5 degrees. It is engine work, not client work, so it is written down here rather than
-  patched over in `ffi/`.
 - **The camera screen has no corner thumbnail.** [Plan section
   12](./iphone-client-plan.md#12-every-line-of-text-the-app-shows) gives the last shot a
   thumbnail in the corner whose action reads "Retake page 7" / "Seite 7 neu fotografieren",

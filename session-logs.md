@@ -8,6 +8,18 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-16 - items 2 and 3 ticked, and the counts they moved
+
+`ARCHITECTURE.md` items 2 and 3 are done and ticked; item 1's three leftover pointers are
+recorded under it as struck. Two things item 2 left behind are fixed here: `README.md` still
+listed the tilt bug under **Parked** and handed the next agent the fix as an instruction, so
+that bullet is gone; and the workspace is 46 green on a Mac and 43 elsewhere now, not 45/42 -
+moved in `README.md` and `core_engine/tests/AGENTS.md`, which is the file that states the rule.
+Two new item 7 lines (`TASKS.md:156, :160, :171`, `client-guide-design-system/tokens.md:13`) and
+one new item 17: `design/gallery/_ds/classical-…/` is the last root of the retired theme and
+only `tokens.md` still names it. It needs Julian's call on the client guide, so it is an item,
+not a strike.
+
 ## 2026-08-16 - the crop arithmetic sits on the values, not on a screen
 
 `ARCHITECTURE.md` item 3. `composed` was a `nonisolated static` on `ScanFlow`, a View, and
