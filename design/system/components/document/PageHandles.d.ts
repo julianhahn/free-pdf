@@ -18,8 +18,10 @@ export interface PageHandlesProps {
   refusedText?: string;
   /**
    * Index of the grip being dragged — it grows 11 to 13px, no colour change, and
-   * the magnifier appears beside it with a crosshair on the grip. Not drawn while
-   * `refused`.
+   * every other grip stops being painted while the drag lasts (their targets and
+   * labels stay). The magnifier docks on the far side of the picture from the
+   * finger, tied back to it by one level accent rule that ends under the
+   * fingertip. Not drawn while `refused`.
    */
   held?: number;
   style?: React.CSSProperties;

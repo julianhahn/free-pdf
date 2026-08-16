@@ -8,24 +8,43 @@ export default {
 
 export const Resting = { args: { count: 4, inset: 8 } };
 
-/* Held: the grip grows, and the magnifier sits beside the finger with the
-   crosshair on the grip - the thing the corner is aimed with. */
-export const HandleHeld = {
-  name: "Handle held — the magnifier above the finger",
-  args: { count: 4, inset: 8, held: 2 },
+/* Held: the grip grows, every other grip stops being painted, and the loupe
+   docks on the far side of the picture - tied back to the finger by one level
+   accent rule that ends under the fingertip and runs into the circle. */
+export const HandleHeldLeft = {
+  name: "Handle held on the left — the loupe docks right",
+  /* Bottom left corner. The finger is on the left half, so the disc goes to the
+     right edge and the leader runs left to right. Nothing is drawn over the
+     corner being dragged. */
+  args: { count: 4, inset: 18, held: 3 },
 };
 
-export const HandleHeldAtTheTop = {
-  name: "Handle held at the top — the magnifier below the finger",
-  /* Nothing above a top corner to put it in, so it goes to the only other side
-     a finger never covers. */
+export const HandleHeldRight = {
+  name: "Handle held on the right — the loupe docks left",
+  /* The mirror: same one rule, pointing the other way. Crossing the middle
+     swaps the sides with no animation, and at the crossing point the run is the
+     same length either way, so the swap is symmetric rather than a lurch. */
+  args: { count: 4, inset: 18, held: 2 },
+};
+
+export const HandleHeldTopCorner = {
+  name: "Handle held at the top corner — the disc slides in, the leader stays level",
+  /* The case every Edges corner hits: the circle would leave the picture, so it
+     slides inward until it is one --space-2 from the edge. The leader does not
+     move with it - it stays at the fingertip's height and still lands on the
+     crosshair, which is why the cross sits off the disc's geometric centre and
+     more of the sheet shows on the side the paper is on. */
   args: { count: 4, inset: 8, held: 0 },
 };
 
 export const CropGripHeld = {
-  name: "Crop grip held — the magnifier on the eight-grip set",
-  /* Both handle sets get it: Edges on the photo, Crop on the page. */
-  args: { count: 8, inset: 18, held: 5 },
+  name: "Crop grip held — eight grips, one painted",
+  /* Both handle sets get it: Edges on the photo, Crop on the page. This is also
+     the middle case - "Top edge" sits at exactly 50%, and the rule is "dock
+     right below 50%, left otherwise", so it docks left every time instead of
+     flickering. Seven grips lose their paint here; their touch targets, labels
+     and hit testing are untouched. */
+  args: { count: 8, inset: 18, held: 4 },
 };
 
 export const Refused = {
@@ -39,7 +58,8 @@ export const Refused = {
 
 export const RefusedWhileHeld = {
   name: "Refused while held — no magnifier",
-  /* Refused is the one state that never magnifies: there is nothing to aim at. */
+  /* Refused is the one state that never magnifies: there is nothing to aim at,
+     so there is no disc and no leader either. */
   args: {
     count: 8,
     inset: 18,

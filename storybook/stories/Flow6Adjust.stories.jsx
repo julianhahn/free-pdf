@@ -27,8 +27,10 @@ import {
      Apply leaves the tool and writes the page. A preview that fails shows the
      engine's own sentence and leaves the last good picture up. The document's
      "There is no live preview anywhere" is false (TASKS.md 26).
-   - A held handle carries the magnifier, and the corner is aimed with its
-     crosshair rather than with the finger (TASKS.md 25).
+   - A held handle puts the magnifier on the far side of the picture from the
+     hand, tied back to the fingertip by one level rule, and the corner is aimed
+     with its crosshair rather than with the finger. Every other grip stops
+     being painted while the drag lasts (TASKS.md 25).
    - The screen opens on what was last applied, not on a fresh suggestion: the
      turn is remembered and the crop box opens on the whole picture, because
      Apply composes the new drag onto the stored one and a crop can only ever
@@ -195,9 +197,12 @@ export const S24EdgesWarning = {
 
 export const S24EdgesCornerHeld = {
   name: "S24 — Edges, a corner under the finger",
-  /* The magnifier beside the finger, the crosshair on the corner: the corner
-     goes where the crosshair is, not where the finger is. The four corner
-     names are unchanged, and a screen reader never announces the magnifier. */
+  /* The magnifier on the far side of the picture from the hand, one rule
+     running level from under the fingertip into it, the crosshair on the
+     corner: the corner goes where the crosshair is, not where the finger is.
+     The other three corners keep their targets and their names but lose their
+     paint, so nothing sits near the thumb. The four corner names are unchanged,
+     and a screen reader never announces the magnifier. */
   render: () => <Edges held={2} />,
 };
 
@@ -219,7 +224,9 @@ export const S28CropGripHeld = {
   name: "S28 — Crop, a grip under the finger",
   /* The magnifier is on both handle sets, Edges on the photo and Crop on the
      page. Here the picture under it is the preview, so the loupe shows what the
-     values would make of the page, not the page on disk. */
+     values would make of the page, not the page on disk. Crop is the screen
+     Julian called crowded: seven of the eight grips lose their paint the moment
+     one is held, which is the real subtraction. */
   render: () => (
     <Adjust
       tool="Crop"
