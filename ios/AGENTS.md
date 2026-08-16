@@ -318,6 +318,15 @@ The words are the copy tables in [`../user-flows.md`](../user-flows.md) sections
   because it costs no bytes and the temporary directory is on the same volume. Nothing is
   stored, so reopening the scan shows an empty field, and a name that would not be one path
   component (`/`, `:`) has those two characters replaced.
+- **The field is focused when the screen opens, once.** Make PDF always means a copy is
+  about to leave, so the keyboard comes up with the screen and its first load is paid
+  there instead of on the first tap - which is the wait Julian felt on the phone
+  (2026-08-16, his call). Once is the whole subtlety: the sheets present over this screen
+  and cost nothing, but `Change pages` destroys the branch and Make PDF builds it again,
+  and raising the keyboard a second time would cover a screen he came back to read. The
+  price is that VoiceOver reads the field instead of the "PDF ready" title on opening.
+  The block below stays reachable because the screen is a `ScrollView`: the keyboard is a
+  bottom safe-area inset, which a scroll view turns into content it can scroll to.
 - **The reader is the system's PDF view under the system's sheet**, and there is nothing
   else on it - no share, no print, no page count. The close control is a glyph, so the copy
   table's "Close the PDF" is the spoken label rather than a word on screen.

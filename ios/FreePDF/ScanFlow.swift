@@ -37,6 +37,13 @@ struct ScanFlow: View {
     /// The name for the copy that leaves, and the temporary link that carries it. Nothing
     /// is stored: both die with the screen, and the file on disk is always `scan.pdf`.
     @State private var name = ""
+    /// The name field's focus, and whether it has been taken already. Make PDF always
+    /// means a copy is about to leave, so the field is raised with the screen and the
+    /// keyboard's first load is paid there rather than on the first tap. Taken once:
+    /// `Change pages` destroys this branch and Make PDF builds it again, and a second
+    /// raise would throw the keyboard over a screen he came back to read.
+    @FocusState private var naming: Bool
+    @State private var focusTaken = false
     @State private var shareCopy: URL?
     @State private var confirmingPhotos = false
     /// The page the Adjust screen is open on. `nil` means the screen is not up.
@@ -535,6 +542,15 @@ struct ScanFlow: View {
         // The copy that leaves carries the typed name; nothing is stored, so leaving the
         // scan and coming back empties the field again.
         .onChange(of: name) { nameTheCopy() }
+        // Once, when this screen opens. It belongs to the branch and not to the Group's
+        // own `.onAppear`, which is shared with the camera, the takeover, Adjust and the
+        // pages - screens with no name field. The sheets need no guard of their own: the
+        // reader and the share sheet present over this screen without removing it.
+        .onAppear {
+            guard !focusTaken else { return }
+            focusTaken = true
+            naming = true
+        }
     }
 
     /// The name for the copy that leaves. On disk the file is always `scan.pdf`, so this
@@ -549,6 +565,7 @@ struct ScanFlow: View {
                 .font(Token.Face.body(Token.Size.textControl))
                 .foregroundStyle(Token.Palette.text)
                 .autocorrectionDisabled()
+                .focused($naming)
                 .padding(.horizontal, Token.Size.space2)
                 .frame(minHeight: Token.Size.inputMinH)
                 .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
