@@ -388,7 +388,9 @@ struct ScanFlow: View {
     /// ponytail: composing means the user can only ever cut tighter, never widen.
     /// Ceiling: widening is "Scan this page again", which is the undo for everything
     /// else on this screen.
-    nonisolated private static func composed(_ values: Engine.Adjustments,
+    /// Not private: `AdjustView`'s preview has to run exactly what Apply sends, and that
+    /// is these values, not the screen's own.
+    nonisolated static func composed(_ values: Engine.Adjustments,
                                              onto stored: Engine.Adjustments?) -> Engine.Adjustments {
         guard let stored, stored.cropWidth > 0, stored.cropHeight > 0 else { return values }
         var old = (x: stored.cropX, y: stored.cropY, w: stored.cropWidth, h: stored.cropHeight)

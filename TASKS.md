@@ -61,7 +61,7 @@ that cannot open a browser.
 | 23 | iOS: Grey becomes a fact about the pages — DONE | 21 | bash ios/check/scan_check.sh |
 | 24 | iOS: Adjust is visible in the overview — DONE | 19 | bash ios/check/scan_check.sh, by hand |
 | 25 | iOS: a magnifier for the corner drags | 22 | bash ios/check/scan_check.sh, by hand |
-| 26 | iOS: every tool shows what it would do | 22 | bash ios/check/scan_check.sh, by hand |
+| 26 | iOS: every tool shows what it would do — DONE | 22 | bash ios/check/scan_check.sh, by hand |
 | 27 | iOS: the jump appears from ten pages — DONE | 17 | bash ios/check/scan_check.sh, by hand |
 ```
 

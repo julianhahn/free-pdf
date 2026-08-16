@@ -24,7 +24,10 @@ enum Engine {
     ///
     /// Every field is filled by the screen or by the suggestion below, so none carries a
     /// default: a default here would be a second opinion about what "change nothing" is.
-    struct Adjustments: Sendable {
+    ///
+    /// `Equatable` so the Adjust screen can key its preview on the values themselves: a
+    /// change is a new run, and an unchanged struct is not a second run of the same work.
+    struct Adjustments: Sendable, Equatable {
         /// The four sheet corners as x, y pairs in photo pixels - the photo upright, at
         /// full size. Only read when `pullTheSheetFlat` is on.
         var corners: [Float]

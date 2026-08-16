@@ -269,6 +269,11 @@ out of it:
   photo has been measured. If the engine refuses the photo, its sentence is the screen and
   Apply stays dead - a page whose photo is gone cannot be adjusted at all, and the pages
   screen already leaves **Adjust page** out of the menu for exactly those pages.
+- **Every tool shows what it would do.** A debounced run of the engine's own recipe into a
+  scratch file under the system's temporary directory - never `photo/`, `page/`, `state/`
+  or `scan.pdf`, so `sweep()` never sees it - draws the page the current values would
+  produce, one run at a time and the newest superseding the last; only **Apply** writes a
+  page. (Julian, 2026-08-16, reversing the earlier "no live preview".)
 - **Edges shows the photo, every other tool the page.** The sheet corners are photo pixels,
   so drawing them over the page would put them in a space nothing maps back to. Crop stays
   on the page, and the fraction dragged there is a fraction of the last cut, which the

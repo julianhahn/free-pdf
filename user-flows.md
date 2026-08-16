@@ -321,14 +321,16 @@ page once, and after that the tools open on what was last applied. The user move
 value or leaves it, and **Back to the suggestion** is the way back to the engine's own
 answer.
 
-There is **no live preview**. You set the values, tap Apply, wait about a second, and
-look at the result. The picture on this screen is the page as it stands now. One code
-path, not two.
+Every tool **shows what it would do**: a moment after a value moves, the picture becomes
+a real engine run of the current values into a scratch file, so what is on screen is what
+Apply would write. Only Apply writes the page. (Julian, 2026-08-16, reversing the earlier
+"no live preview".)
 
 1. From the pages: **Page ⋯ → Adjust page**.
 2. The photo is re-read from `photo/NNNN.jpg`. Adjust needs the photo: a page whose photo
    has been deleted cannot be adjusted at all.
-3. A control strip picks one tool at a time. Nothing on screen changes until Apply.
+3. A control strip picks one tool at a time. The picture follows the values; nothing is
+   written until Apply.
 4. **Apply** re-runs the recipe with the chosen values and replaces the page file whole,
    by rename. The previous page bytes are gone; the photo is what an adjustment can be
    redone from. **Cancel** leaves the page as it was.
@@ -570,8 +572,9 @@ All settled, Julian, 2026-08-12. Each one is written into the section named besi
 1. **Adjust comes after the automatic run**, on a page you can already see. Never before.
    (Sections 0 and 7.)
 
-2. **No live preview.** Set the values, tap Apply, wait about a second, look at the
-   result. One code path, not two. (Section 7.)
+2. **Every tool shows what it would do.** A debounced engine run into a scratch file
+   shows the page the current values would produce; only Apply writes it. (Julian,
+   2026-08-16, reversing the 2026-08-12 decision. Section 7.)
 
 3. **Apply-to-all is not promised across a kill.** "Keep the app open" for that one run,
    nothing new goes on disk. (Section 7b.)

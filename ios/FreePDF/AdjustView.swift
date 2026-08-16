@@ -1,9 +1,11 @@
 //  AdjustView.swift - the six tools, one at a time, on one page.
 //
-//  Reached from the Page menu only. It shows the page **as it stands now**: there is no
-//  live preview anywhere, and dragging a handle moves the handle, not the picture. Apply
-//  re-runs the recipe from `photo/NNNN.jpg` with the values below and replaces the page
-//  file whole ([`../../user-flows.md`](../../user-flows.md) section 7).
+//  Reached from the Page menu only. Every change shows what it would do: a moment after
+//  a value moves, the picture becomes a real engine run of the current values into a
+//  scratch file outside the scan folder, so what is on screen is what Apply would write.
+//  Only Apply writes a page - it re-runs the recipe from `photo/NNNN.jpg` with the values
+//  below and replaces the page file whole ([`../../user-flows.md`](../../user-flows.md)
+//  section 7). Julian reversed the old "no live preview" rule on 2026-08-16.
 //
 //  The engine seeds a page once - `freepdf_suggest_adjustments`, what it would have done
 //  by itself - and after that the controls open on what was last applied, out of the
@@ -69,6 +71,13 @@ struct AdjustView: View {
     /// looks like when the block it is dragged in is the shape of the picture inside it.
     @State private var photoSize = CGSize.zero
     @State private var pageSize = CGSize.zero
+    /// The last good preview - a page the engine really wrote, from the current values,
+    /// into a file that is not `photo/`, `page/`, `state/` or `scan.pdf`. `nil` until the
+    /// first run lands, and then the picture is this instead of the page on disk.
+    @State private var previewFile: URL?
+    /// What the engine said about a preview that failed, in its own sentence. The last
+    /// good picture stays up under it.
+    @State private var previewFailure: String?
 
     private static let wholePicture = [CGPoint(x: 0, y: 0), CGPoint(x: 1, y: 0),
                                        CGPoint(x: 1, y: 1), CGPoint(x: 0, y: 1)]
@@ -77,7 +86,7 @@ struct AdjustView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: Token.Size.space4) {
-                    if let said = refusal ?? message { ErrorLine(sentence: said) }
+                    if let said = refusal ?? message ?? previewFailure { ErrorLine(sentence: said) }
                     picture
                     if tool == .edges, let suggestion {
                         if suggestion.runsOffThePicture {
@@ -122,6 +131,72 @@ struct AdjustView: View {
                 refusal = error.localizedDescription
             }
         }
+        // Every value change is a new run and cancels the one before it: `task(id:)` is
+        // the one-at-a-time rule, and the sleep is what makes a dragged slider one run
+        // rather than fifty.
+        .task(id: previewValues) { await showWhatItWouldDo() }
+        .onDisappear {
+            if let previewFile { try? FileManager.default.removeItem(at: previewFile) }
+        }
+    }
+
+    // MARK: - What it would do
+
+    /// The picture becomes the page the current values would produce.
+    ///
+    /// It is a real run of the engine's recipe, not an approximation drawn here, so what
+    /// is on screen is what Apply writes. It goes to its own file under the system's
+    /// temporary directory - never `photo/`, `page/`, `state/` or `scan.pdf`, so `sweep()`
+    /// never sees it and a kill mid-run leaves nothing new in the scan folder. Each run
+    /// writes its own file and the one before it is deleted only once the new one has
+    /// landed, so a superseded run can never take the picture that is up.
+    private func showWhatItWouldDo() async {
+        guard suggestion != nil else { return }
+        try? await Task.sleep(for: .milliseconds(Self.settle))
+        guard !Task.isCancelled else { return }
+        let asked = previewValues, source = photo
+        let scratch = FileManager.default.temporaryDirectory
+            .appendingPathComponent("adjust-preview-\(UUID().uuidString).jpg")
+        do {
+            try await Task.detached(priority: .userInitiated) {
+                try Engine.adjustPage(source, into: scratch, asked)
+            }.value
+            guard !Task.isCancelled else {
+                try? FileManager.default.removeItem(at: scratch)
+                return
+            }
+            let stale = previewFile
+            previewFile = scratch
+            // The preview carries the turn and the cut, so it is the file the block's
+            // shape now comes from.
+            pageSize = Self.pixels(scratch)
+            previewFailure = nil
+            if let stale { try? FileManager.default.removeItem(at: stale) }
+        } catch {
+            try? FileManager.default.removeItem(at: scratch)
+            // The engine's sentence, unchanged, exactly as Apply shows it. The last good
+            // picture stays up.
+            previewFailure = error.localizedDescription
+        }
+    }
+
+    /// How long a value has to sit still before the engine is asked, in milliseconds. A
+    /// run costs about as much as one scan, so a drag would otherwise queue one per frame.
+    private static let settle = 300
+
+    /// What the preview runs - the values Apply would send, composed onto what is stored
+    /// exactly as `ScanFlow` composes them.
+    ///
+    /// Crop is the one difference, and it is not a second code path: the box the user is
+    /// dragging is a fraction of the picture **before** the cut, so while that tool is up
+    /// the preview shows that picture, which is the page with the stored cut and nothing
+    /// further. Every other tool sees the finished page.
+    private var previewValues: Engine.Adjustments {
+        var mine = values
+        if tool == .crop {
+            (mine.cropX, mine.cropY, mine.cropWidth, mine.cropHeight) = (0, 0, 0, 0)
+        }
+        return ScanFlow.composed(mine, onto: stored)
     }
 
     // MARK: - The bar
@@ -162,7 +237,7 @@ struct AdjustView: View {
             // well - otherwise a crop box dragged onto the bottom is cut off the side.
             let upright = quarter % 2 == 0
             let inner = upright ? geo.size : CGSize(width: geo.size.height, height: geo.size.width)
-            PageImage(url: tool == .edges ? photo : page)
+            PageImage(url: tool == .edges ? photo : (previewFile ?? page))
                 .overlay {
                     switch tool {
                     case .edges: handles($sheet, colour: Token.Palette.accent)
@@ -181,9 +256,11 @@ struct AdjustView: View {
 
     /// How far the picture on screen is turned - only the turns added since the last
     /// Apply, because the page file already carries the stored ones. Edges draws the
-    /// photo, which the turn does not touch.
+    /// photo, which the turn does not touch, and a preview was turned by the engine
+    /// itself, so neither is turned again here.
     private var quarter: Int {
-        tool == .edges ? 0 : (turns - Int(stored?.quarterTurns ?? 0) + 4) % 4
+        tool == .edges || previewFile != nil
+            ? 0 : (turns - Int(stored?.quarterTurns ?? 0) + 4) % 4
     }
 
     /// The shape of the picture on screen, measured from the file that is drawn. It has
