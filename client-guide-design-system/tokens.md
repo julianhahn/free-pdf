@@ -30,8 +30,7 @@ Roles first. A client sets these six and everything else follows.
 | text-muted | text at 55-60% | same rule | Subtitles, captions, slider end labels. |
 ```
 
-`accent-2` exists in the stylesheet but is a machine-derived stand-in. This is a **one-accent**
-scheme. Ignore it.
+This is a **one-accent** scheme. There is no second accent to reach for.
 
 Ramps, same in both themes. Use 100-300 for tinted fills and hovers, 500 as the base, 700-900
 for text on a tinted fill and for pressed states.
@@ -149,7 +148,7 @@ theme colour is a stroke, not a fill.
 ```
 | Thing | Size |
 | --- | --- |
-| shutter | 72 px circle, 1 px divider border, inner 4 px bg ring, then 1 px accent ring |
+| shutter | 72 px circle, 2 px accent ring, 4 px gap, paper disc with a hairline edge |
 | switch | 42 x 24, knob 16, travel 3 to 21 |
 | slider | 1 px track, 17 px round thumb, bg fill, 1 px accent border |
 | icon button | 36 x 36 |

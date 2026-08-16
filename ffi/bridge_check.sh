@@ -213,7 +213,7 @@ let reused = call { error, size in
 }
 precondition(reused.status == 0, "the suggested values were refused: \(reused.message)")
 
-// 5c - the angle AND the two tone points are measured against the sheet it was handed.
+// 5e - the angle AND the two tone points are measured against the sheet it was handed.
 // The same photo asked twice: once with NULL, which is the engine's own sheet, and once
 // with a sheet turned a few degrees off it. Turned corners mean writing that comes out
 // turned, so the two answers cannot be the same number. If they are, the corners handed

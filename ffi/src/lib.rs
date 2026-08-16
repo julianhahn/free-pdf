@@ -6,8 +6,9 @@
 //! ([`../AGENTS.md`](../AGENTS.md)). This crate is a client - the smallest one
 //! there is, and the only one that has to speak C.
 //!
-//! What crosses the boundary: C strings, a size, an int32, and one read-only struct
-//! of numbers for the adjusted case. What never crosses: a pixel buffer, an image
+//! What crosses the boundary: C strings, a size, an int32, and two structs of plain
+//! numbers - `FreepdfAdjustments` in, `FreepdfSuggestion` out, both copied at the
+//! boundary. What never crosses: a pixel buffer, an image
 //! handle, an allocation the caller has to free, a callback. The rules of this crate are in [`AGENTS.md`](./AGENTS.md).
 
 // Edition 2024's rule, asked for early: an `unsafe fn` does not quietly make its whole

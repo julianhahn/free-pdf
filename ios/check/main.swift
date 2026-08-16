@@ -1,5 +1,6 @@
-//  The check for milestone 3: does the model come back correctly after the process
-//  dies? Twelve moments - ten where it is killed, and two the user reaches on his own.
+//  Does the model come back correctly after the process dies, and does it say the right
+//  thing? Seventeen sections: twelve moments - ten where it is killed, two the user
+//  reaches on his own - then the sentences the list rows say and the values a page keeps.
 //
 //  Real files in a temporary directory, because that is the model's only input - and
 //  Foundation only, so this runs in about two seconds with no Xcode and no simulator.

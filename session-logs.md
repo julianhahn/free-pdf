@@ -8,6 +8,31 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-16 - items 4, 5 and 7 are ticked, and the last false lines go with them
+
+`ARCHITECTURE.md` items 4, 5 and 7 are `[x]`. Item 7's document half had landed (a855f8b); its
+other half - the code's own comments - is in this commit: `ios/AGENTS.md` said two C functions
+(four), drew four screen branches (six: the takeover and Adjust were missing), claimed one piece
+of view state decides a screen (three do: `shooting`, `applyingAll`, `adjusting`) and named
+`makePDF()` as the one listing exception (`everyPage()` is the second - `refresh`'s grey line
+reads state files, it lists nothing, so item 7's "three" was itself wrong). Both check headers
+said "milestone 3" and counted ten and twelve moments where there are seventeen sections;
+`ffi/src/lib.rs:9` said one struct crosses where two do; `bridge_check.sh` numbered two sections
+`5c`. Three more were found on the way and struck with them: `TASKS.md:214`'s phone frame at the
+deleted `Screens.stories.jsx`, and in the client guide the `accent-2` sentence (that token lives
+only in the retired classical stylesheet) and the shutter row (2 px accent ring and a 4 px gap,
+not "1 px divider border … 1 px accent ring", per `controls.css` and `Shutter.jsx`).
+
+The picture caught up with the tree: `ios/` is thirteen files, the done branch is `DoneView` and
+no longer "the only screen with no file", `Scan` owns the deletes including `scan.pdf`, and
+`DoneView`'s share hard-link is named as the one file a screen makes itself. Items 6, 8 and 10
+had anchors pointing into the moved code and now point at `DoneView.swift`. Items 4 and 5 carry
+what was refused with them: `retake` and `deletePage` still name `FileManager` in the router, and
+`focusTaken` stayed behind as a `Binding`. Item 17 lost its blocker - nothing outside the folder
+names the classical theme any more - and one new item 18 went on the list: `README.md`'s Next
+steps row 3 still says tasks 19 to 23 are unbuilt. Only comments were edited inside the checks;
+no assertion was touched. `resume ok`, `bridge ok`, `cargo test --workspace` 46 green.
+
 ## 2026-08-16 - the done screen is a file, like every other screen
 
 `ARCHITECTURE.md` item 5. The finished screen - name field, Open PDF, Share PDF, Change

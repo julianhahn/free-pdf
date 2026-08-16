@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# The check for milestone 3: the resume rules. Ten moments the process could die, each
-# one built as real files and read back through the model the app itself uses.
+# The check that needs no Xcode: seventeen sections, each built as real files and read
+# back through the model the app itself uses. Twelve are moments - ten where the process
+# is killed, two the user reaches on his own - and the rest are the sentences the list
+# rows say and the values a page keeps.
 #
 # No Xcode, no simulator, no project file - `Scan.swift` and `Engine.swift` are
 # Foundation only, so swiftc alone compiles the whole state machine and the values a

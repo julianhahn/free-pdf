@@ -211,7 +211,7 @@ S2, S4, S5. Pictures: the `01-*`, `02-*` and `03-*` files in
 
 **Build.** Four stories in a new
 `/Users/julianhahn/free-pdf/storybook/stories/Flow1Scans.stories.jsx`, each rendered in the
-phone frame the existing `Screens.stories.jsx` uses: the empty list, the empty list with an
+phone frame the flow stories use: the empty list, the empty list with an
 `ErrorLine`, a row swiped left showing Delete, and the delete confirmation over the list.
 
 **Components.** `EmptyState`, `Button`, `ErrorLine`, `ScanRow` (its own `swiped` state),

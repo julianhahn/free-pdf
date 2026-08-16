@@ -16,7 +16,7 @@ them. Read the AGENTS.md beside a file before you touch it.
                               ▲
                               │  every read is a fresh directory listing. No cache
                               │  of the truth, no manifest, nothing to disagree.
-   ios/  SwiftUI, 12 files    │
+   ios/  SwiftUI, 13 files    │
       FreePDFApp ── sweep() at launch, the only repair pass
          └─ ScanList ──tap──▶ ScanFlow ───── Scan.swift  (the disk. Foundation only)
                                  │
@@ -25,7 +25,7 @@ them. Read the AGENTS.md beside a file before you touch it.
                                  ├─ CameraView      shooting
                                  ├─ takeover        applying to every page
                                  ├─ AdjustView      adjusting one page
-                                 ├─ done            finished  ← the only screen with no file
+                                 ├─ DoneView        finished
                                  ├─ PagesView       nothing left to drain
                                  └─ scanning        the drain
                                  │
@@ -36,7 +36,7 @@ them. Read the AGENTS.md beside a file before you touch it.
    ios/FreePDF/EngineCalls.swift  ──▶  ffi/include/freepdf.h
                                  │     0 = it worked. Anything else = one sentence,
                                  │     copied into the caller's buffer, shown unchanged.
-   ffi/  Rust, 622 lines, four C functions
+   ffi/  Rust, ~620 lines, four C functions
       scan_page   suggest_adjustments   adjust_page   pages_to_pdf
       ★ THE ORDER OF THE TOOLS LIVES HERE, not in the engine:
         deskew → straighten → levels → 3000 px cap → sharpen → [turn → crop → grey] → write
@@ -61,10 +61,12 @@ knows no order and holds no state, which is what lets a client rerun one step
 paths and plain numbers in, an `int32` out. It owns the order of the tools
 ([`ffi/AGENTS.md`](./ffi/AGENTS.md)).
 
-**ios** is a router with screens hanging off it. `Scan.swift` is the disk; `ScanFlow` reads
-it into a cache, decides from that cache which screen this scan means, and owns every file
-move any screen asks for. The screens are dumb: numbers in, closures out
-([`ios/AGENTS.md`](./ios/AGENTS.md)).
+**ios** is a router with screens hanging off it. `Scan.swift` is the disk and owns every
+delete, `scan.pdf` included; `ScanFlow` reads it into a cache, decides from that cache which
+screen this scan means, and makes every file move a screen asks for. The screens are dumb:
+numbers in, closures out ([`ios/AGENTS.md`](./ios/AGENTS.md)). The one file a screen makes
+itself is `DoneView`'s share link - a temporary hard link carrying the typed name, nothing
+stored ([`DoneView.swift:162`](./ios/FreePDF/DoneView.swift)).
 
 **design/system** is where a visual value is decided. The CSS tokens are the single source
 and `build-tokens.mjs` generates `Tokens.swift` from them, so a second client is an emitter
@@ -99,7 +101,8 @@ and nothing else.
 
 Ranked by how much a reader's head is unburdened per line of risk. Every item removes
 something. Checks: `cargo test --workspace`; `bash ffi/bridge_check.sh` (~1 s);
-`bash ios/check/run.sh` (~2 s, no Xcode); `bash ios/check/scan_check.sh` (~3 min, simulator);
+`bash ios/check/run.sh` (~2 s, no Xcode); `bash ios/check/scan_check.sh` (~3 min cold,
+simulator - warm it is seconds, so do not skip it);
 `cd storybook && npx storybook build`; `node design/system/tokens/build-tokens.mjs --check`.
 
 ### 1. [x] Delete the frozen second copy of the design system
@@ -165,7 +168,7 @@ new cut inside a stored one) sitting on a View, reached from another screen at
   arithmetic is.
 - **Check:** `bash ios/check/run.sh`, plus one round-trip case in `check/main.swift`.
 
-### 4. [ ] The PDF gets a home on `Scan`
+### 4. [x] The PDF gets a home on `Scan`
 
 `try? FileManager.default.removeItem(at: scan.pdf)` appears at `ScanFlow.swift:251, 307, 455,
 524`, three of them with their own comment saying the same thing: the PDF is derived, so
@@ -174,13 +177,17 @@ and `deleteState()`. The PDF is the one file the model does not delete, and "fin
 spelled twice - `Scan.swift:103` and `ScanFlow.swift:691`.
 
 - **Removes:** four copies plus three comments, one direct `fileExists` out of the router, and
-  one of the two spellings of finished. After it, `ScanFlow` names `FileManager` only for the
-  share hard-link, which really is the screen's business.
+  one of the two spellings of finished.
 - **Costs:** two small members on `Scan`.
 - **Check:** `bash ios/check/run.sh` - and it can then watch "Change pages unfinishes a
   finished scan", which no check sees today.
+- **Refused with it** (f551bb3): the claim that afterwards `ScanFlow` names `FileManager` only
+  for the share hard-link. `retake` and `deletePage` still remove a page and a photo file
+  directly (`ScanFlow.swift:432, :442-443`). Moving those adds two members to `Scan` to delete
+  three lines, and puts a `Scan.deletePage` that deletes one file next to a
+  `ScanFlow.deletePage` that deletes three.
 
-### 5. [ ] The done screen gets a file
+### 5. [x] The done screen gets a file
 
 `ScanFlow.swift:503-681` plus `OutlineStyle:701-718` is a whole screen - name field, share
 link, PDF reader, photos block - living inside the router, while every other branch of the same
@@ -188,20 +195,24 @@ switch is its own file. It drags six of `ScanFlow`'s twenty-one state properties
 (`name`, `naming`, `focusTaken`, `shareCopy`, `confirmingPhotos`, `reading`) - a keyboard and a
 share sheet, not a scan.
 
-- **Removes:** ~215 lines and six state properties from the router, and makes
-  `ios/AGENTS.md:121` true again ("ScanFlow owns one piece of view state that decides a
-  screen" - today three do).
+- **Removes:** ~215 lines and five state properties from the router - `name`, `naming`,
+  `shareCopy`, `confirmingPhotos`, `reading`.
 - **Costs:** a 215-line move. Nothing new is introduced: `DoneView.swift` with values in and
   `onChangePages` / `onDeletePhotos` out is exactly the shape `PagesView` and `AdjustView`
   already have. Every comment moves with its code and none is shortened.
 - **Check:** `bash ios/check/scan_check.sh` - the only check that compiles a screen.
+- **Did not travel** (f95e1d1): `focusTaken`. Change pages destroys the done screen and Make
+  PDF builds it again, so `@State` there would raise the keyboard a second time over a screen
+  the user came back to read - the exact thing its comment forbids. It stays in `ScanFlow` and
+  goes back as a `@Binding`, the way `PagesView` takes `showing`. So this did not make
+  `ios/AGENTS.md:121` true; that line was corrected instead, under item 7.
 
 ### 6. [ ] One button style
 
 The design system has one `Button` with four variants and one rule: "Outlined, never filled"
 (`components/core/Button.jsx:11`). Swift writes that recipe - heading face, tracking,
 `buttonPaddingY/X`, `touchMin`, `radiusMd`, hairline stroke - in eight places behind two nearly
-identical `ButtonStyle` structs: `ScanFlow.swift:701` `OutlineStyle`, `PagesView.swift:366`
+identical `ButtonStyle` structs: `DoneView.swift:220` `OutlineStyle`, `PagesView.swift:366`
 `SecondaryStyle`, and six inline copies (`PagesView:272`, `ScanList:119`, `CameraView:156` and
 `:190`, `AdjustView:467` and `:584`). They have already drifted: the two in `AdjustView` use no
 `buttonPaddingY` at all, and three of the eight are **filled**, a variant the source of truth
@@ -215,57 +226,36 @@ does not have.
   its own (`ToolStrip.jsx`) that is transparent with an accent underline, not a filled pill.
 - **Check:** `bash ios/check/scan_check.sh` builds the app; nothing checks how it looks.
 
-### 7. [ ] Strike what the docs say that the code no longer does
+### 7. [x] Strike what the docs say that the code no longer does
 
-Each is one line. All verified against the code today.
+Each was one line, each checked against the code before it was cut. ~~`design/AGENTS.md:10`~~
+had already gone with 50242b2 and 443f878. The four documents went in a855f8b - `TASKS.md:12`,
+all five task-3 titles (not only the two this list had spotted), `:171`, `:534` and `:541`,
+`user-flows.md:255`, `:291`, `:333`, `client-guide-design-system/tokens.md:13`, and
+`design/system/readme.md:168` plus its 18-component list. The code's own comments went with the
+commit that ticks this item: `ios/AGENTS.md:5`, its screens diagram, `:121`, `:220`, both check
+headers, `ffi/src/lib.rs:9`, and the second `5c` in `bridge_check.sh`.
 
-- ~~`design/AGENTS.md:10`~~ - done by 50242b2 and 443f878: the stylesheet it pointed at is gone
-  and the row that taught its naming scheme went with it.
-
-- `ios/AGENTS.md:5` - "the **two** C functions in `../ffi`". There are four.
-- `ios/AGENTS.md:110-119` - the screens diagram draws four branches. The switch has six; the
-  takeover and Adjust are missing.
-- `ios/AGENTS.md:121` - "one piece of view state that decides a screen". Three do:
-  `shooting`, `applyingAll`, `adjusting`. (Item 5 makes this one true instead.)
-- `ios/AGENTS.md:220` - "`makePDF()` is the one deliberate exception". There are three:
-  `makePDF`, `everyPage` and `refresh`'s grey line.
-- `TASKS.md:534` and `:541` - "Corners are fractions 0…1 of the photo". They are pixels:
-  `Engine.swift:31`, `Scan.swift:155`, `ffi/AGENTS.md`, `freepdf.h:41`.
-- `user-flows.md:291` - the copy table says "Choose a page". The app, the component and the
-  story all say "Go to page" (`PagesView.swift:179`, `PageStrip.jsx:88`). The German pair goes
-  with it. The copy tables are where the app reads its words from, so this one line is wrong in
-  the one place that is meant to be right.
-- `user-flows.md:255` and `:333` - both still route to Adjust through the `⋯` menu. Task 24
-  gave it its own control. Correct by cutting the "⋯ →", not by adding a paragraph.
-- `client-guide-design-system/tokens.md:13` - says every number a client may use is "Taken from"
-  `design/gallery/_ds/classical-…/styles.css`. That is the retired classical theme, and it is now
-  the only thing in the repo naming that folder (item 17). The truth is `design/system/tokens/*.css`.
-- `TASKS.md:171` - "the five stories in `storybook/stories/Screens.stories.jsx`". Item 1 deleted
-  that file; the flow stories are what shows those screens now.
-- `TASKS.md:156` and `:160` - tasks 3.3 and 3.4 are titled `PagesScreen.jsx` and `AdjustScreen.jsx`,
-  both deleted by item 1. Both tasks are done, so this is a title pointing at a gone file.
-- `design/system/readme.md:225-278` - lists 18 components; there are 22. `PageStrip`,
-  `ToolStrip`, `PageHandles` and `Sheet` are missing, so a future client agent builds a kit with
-  no rail and no handles. `:168` still teaches "Disabled is 45% opacity", which
-  `tokens/colors.css:33` marks retired.
-- `TASKS.md:12` - "Open the `.dc.html` documents in a browser - they render." They do not: all
-  seven load `_ds/freepdf-design-system-…/_ds_bundle.js` and that folder is gone. Point at
-  `design/flows/shots/` and Storybook instead.
-- `ios/check/run.sh:2` says "Ten moments"; `check/main.swift:2` says twelve. There are seventeen
-  numbered sections. Both headers still say "milestone 3", and the file long ago stopped being
-  only about resume. `ffi/bridge_check.sh` numbers two different sections `5c`.
-- `ffi/src/lib.rs:9-10` - "**one** read-only struct". Two cross now, and the second is written
-  to. `ffi/AGENTS.md` already says it correctly.
+- **One was itself wrong.** `ios/AGENTS.md:220` has two exceptions, not three: `makePDF` and
+  `everyPage`. `refresh`'s grey line reads state files, it lists no directory.
+- **Left standing on purpose:** `TASKS.md` task 3's **Why** and **Read** still point at
+  `ui_kits/iphone/` and a `.dc.html` section. Task 3 is done, so those lines are the record of
+  what it was written against, not a claim about the app today.
+- **Struck with them, found on the way:** `TASKS.md:214`'s phone frame at the deleted
+  `Screens.stories.jsx`; and two in the client guide - the `accent-2` sentence, which sent a
+  client after a token that exists only in the retired classical stylesheet (item 17), and the
+  shutter row, which is a 2 px accent ring and a 4 px gap, not "1 px divider border … 1 px
+  accent ring".
 
 ### 8. [ ] `Scan.numbers`
 
 "Every number this scan has ever had" is written four times in three spellings:
-`Scan.swift:297`, `Scan.swift:100`, `ScanFlow.swift:272` and `:693`
+`Scan.swift:301`, `Scan.swift:104`, `ScanFlow.swift:275` and `:478`
 (`Array(Set(photos + pages)).sorted()`). `ios/AGENTS.md:86` already describes the concept in
 prose.
 
 - **Removes:** three spellings of one concept; `nextPage` reads `(numbers.max() ?? 0) + 1`.
-- **Costs:** none. `ScanFlow.numbers:449` stays as it is - it reads the cache on purpose.
+- **Costs:** none. `ScanFlow.numbers:416` stays as it is - it reads the cache on purpose.
 - **Check:** `bash ios/check/run.sh`.
 
 ### 9. [ ] `FakeShoot` returns the failure kind instead of a sentence to sniff
@@ -282,7 +272,7 @@ which is `hasSuffix("could not be drawn.")`.
 
 ### 10. [ ] `photoCount()` beside `pageCount()`
 
-`"photo\(n == 1 ? "" : "s")"` is written at `Scan.swift:139`, `ScanFlow.swift:617` and `:621`.
+`"photo\(n == 1 ? "" : "s")"` is written at `Scan.swift:143`, `DoneView.swift:150` and `:154`.
 `pageCount(_:)` at `Scan.swift:13` is the shape to copy, and `ios/AGENTS.md:344` already claims
 this plural is not duplicated.
 
@@ -357,18 +347,33 @@ The header uses the same word, "values", that means "everything the user set" ev
 Item 1 deleted the frozen copy under `design/system/`. The older one is still there:
 `design/gallery/_ds/classical-fee6c86c-b348-4033-b8e7-e8f35de9f737/` - `_ds_bundle.js`,
 `styles.css`, `readme.md`, `_ds_manifest.json`, `_adherence.oxlintrc.json`. Nothing loads it:
-`design/gallery/FreePDF Components.dc.html` names only `./support.js`, which exists. One line in
-the whole repo points into it, `client-guide-design-system/tokens.md:13`, and it points there for
-provenance - "Taken from" - not to be read.
+`design/gallery/FreePDF Components.dc.html` names only `./support.js`, which exists. No file
+outside it points into it any more - item 7 re-sourced the one line that did,
+`client-guide-design-system/tokens.md:13`, against `design/system/tokens/*.css` after checking
+every table in that guide against those files. Only this document still names the folder.
 
 - **Removes:** the second frozen stylesheet, and the last place an agent can find a colour that
   no client uses. After it, `design/system/tokens/*.css` is the only stylesheet in the repo that
   decides anything.
-- **Needs a decision first:** `tokens.md` is the client guide, and its numbers were copied from
-  that file. Either the numbers are re-sourced against `tokens/*.css` (they may have drifted -
-  the guide's own preface says the table and the pictures never agreed) or the provenance line is
-  cut. That is Julian's call, and it is why this is not part of item 7.
+- **The decision it was waiting on is made:** the numbers were re-sourced, and they agree. What
+  is left is one paragraph, not a folder - the guide's preface still says these values "were read
+  off a stylesheet that the delivered component gallery never used", which is now the history of
+  where they came from and not where they live. Whether the guide is still "provisional" is
+  Julian's word, not a fact readable off the code, so nobody but him should cut that preface.
 - **Check:** `npx storybook build`; `grep -rn classical-fee6c86c .` returns nothing.
+
+### 18. [ ] `README.md`'s Next steps row 3 says what is being built, and it is out of date
+
+The README's own line above it promises "it is the one place that says what is being built right
+now, and every session leaves it correct". Row 3 then says tasks "14 to 18 are built. Next is 19,
+the done screen", that a crop and a turn "die at the next Apply", and that "Grey still greys the
+screen only". Tasks 19 to 23 landed (e526f60, d488852) and 24 to 27 are being worked through
+(6a63de5). This was left out of item 7 on purpose: every other line there was a fact readable off
+one file, and this one needs someone who knows which tasks are actually finished on a phone.
+
+- **Removes:** the last doc line in the repo that describes an older app, and the reason a reader
+  cannot trust the one paragraph the README tells him to trust.
+- **Check:** none - it is one paragraph of prose.
 
 ## Considered and rejected
 

@@ -2,7 +2,7 @@
 
 The iPhone app. `FreePDF/` is what ships - the screens and the storage model under them -
 and `check/` holds the two checks: one that needs no Xcode at all, one that drives the
-whole app on a simulator. The engine is reached through the two C functions in
+whole app on a simulator. The engine is reached through the four C functions in
 [`../ffi`](../ffi/AGENTS.md) and nothing else - no image work and no PDF work belongs in
 here.
 
@@ -113,14 +113,17 @@ ScanList ──"New scan"──▶ Scan.create() ──▶ ScanFlow
    ▼
 ScanFlow - one screen, and it switches on what the files say
    ├─ shooting ─▶ the camera        "Scan 7 pages" ─┐
+   ├─ takeover   one answer being applied to every page
+   ├─ adjusting  one page, in AdjustView
    ├─ scanning ◀───────────────────────────────────-┘   the drain, below
    ├─ ready      the pages, one per swipe           "Make PDF" ─▶ scan.pdf
    └─ done       Open PDF │ Change pages
 ```
 
-`ScanFlow` owns one piece of view state that decides a screen, `shooting`. Everything
-else it shows is read from the files; `photos` and `pages` are a copy for SwiftUI to
-redraw on, refreshed at every moment the files change, never a second truth.
+`ScanFlow` owns three pieces of view state that decide a screen - `shooting`,
+`applyingAll` and `adjusting`. Everything else it shows is read from the files; `photos`
+and `pages` are a copy for SwiftUI to redraw on, refreshed at every moment the files
+change, never a second truth.
 
 - **The screen is not `scan.state` alone.** A photo the engine refuses stays unscanned
   for ever, so the scan would sit in front of a progress bar that can never move again.
@@ -218,8 +221,9 @@ actions and hands the screen numbers.
   files. That is not tidiness: while the drain writes, a listing inside a body answers
   differently twice in one frame and SwiftUI never settles - the screen sat in front of a
   finished scan for ever. The drain was fixed for that first; this screen was built that
-  way. `makePDF()` is the one deliberate exception and reads the pages straight off the
-  disk, because a cache one refresh behind would leave a page out of the PDF.
+  way. `makePDF()` and `everyPage()` are the deliberate exceptions and read the numbers
+  straight off the disk, because a cache one refresh behind would leave a page out of the
+  PDF, or out of the run that has to cover every page.
 - **The position is counted, the number is printed.** "Page 3 of 12" counts the carousel;
   the tile says the file's own number. A page deleted in the middle keeps its gap for
   ever, so the two disagree from the first delete on, and the jump takes the counted one -
