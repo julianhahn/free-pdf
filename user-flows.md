@@ -316,8 +316,10 @@ client owns the order. This screen is where the tools become reachable.
 Adjust always comes **after** the automatic run. You fix a page you can already see
 instead of guessing settings for a page you have not seen.
 
-The principle from the engine docs holds: **suggest, then apply**. Every control opens
-sitting on the value the engine suggested. The user moves it or leaves it.
+The principle from the engine docs holds: **suggest, then apply**. The engine seeds a
+page once, and after that the tools open on what was last applied. The user moves a
+value or leaves it, and **Back to the suggestion** is the way back to the engine's own
+answer.
 
 There is **no live preview**. You set the values, tap Apply, wait about a second, and
 look at the result. The picture on this screen is the page as it stands now. One code

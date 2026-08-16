@@ -252,10 +252,14 @@ overrule**:
   edge, because the crop crosses as fractions 0…1 and nothing outside the picture can be
   said.
 
-Every control opens on the engine's own answer: `freepdf_suggest_adjustments` asks what the
-automatic run would have done and hands back the corners, the angle, the two levels points
-and the three note flags ([`../ffi/AGENTS.md`](../ffi/AGENTS.md)). **Back to the suggestion**
-puts that tool's part of it back, so the label is true. Three rules fall out of it:
+The engine seeds a page once, and after that the controls open on what was last applied:
+`freepdf_suggest_adjustments` asks what the automatic run would have done and hands back
+the corners, the angle, the two levels points and the three note flags
+([`../ffi/AGENTS.md`](../ffi/AGENTS.md)), and the page's `state/NNNN.txt` wins over it
+wherever there is one. The suggestion is still asked for on every open, because its two
+notes are about the photo rather than about the values, and **Back to the suggestion**
+puts that tool's part of the engine's answer back, so the label is true. Three rules fall
+out of it:
 
 - **Nothing can be moved before the answer arrives, and no page opens without one.** The
   call runs in the screen's own `.task`, after the two files have been measured, because

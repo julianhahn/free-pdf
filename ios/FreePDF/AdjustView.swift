@@ -5,10 +5,11 @@
 //  re-runs the recipe from `photo/NNNN.jpg` with the values below and replaces the page
 //  file whole ([`../../user-flows.md`](../../user-flows.md) section 7).
 //
-//  Every control opens on what the engine would have done by itself
-//  (`freepdf_suggest_adjustments`), and "Back to the suggestion" puts exactly that back:
-//  suggest, then apply. A photo the engine cannot read means the page cannot be adjusted
-//  at all, and the screen says so instead of opening on zeros.
+//  The engine seeds a page once - `freepdf_suggest_adjustments`, what it would have done
+//  by itself - and after that the controls open on what was last applied, out of the
+//  page's `state/NNNN.txt`. "Back to the suggestion" puts the engine's own answer back on
+//  one tool, which is the only way back to it. A photo the engine cannot read means the
+//  page cannot be adjusted at all, and the screen says so instead of opening on zeros.
 //
 //  Like the pages, this screen never lists a directory: the numbers come in from
 //  `ScanFlow` and the two files it reads are named, not searched for.
@@ -27,6 +28,10 @@ struct AdjustView: View {
     /// The scan's Grey switch, carried through: applying without it would quietly
     /// un-grey the page.
     let grey: Bool
+    /// What the user last asked for on this page, read out of `state/NNNN.txt` by
+    /// `ScanFlow`. `nil` the first time a page is adjusted, and then the engine's
+    /// suggestion is what the controls open on.
+    let stored: Engine.Adjustments?
     /// True while one page is being written. Nothing moves; Apply says so and Cancel is
     /// refused, because stopping halfway would leave a half-written page.
     let applying: Bool
@@ -110,7 +115,9 @@ struct AdjustView: View {
                 suggestion = try await Task.detached(priority: .userInitiated) {
                     try Engine.suggest(file)
                 }.value
-                seed(nil)
+                // The suggestion is asked for on every open whatever the state file
+                // says: its two notes are about the photo, not about the values.
+                seed(nil, from: stored)
             } catch {
                 refusal = error.localizedDescription
             }
@@ -356,11 +363,17 @@ struct AdjustView: View {
     ///
     /// Pixels become fractions here, the one way round from `values` below: the corners
     /// against the photo, 0…255 back into the sliders' percent.
-    private func seed(_ only: Tool?) {
+    private func seed(_ only: Tool?, from stored: Engine.Adjustments? = nil) {
         guard let s = suggestion else { return }
-        let all = s.values
+        // The engine seeds a page once. After that the screen opens on what was last
+        // applied, which is what `state/NNNN.txt` is for - "Back to the suggestion"
+        // passes nothing here and is the one way back to the engine's own answer.
+        let all = stored ?? s.values
         if only == nil || only == .edges {
-            let measured = s.foundASheet && photoSize.width > 0 && photoSize.height > 0
+            // The corners of a stored line were measured on this same photo, which
+            // never changes, so they need no second opinion from the engine.
+            let measured = (stored != nil || s.foundASheet)
+                && photoSize.width > 0 && photoSize.height > 0
             sheet = measured
                 ? stride(from: 0, to: 8, by: 2).map {
                       CGPoint(x: Double(all.corners[$0]) / photoSize.width,
@@ -378,9 +391,17 @@ struct AdjustView: View {
             tones = all.adjustTheTones
         }
         if only == nil || only == .sharpen { sharpen = Double(all.sharpenRadius) }
-        if only == nil || only == .crop { box = Self.wholePicture }
-        // The turn the page already has sits in its photo's orientation, so the
-        // engine's 0 is the truth here: 0 means no *further* turn.
+        if only == nil || only == .crop {
+            // A stored box is the cut the last Apply was told to make, so the handles
+            // come back where they were left. Without one there is no cut yet.
+            box = all.cropWidth > 0 && all.cropHeight > 0
+                ? [CGPoint(x: Double(all.cropX), y: Double(all.cropY)),
+                   CGPoint(x: Double(all.cropX + all.cropWidth), y: Double(all.cropY)),
+                   CGPoint(x: Double(all.cropX + all.cropWidth),
+                           y: Double(all.cropY + all.cropHeight)),
+                   CGPoint(x: Double(all.cropX), y: Double(all.cropY + all.cropHeight))]
+                : Self.wholePicture
+        }
         if only == nil || only == .turn { turns = Int(all.quarterTurns) }
     }
 

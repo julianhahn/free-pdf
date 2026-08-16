@@ -70,6 +70,7 @@ struct ScanFlow: View {
                            page: scan.pageURL(adjusting),
                            position: (numbers.firstIndex(of: adjusting) ?? 0) + 1,
                            grey: adjustGrey,
+                           stored: scan.readState(adjusting),
                            applying: applyingOne,
                            message: message,
                            onCancel: { self.adjusting = nil; message = nil },
@@ -288,7 +289,7 @@ struct ScanFlow: View {
         let photo = scan.photoURL(number)
         let page = scan.pageURL(number)
         do {
-            try await Task.detached(priority: .userInitiated) {
+            let asked = try await Task.detached(priority: .userInitiated) { () -> Engine.Adjustments in
                 var mine = values
                 var own = own
                 // The turn goes on the photo, not on the page. The page is rebuilt from
@@ -312,7 +313,19 @@ struct ScanFlow: View {
                     }
                 }
                 try Engine.adjustPage(photo, into: page, mine)
+                return mine
             }.value
+            // The page first, its sidecar second, and that order is the whole safety
+            // argument. Killed before the rename: the old page and the old instruction,
+            // nothing happened. Killed in between: the new page with the previous
+            // instruction, so the user redoes one nudge - nothing is corrupt and no
+            // screen lies, because `Scan.state` never reads this file. The reverse skew,
+            // a sidecar ahead of its page, cannot happen.
+            //
+            // What is stored is what was really sent: on an all-pages run each page
+            // writes its own re-asked corners, not the corners of the page the user was
+            // looking at.
+            scan.writeState(number, asked)
             return true
         } catch {
             message = error.localizedDescription
