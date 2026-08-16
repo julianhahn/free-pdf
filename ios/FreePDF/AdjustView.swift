@@ -78,6 +78,9 @@ struct AdjustView: View {
     /// What the engine said about a preview that failed, in its own sentence. The last
     /// good picture stays up under it.
     @State private var previewFailure: String?
+    /// Which corner is under the finger right now, and so where the magnifier is. `nil`
+    /// between drags, which is when there is no magnifier at all.
+    @State private var held: Int?
 
     private static let wholePicture = [CGPoint(x: 0, y: 0), CGPoint(x: 1, y: 0),
                                        CGPoint(x: 1, y: 1), CGPoint(x: 0, y: 1)]
@@ -237,7 +240,7 @@ struct AdjustView: View {
             // well - otherwise a crop box dragged onto the bottom is cut off the side.
             let upright = quarter % 2 == 0
             let inner = upright ? geo.size : CGSize(width: geo.size.height, height: geo.size.width)
-            PageImage(url: tool == .edges ? photo : (previewFile ?? page))
+            PageImage(url: drawn)
                 .overlay {
                     switch tool {
                     case .edges: handles($sheet, colour: Token.Palette.accent)
@@ -252,6 +255,13 @@ struct AdjustView: View {
         .aspectRatio(aspect, contentMode: .fit)
         .frame(maxWidth: .infinity)
         .background(Token.Palette.paper, in: RoundedRectangle(cornerRadius: Token.Size.radiusLg))
+    }
+
+    /// The file the picture draws, and the one the magnifier draws again: the photo under
+    /// Edges, because its corners are photo pixels, and otherwise what the values would
+    /// make of the page, falling back to the page on disk until the first preview lands.
+    private var drawn: URL {
+        tool == .edges ? photo : (previewFile ?? page)
     }
 
     /// How far the picture on screen is turned - only the turns added since the last
@@ -274,7 +284,8 @@ struct AdjustView: View {
         return quarter % 2 == 0 ? file.width / file.height : file.height / file.width
     }
 
-    /// Four draggable corners over the picture.
+    /// Four draggable corners over the picture, and while one is held, the magnifier that
+    /// makes it aimable.
     private func handles(_ points: Binding<[CGPoint]>, colour: Color) -> some View {
         GeometryReader { geo in
             ForEach(0..<4, id: \.self) { i in
@@ -285,13 +296,59 @@ struct AdjustView: View {
                     .position(x: points.wrappedValue[i].x * geo.size.width,
                               y: points.wrappedValue[i].y * geo.size.height)
                     .gesture(DragGesture().onChanged { move in
+                        held = i
                         points.wrappedValue[i] = CGPoint(x: move.location.x / geo.size.width,
                                                          y: move.location.y / geo.size.height)
-                    })
+                    }.onEnded { _ in held = nil })
                     .accessibilityLabel(Self.cornerNames[i])
                     .accessibilityHint("Swipe up or down to move it.")
             }
+            // Over the handles, because it is the thing being read while one is held.
+            if let held, refusal == nil, suggestion != nil {
+                magnifier(at: points.wrappedValue[held], in: geo.size)
+            }
         }
+    }
+
+    /// The picture under the held corner, blown up beside the finger with a crosshair on
+    /// the corner itself - a handle sits under the fingertip that drags it, so without
+    /// this the user aims at what he cannot see. Julian's decision, 2026-08-16.
+    ///
+    /// It is the same file the picture draws, drawn again at the same size and scaled
+    /// about the corner, so it can never disagree with what is underneath. It is
+    /// decoration: it takes no touch and a screen reader never announces it, and the four
+    /// corner names stay the way a corner is moved without sight.
+    private func magnifier(at corner: CGPoint, in size: CGSize) -> some View {
+        let at = CGPoint(x: corner.x * size.width, y: corner.y * size.height)
+        let zoom = Token.Number.magnifierZoom
+        let lift = Token.Size.magnifierLift
+        // Above the finger, unless the finger is at the top of the picture and there is
+        // no room - then below it, which is the only other side that is never covered.
+        let side: CGFloat = at.y > lift ? -1 : 1
+        return Circle()
+            .fill(Token.Palette.paper)
+            .overlay {
+                PageImage(url: drawn)
+                    .frame(width: size.width, height: size.height)
+                    .scaleEffect(zoom)
+                    .offset(x: (size.width / 2 - at.x) * zoom,
+                            y: (size.height / 2 - at.y) * zoom)
+            }
+            .overlay {
+                Group {
+                    Rectangle().frame(width: Token.Size.magnifierCross,
+                                      height: Token.Size.ruleStrong)
+                    Rectangle().frame(width: Token.Size.ruleStrong,
+                                      height: Token.Size.magnifierCross)
+                }
+                .foregroundStyle(Token.Palette.accent)
+            }
+            .clipShape(Circle())
+            .overlay(Circle().stroke(Token.Palette.divider, lineWidth: Token.Size.hairlineW))
+            .frame(width: Token.Size.magnifier, height: Token.Size.magnifier)
+            .position(x: at.x, y: at.y + side * lift)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 
     private static let cornerNames = ["Top left corner", "Top right corner",

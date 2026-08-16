@@ -230,6 +230,12 @@ enum Token {
         static let iconEmpty: CGFloat = 30
         /// --viewfinder-corner
         static let viewfinderCorner: CGFloat = 26
+        /// --magnifier
+        static let magnifier: CGFloat = 88
+        /// --magnifier-lift
+        static let magnifierLift: CGFloat = 72
+        /// --magnifier-cross
+        static let magnifierCross: CGFloat = 13
     }
 
     enum Number {
@@ -251,6 +257,8 @@ enum Token {
         static let weightBody: CGFloat = 400
         /// --viewfinder-corner-inset
         static let viewfinderCornerInset: CGFloat = 0.06
+        /// --magnifier-zoom
+        static let magnifierZoom: CGFloat = 2.5
         /// --page-ratio
         static let pageRatio: CGFloat = 0.75
     }

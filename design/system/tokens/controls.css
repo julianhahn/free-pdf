@@ -10,5 +10,9 @@
 --icon-empty:30px; /* the icon above an empty state */
 --viewfinder-corner:26px;      /* the length of one arm of a viewfinder corner mark */
 --viewfinder-corner-inset:0.06; /* how far in from the frame, as a fraction of it */
+--magnifier:88px;      /* the loupe under a dragged corner: about a fingertip across */
+--magnifier-lift:72px; /* how far from the fingertip it sits, so the finger never covers it */
+--magnifier-cross:13px;/* one arm of the crosshair in it - the thing that is aimed with */
+--magnifier-zoom:2.5;  /* how much bigger the picture is inside it */
 --page-ratio:3/4; /* @kind other */
 }
