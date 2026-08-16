@@ -660,9 +660,8 @@ component, including its refused state. `/Users/julianhahn/free-pdf/user-flows.m
   first step, so a new corner means straighten, the cap, the turn and the crop are all applied
   again on top of it, and the preview from task 26 shows that, not the old picture with new
   dots. The stored crop composes as task 22 says; nothing about composition changes here.
-  The angle is also re-*measured* against the new corners while the number on the slider is
-  still the engine's, because an angle read off another sheet is the wrong angle; a number
-  the user set by hand stays his.
+  The angle and the two tone points are also re-*measured* against the new corners,
+  replacing whatever is showing.
 - VoiceOver is unchanged: the four corner names stay, and the magnifier is decoration a screen
   reader never announces.
 

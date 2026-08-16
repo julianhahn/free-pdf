@@ -10,10 +10,12 @@
 //  The engine seeds a page once - `freepdf_suggest_adjustments`, what it would have done
 //  by itself - and after that the controls open on what was last applied, out of the
 //  page's `state/NNNN.txt`. "Back to the suggestion" puts the engine's own answer back on
-//  one tool, which is the only way back to it. The one exception is the angle: it only
-//  means something against one set of corners, so moving the sheet re-measures it while the
-//  number on the slider is still the engine's. A photo the engine cannot read means the
-//  page cannot be adjusted at all, and the screen says so instead of opening on zeros.
+//  one tool, which is the only way back to it. The exception is what the engine measures
+//  for itself - the straightening angle and the two tone points - which only mean something
+//  against one set of corners, so moving the sheet measures them again and replaces what is
+//  showing, whether the engine put it there or the user did. A photo the engine cannot read
+//  means the page cannot be adjusted at all, and the screen says so instead of opening on
+//  zeros.
 //
 //  Like the pages, this screen never lists a directory: the numbers come in from
 //  `ScanFlow` and the two files it reads are named, not searched for.
@@ -83,17 +85,23 @@ struct AdjustView: View {
     /// Which corner is under the finger right now, and so where the magnifier is. `nil`
     /// between drags, which is when there is no magnifier at all.
     @State private var held: Int?
-    /// The angle as it was last put on the slider by the engine, and the sheet that
-    /// number was measured against.
+    /// The sheet the numbers on screen were measured against.
     ///
-    /// A straightening angle only means something against one set of corners - the
-    /// engine reads the tilt off the picture *after* it has been pulled flat - so an
-    /// angle measured on the engine's sheet is the wrong angle for the user's. While
-    /// `angle` is still `seededAngle`, moving a corner asks the engine again; a number
-    /// the user set by hand is his and nothing overwrites it. `nil` means the angle
-    /// belongs to no sheet on screen, so the next settle measures one.
-    @State private var seededAngle = 0.0
-    @State private var angleFor: ([CGPoint], Bool)?
+    /// The angle and the two levels points only mean something against one set of
+    /// corners, because the engine reads the tilt and the tone points off the picture
+    /// *after* it has been pulled flat. When this no longer matches the corners on
+    /// screen the engine is asked again and its numbers replace the ones showing, hand
+    /// set or not: a number set against corners the user then moved describes an image
+    /// the app no longer makes (Julian, 2026-08-16). `nil` means they belong to no sheet
+    /// on screen, so the next settle measures one.
+    @State private var measuredFor: ([CGPoint], Bool)?
+
+    /// True while the numbers on screen belong to a sheet that is no longer on screen.
+    /// It gates the re-measure and it holds Apply, so a tap straight after a corner
+    /// drag cannot write the numbers the drag just made wrong.
+    private var measuredForAnotherSheet: Bool {
+        measuredFor.map { $0.0 != sheet || $0.1 != pullFlat } ?? true
+    }
 
     private static let wholePicture = [CGPoint(x: 0, y: 0), CGPoint(x: 1, y: 0),
                                        CGPoint(x: 1, y: 1), CGPoint(x: 0, y: 1)]
@@ -170,9 +178,9 @@ struct AdjustView: View {
         guard suggestion != nil else { return }
         try? await Task.sleep(for: .milliseconds(Self.settle))
         guard !Task.isCancelled else { return }
-        if angle == seededAngle, angleFor.map({ $0.0 != sheet || $0.1 != pullFlat }) ?? true {
+        if measuredForAnotherSheet {
             let before = previewValues
-            await measureTheAngle()
+            await measureAgain()
             // A new number re-keys `task(id:)` and that run draws the picture. If it came
             // back the same number nothing was re-keyed, so this run draws it instead. A
             // settled drag costs two engine passes at most, never one per frame.
@@ -204,37 +212,47 @@ struct AdjustView: View {
         }
     }
 
-    /// The straightening angle measured again, against the corners now on screen.
+    /// What the engine measures for itself, measured again against the corners now on
+    /// screen: the straightening angle and the two tone points.
     ///
-    /// Julian found this on a real phone: move the corners, tap Apply, and the page comes
-    /// back framed his way and still crooked. The angle he was sending was measured on the
-    /// engine's own sheet - usually 0.0° once auto-detection was good - which is a
-    /// measurement of a picture the app no longer makes.
+    /// Julian found this on a real phone: the common case is that find-page cut his page
+    /// off, so he opens Adjust on Edges, puts the four crosshairs on the real corners and
+    /// taps Apply without ever seeing another tab. Apply has to give him the page the
+    /// automatic run would have made if find-page had found those corners itself - so
+    /// every number the engine measures for itself is measured again. The angle was read
+    /// off the engine's own frame; the black and white points were read off the pixels
+    /// inside that frame, which caught the desk. Both describe a picture the app no
+    /// longer makes.
     ///
-    /// Only while the number on the slider is still the engine's: a number the user set by
-    /// hand is his, and this never touches it.
-    ///
-    /// ponytail: straighten only. The two levels points are stale in exactly the same way -
-    /// the engine reads them off the straightened picture - and the upgrade is this same
-    /// call, reading `black` and `white` out of the answer too.
-    private func measureTheAngle() async {
+    /// This replaces the numbers whether the engine put them there or the user nudged
+    /// them (Julian, 2026-08-16). A number set by hand against corners he then moved is
+    /// not his any more. From here he is back to nudging.
+    private func measureAgain() async {
         let source = photo, asked = values
         do {
             let fresh = try await Task.detached(priority: .userInitiated) {
                 try Engine.suggest(source, for: asked)
             }.value
             guard !Task.isCancelled else { return }
-            // Never into `suggestion`: `shiftedLevels` shifts from its two points and
-            // "Back to the suggestion" needs its corners, so it stays the engine's own
-            // answer about its own sheet.
+            // The whole answer, not a piece of it. Asked about the user's sheet the
+            // engine hands back its own found corners, its own switch and its three
+            // notes unchanged - only the angle, the two tone points and the tones
+            // switch are measured against what it was given. So this is still the
+            // engine's own answer, now about the sheet on screen, and "Back to the
+            // suggestion" reads exactly the same corners it read before.
+            suggestion = fresh
             angle = Double(fresh.values.straightenDegrees)
-            seededAngle = angle
-            angleFor = (sheet, pullFlat)
+            black = Self.percent(fresh.values.black)
+            white = Self.percent(fresh.values.white)
+            tones = fresh.values.adjustTheTones
         } catch {
             // The engine's sentence, exactly as a failed preview shows it, last good
             // picture up.
             previewFailure = error.localizedDescription
         }
+        // Set whether it worked or not: a photo the engine refuses must not leave Apply
+        // dead forever, and Apply would show the same sentence anyway.
+        measuredFor = (sheet, pullFlat)
     }
 
     /// How long a value has to sit still before the engine is asked, in milliseconds. A
@@ -274,7 +292,7 @@ struct AdjustView: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
             Button(applying ? "Applying…" : "Apply") { onApply(values, allPages) }
-                .disabled(applying || suggestion == nil)
+                .disabled(applying || suggestion == nil || measuredForAnotherSheet)
                 .accessibilityHint("Rewrites this page from its photo.")
         }
     }
@@ -575,14 +593,7 @@ struct AdjustView: View {
             // picture it would send four corners the engine refuses, every time.
             pullFlat = all.pullTheSheetFlat && measured
         }
-        if only == nil || only == .straighten {
-            angle = Double(all.straightenDegrees)
-            seededAngle = angle
-            // "Back to the suggestion" on Straighten puts back a number the engine
-            // measured against *its own* sheet, not the corners on screen, so it is
-            // marked as belonging to no sheet and the next settle measures it properly.
-            angleFor = only == .straighten ? nil : (sheet, pullFlat)
-        }
+        if only == nil || only == .straighten { angle = Double(all.straightenDegrees) }
         if only == nil || only == .brightness {
             black = Self.percent(all.black)
             white = Self.percent(all.white)
@@ -597,6 +608,12 @@ struct AdjustView: View {
             box = Self.wholePicture
         }
         if only == nil || only == .turn { turns = Int(all.quarterTurns) }
+        // Only a full seed. On open the screen has to show what was last applied without
+        // spending an engine pass or overwriting the stored numbers. "Back to the
+        // suggestion" on Straighten or Brightness puts back numbers that are already the
+        // engine's answer for the sheet on screen, so it needs no forced re-measure; on
+        // Edges it moves `sheet` and leaves this behind, which fires one by itself.
+        if only == nil { measuredFor = (sheet, pullFlat) }
     }
 
     // MARK: - The values

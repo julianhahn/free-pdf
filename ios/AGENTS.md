@@ -260,12 +260,15 @@ the corners, the angle, the two levels points and the three note flags
 ([`../ffi/AGENTS.md`](../ffi/AGENTS.md)), and the page's `state/NNNN.txt` wins over it
 wherever there is one. The suggestion is still asked for on every open, because its two
 notes are about the photo rather than about the values, and **Back to the suggestion**
-puts that tool's part of the engine's answer back, so the label is true. There is one
-exception, and it is the angle: an angle only means something against one set of corners,
-because the engine reads the tilt off the picture **after** it was pulled flat. So while
-the number on the slider is still the engine's, moving the sheet corners asks the engine
-for the angle again, against those corners - a number the user set by hand is his and is
-never overwritten. Three rules fall out of it:
+puts that tool's part of the engine's answer back, so the label is true. The exception is
+what the engine measures for itself - the straightening angle and the two tone points -
+which only mean something against one set of corners, because the engine reads the tilt
+and the tone points off the picture **after** it was pulled flat. So moving the sheet
+corners asks the engine for them again, against those corners, and its numbers replace
+what is on screen, whether the engine put it there or the user did (Julian, 2026-08-16:
+the common flow never leaves the Edges tab, so Apply has to run the automatic steps
+again). Crop, turn, grey and the flat switch are the user's and are kept. Four rules fall
+out of it:
 
 - **Nothing can be moved before the answer arrives, and no page opens without one.** The
   call runs in the screen's own `.task`, after the two files have been measured, because
@@ -273,6 +276,10 @@ never overwritten. Three rules fall out of it:
   photo has been measured. If the engine refuses the photo, its sentence is the screen and
   Apply stays dead - a page whose photo is gone cannot be adjusted at all, and the pages
   screen already leaves **Adjust page** out of the menu for exactly those pages.
+- **Apply is refused while the numbers belong to a sheet that is no longer on screen.**
+  From the moment a corner moves until the re-measure lands, Apply is dead, because
+  `write` stores exactly what it sent - a tap in that gap would run and record numbers
+  the drag itself had just made wrong.
 - **Every tool shows what it would do.** A debounced run of the engine's own recipe into a
   scratch file under the system's temporary directory - never `photo/`, `page/`, `state/`
   or `scan.pdf`, so `sweep()` never sees it - draws the page the current values would

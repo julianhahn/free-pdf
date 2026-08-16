@@ -213,11 +213,13 @@ let reused = call { error, size in
 }
 precondition(reused.status == 0, "the suggested values were refused: \(reused.message)")
 
-// 5c - the angle is measured against the sheet it was handed. The same photo asked
-// twice: once with NULL, which is the engine's own sheet, and once with a sheet turned
-// a few degrees off it. Turned corners mean writing that comes out turned, so the two
-// answers cannot be the same number. If they are, the corners handed in were ignored,
-// and the app would put an angle on the slider that belongs to a page it never makes.
+// 5c - the angle AND the two tone points are measured against the sheet it was handed.
+// The same photo asked twice: once with NULL, which is the engine's own sheet, and once
+// with a sheet turned a few degrees off it. Turned corners mean writing that comes out
+// turned, so the two answers cannot be the same number. If they are, the corners handed
+// in were ignored, and the app would put an angle on the slider that belongs to a page
+// it never makes. The Adjust screen puts the whole answer back on its controls when the
+// corners move, so the tone points have to follow the handed-in sheet as well.
 var turnedSheet = suggestion.values
 turnedSheet.pull_the_sheet_flat = 1
 let middle = (x: (corners[0] + corners[2] + corners[4] + corners[6]) / 4,
@@ -241,6 +243,16 @@ precondition(asked.status == 0, "suggesting for the caller's own sheet failed: \
 precondition(forTheirSheet.values.straighten_degrees != suggestion.values.straighten_degrees,
              "a sheet turned six degrees came back with the same straightening angle "
              + "(\(suggestion.values.straighten_degrees)), so the corners handed in were ignored")
+// The tone points are read off the picture after that same deskew and that same
+// straightening, so a sheet turned six degrees puts different pixels inside the paper
+// and cannot come back with both points unchanged. If it does, `suggest_levels` is
+// being run before the handed-in corners reach the deskew, and Adjust would send
+// Apply a black and a white point measured on the frame the user just corrected.
+precondition(forTheirSheet.values.black != suggestion.values.black
+             || forTheirSheet.values.white != suggestion.values.white,
+             "a sheet turned six degrees came back with the same tone points "
+             + "(black \(suggestion.values.black), white \(suggestion.values.white)), "
+             + "so the levels were not measured against the corners handed in")
 // And the corners handed back stay the engine's own, whichever sheet was asked about:
 // that is what "Back to the suggestion" reads.
 let theirCorners = withUnsafeBytes(of: forTheirSheet.values.corners) { Array($0.bindMemory(to: Float.self)) }
