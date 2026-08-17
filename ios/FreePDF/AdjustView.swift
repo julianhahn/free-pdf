@@ -653,9 +653,12 @@ struct AdjustView: View {
                               y: Double(all.corners[$0 + 1]) / photoSize.height)
                   }
                 : Self.wholePicture
-            // The switch needs the same guard as the corners: armed over the whole
-            // picture it would send four corners the engine refuses, every time.
-            pullFlat = all.pullTheSheetFlat && measured
+            // Julian, 2026-08-17: the switch opens on whether corners were measured at
+            // all, not on whether the engine approves of them - its veto is true on
+            // almost every photo, and the handles are on screen to be dragged before
+            // Apply. A stored answer is the user's own and is kept; the guard against
+            // arming over the whole picture stays, there are no corners to send.
+            pullFlat = stored != nil ? all.pullTheSheetFlat : measured
         }
         if only == nil || only == .straighten { angle = Double(all.straightenDegrees) }
         if only == nil || only == .brightness {

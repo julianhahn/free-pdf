@@ -64,6 +64,7 @@ themselves are drawn by Storybook.
 | 27 | iOS: the jump appears from ten pages — DONE | 17 | bash ios/check/scan_check.sh, by hand |
 | 28 | iOS: the typed name is the scan's name — DONE | 19 | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
 | 29 | The sheet is found by its edges, not by its brightness — DONE | - | cargo test --workspace, bash ffi/bridge_check.sh, by eye on real photos |
+| 30 | iOS: Pull the sheet flat starts on — DONE | 29 | bash ios/check/scan_check.sh, by hand |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -878,6 +879,50 @@ chopped letterhead, no cut-through text, no desk left in a corner. A number is n
 substitute for that look.
 
 **Blocked by.** Nothing.
+
+---
+
+## 30. iOS: Pull the sheet flat starts on - Julian, 2026-08-17
+
+**Why.** Julian's decision on 2026-08-17: the switch is on when the screen opens. Today
+`/Users/julianhahn/free-pdf/ios/FreePDF/AdjustView.swift`, `seed(_:)`, reads
+
+```swift
+pullFlat = all.pullTheSheetFlat && measured
+```
+
+and the left half is the engine's veto. While task 29 is unbuilt that veto is true on almost
+every photo, so the one control that would cut the page opens switched off and the user has to
+know to turn it on. He should not have to.
+
+**Build.** The switch opens on whether corners were measured at all, not on whether the engine
+approves of them. The switch stays - turning it off is how a photo the engine is right about is
+handled - and nothing else about the screen changes.
+
+**Do not.** Do not touch `runs_off_the_picture`, `scan_page` or anything in `core_engine` and
+`ffi`; this is the Adjust screen and nothing else. The automatic run keeps the engine's own
+judgement, so a page written by the drain is unaffected. Do not remove the switch, and do not
+apply anything without Apply.
+
+**Why it is safe even with wrong corners.** Adjust draws the four handles before Apply is
+pressed, so a corner the engine got wrong is on screen and can be dragged. The user sees what
+will be cut. That is the whole difference from the automatic run, and it is why this is not a
+second version of the reverted tolerance in task 29.
+
+**Blocked by.** 29 - once the corners are the paper's, this stops being a workaround and
+becomes the honest default. Building it earlier is allowed and only makes today's manual step
+unnecessary; say in the report which of the two situations it was built in.
+
+**Built before 29 and now standing behind it.** The switch was flipped first, so for one run it was
+the workaround; task 29 landed the same day and made it the honest default - `runs_off_the_picture`
+is false on all twelve real photos, so the engine's own judgement no longer vetoes anything here.
+One deviation from the text above: the engine's veto was dropped only from the *suggestion* path,
+`pullFlat = stored != nil ? all.pullTheSheetFlat : measured`. A plain `pullFlat = measured` would
+overwrite a stored "off" and break task 21's rule that the tools open on what was last applied.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by
+hand on a phone: open Adjust on a page, the switch reads on, Apply cuts the page without
+touching the switch first.
 
 ---
 
