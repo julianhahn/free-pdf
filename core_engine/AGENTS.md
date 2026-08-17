@@ -92,7 +92,8 @@ Why the page path exists at all, so nobody simplifies it away later:
 
 ## Limits, not bugs
 
-Finding the sheet goes by brightness, so a document on a white desk breaks it. That is recorded
-as a `ponytail:` note in `src/paper.rs` with the way up; do not paper over it with a threshold.
-HEIC decoding stays out of this crate, the client's own system does it. And widening
+Finding the sheet starts from brightness and then follows the edges of the paper, so a document
+on a white desk still breaks it: there is no step from paper to desk for a ray to stop on. That
+is recorded as a `ponytail:` note in `src/paper.rs` with the way up; do not paper over it with a
+threshold. HEIC decoding stays out of this crate, the client's own system does it. And widening
 `MOST_TILT` is not how a page held sideways gets fixed; that is `rotate`.

@@ -7,8 +7,8 @@ root:
 cargo test --workspace
 ```
 
-38 tests are in this file. Five more are in `backend-core-runner/src/main.rs`, three of them
-only on macOS, and three in `ffi/src/lib.rs`, so the workspace shows 46 green on a Mac and 43
+42 tests are in this file. Five more are in `backend-core-runner/src/main.rs`, three of them
+only on macOS, and three in `ffi/src/lib.rs`, so the workspace shows 50 green on a Mac and 47
 elsewhere. A different number means something else was touched. [`../../README.md`](../../README.md) prints both counts
 under "Start here" - move them with the count, in the same commit.
 
@@ -76,4 +76,13 @@ run red in a file that looks unrelated. Run it by hand:
 
 ```sh
 cargo run -p core_engine --example compare -- original.jpeg edited.jpeg
+```
+
+[`../examples/mask.rs`](../examples/mask.rs) is not a test either, and the same warning
+applies: it calls `core_engine::load_image` and `core_engine::find_paper`. It paints what
+`find_paper` calls the paper over the photo, which is the only honest way to check the search -
+a mask is looked at, not counted. Run it by hand and open the PNG:
+
+```sh
+cargo run -p core_engine --example mask -- photo.jpeg overlay.png
 ```

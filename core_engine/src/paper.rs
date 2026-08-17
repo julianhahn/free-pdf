@@ -38,12 +38,16 @@ pub struct Point {
 /// is on the paper - which the box cannot do: a sheet photographed at even a
 /// slight angle has background in the corners of its box, and a handful of dark
 /// table pixels in there is enough to ruin a measurement.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Paper {
     /// The smallest box that holds the whole sheet.
     pub bounds: Rect,
     /// Which pixels are paper, on the shrunk copy the search ran on.
     on_paper: Vec<bool>,
+    /// The corners of the four sides that were fitted to the edges of the sheet,
+    /// on the shrunk copy, when they could be fitted. Nothing when only brightness
+    /// found the sheet, and then [`Self::corners`] falls back to reading the mask.
+    corners: Option<[Point; 4]>,
     width: u32,
     height: u32,
     image_width: u32,
@@ -70,12 +74,24 @@ impl Paper {
     /// whose corners are not the corners of any box, and pulling those four points
     /// into a rectangle is what undoes the perspective.
     ///
-    /// Found as the outermost pixel of the sheet along each diagonal, which for any
-    /// convex shape is a corner. A sheet turned by roughly 45 degrees still gets
-    /// its four corners in the right order round the shape, so straightening still
-    /// works - the result simply comes out turned by the same 45 degrees, since
-    /// nothing here knows which way up the writing is.
+    /// Normally these are the four places where the fitted sides of the sheet
+    /// cross, and they have to come from the sides rather than from any point of
+    /// the mask. A real photographed sheet has rounded or turned-up corners, and
+    /// even the `document_on_a_dark_table` fixture cuts sixty pixels off each
+    /// corner on purpose, so the corner of the paper is often not a pixel of the
+    /// paper at all. Two lines crossing find it anyway.
+    ///
+    /// When no sides could be fitted the answer falls back to the outermost pixel
+    /// of the mask along each diagonal, which for any convex shape is a corner. A
+    /// sheet turned by roughly 45 degrees still gets its four corners in the right
+    /// order round the shape, so straightening still works - the result simply
+    /// comes out turned by the same 45 degrees, since nothing here knows which way
+    /// up the writing is.
     pub fn corners(&self) -> [Point; 4] {
+        if let Some(corners) = self.corners {
+            return corners.map(|corner| self.point_in_full_size(corner));
+        }
+
         let mut top_left = (i32::MAX, 0u32, 0u32);
         let mut top_right = (i32::MIN, 0u32, 0u32);
         let mut bottom_right = (i32::MIN, 0u32, 0u32);
@@ -109,9 +125,18 @@ impl Paper {
     /// so the error is spread evenly instead of always falling outwards onto the
     /// table.
     fn to_full_size(&self, x: u32, y: u32) -> Point {
+        self.point_in_full_size(Point {
+            x: x as f32,
+            y: y as f32,
+        })
+    }
+
+    /// The same for a point that fell between pixels of the shrunk copy, which a
+    /// corner found by crossing two fitted lines always does.
+    fn point_in_full_size(&self, point: Point) -> Point {
         Point {
-            x: (x as f32 + 0.5) * self.image_width as f32 / self.width as f32,
-            y: (y as f32 + 0.5) * self.image_height as f32 / self.height as f32,
+            x: (point.x + 0.5) * self.image_width as f32 / self.width as f32,
+            y: (point.y + 0.5) * self.image_height as f32 / self.height as f32,
         }
     }
 
@@ -157,15 +182,30 @@ const THINNEST_SIDE: f32 = 0.25;
 
 /// Finds the sheet of paper in a photograph.
 ///
-/// It works from two ideas. The paper is brighter than what it lies on, and the
-/// background reaches the edge of the picture while the paper does not have to.
-/// So the dark pixels that can be reached from the border are the background, and
-/// the largest area that is not background is the sheet.
+/// It looks twice, and the second look is the answer. The first is brightness: the
+/// paper is brighter than what it lies on, and the background reaches the edge of
+/// the picture while the paper does not have to, so the dark pixels that can be
+/// reached from the border are the background and the largest area that is not
+/// background is roughly where the sheet is. Going by "not background" rather than
+/// "bright" is what puts the writing back on the paper: letters are dark, but they
+/// are surrounded by paper and never touch the border, so they end up inside the
+/// sheet where they belong. Without that a measurement inside the sheet would never
+/// see any ink.
 ///
-/// Going by "not background" rather than "bright" is what puts the writing back on
-/// the paper: letters are dark, but they are surrounded by paper and never touch
-/// the border, so they end up inside the sheet where they belong. Without that a
-/// measurement inside the sheet would never see any ink.
+/// Roughly is not enough, though. A desk with any shine on it has patches as bright
+/// as the paper lying against the sheet, and they join that area as one lobe. So
+/// the second look asks where the paper *stops*: from inside the rough area it
+/// marches outward along every row and every column until it crosses a step from
+/// paper to table, fits a straight line through where those marches stopped on each
+/// of the four sides, and takes the sheet to be the quadrilateral those four lines
+/// make. A patch of sheen cannot bend one of those lines much and cannot move a
+/// corner at all, because a corner is now where two lines cross rather than the
+/// outermost pixel of a blob.
+///
+/// The two looks stay tied together. The lines are only believed while they agree
+/// with the rough area, the mask is the quadrilateral **and** the rough area, so
+/// neither can claim what the other calls table, and when no line can be fitted the
+/// rough area is the answer on its own, exactly as it was before.
 ///
 /// The result is a **suggestion**, like [`crate::suggest_levels`]: the client is
 /// meant to show the box as a rectangle the user can drag before anything is cut.
@@ -174,10 +214,15 @@ const THINNEST_SIDE: f32 = 0.25;
 /// thin to be a document. It does not judge whether what it found is really paper
 /// - on a picture of something else it returns the largest bright thing in it.
 ///
-/// ponytail: brightness only. A document on a white desk breaks it, because paper
-/// and desk are then the same brightness. Following the edges of the sheet instead
-/// would fix that, and would also give the four corners a deskew needs - worth
-/// doing when either shows up.
+/// Nothing about the sides can turn a sheet into `None`: a client reads `None` as
+/// "leave this photo alone", so a side that cannot be fitted has to fall back to the
+/// rough area rather than refuse the page.
+///
+/// ponytail: the rough area is still brightness only, so a document on a white desk
+/// is still not found - paper and desk are then the same brightness and there is no
+/// step for a ray to stop on either. Fixing that needs the sides to be found from
+/// gradients across the whole picture instead of from inside a blob; worth doing
+/// when someone actually photographs a page on white.
 pub fn find_paper(img: &DynamicImage) -> Option<Paper> {
     let (image_width, image_height) = (img.width(), img.height());
     if image_width == 0 || image_height == 0 {
@@ -194,21 +239,626 @@ pub fn find_paper(img: &DynamicImage) -> Option<Paper> {
 
     let (area, bounds, on_paper) = largest_blob(&candidate, width, height)?;
 
-    let believable = area as f32 >= (width * height) as f32 * SMALLEST_SHARE
-        && bounds.width as f32 >= width as f32 * THINNEST_SIDE
-        && bounds.height as f32 >= height as f32 * THINNEST_SIDE;
-    if !believable {
+    if !believable(area, bounds, width, height) {
         return None;
     }
+
+    let fitted = paper_and_table_levels(&small, &on_paper)
+        .and_then(|levels| sides_of_the_sheet(&small, &on_paper, &background, bounds, &levels))
+        .and_then(|sides| the_sheet_between_the_sides(&sides, &on_paper, width, height));
+    let (bounds, on_paper, corners) = match fitted {
+        Some((bounds, mask, corners)) => (bounds, mask, Some(corners)),
+        None => (bounds, on_paper, None),
+    };
 
     Some(Paper {
         bounds: scale_up(bounds, width, height, image_width, image_height),
         on_paper,
+        corners,
         width,
         height,
         image_width,
         image_height,
     })
+}
+
+/// Whether something of this size and shape can be the document someone
+/// photographed. Asked of the rough area, where it decides between a sheet and
+/// `None`, and again of the quadrilateral, where it only decides whether the four
+/// fitted lines are worth believing.
+fn believable(area: u32, bounds: Rect, width: u32, height: u32) -> bool {
+    area as f32 >= (width * height) as f32 * SMALLEST_SHARE
+        && bounds.width as f32 >= width as f32 * THINNEST_SIDE
+        && bounds.height as f32 >= height as f32 * THINNEST_SIDE
+}
+
+/// How much of the picture's own paper-to-table contrast a step has to cross before
+/// it counts as the edge of the sheet. Well under half, because a shadow along one
+/// side of the paper softens the step there, and well above nothing, because a fold
+/// or a shaded half of the page is a step too.
+const EDGE_SHARE_OF_CONTRAST: f32 = 0.4;
+
+/// The smallest step in brightness that is not simply noise. Shrinking and JPEG
+/// leave a couple of levels of wobble on a flat surface, so a picture of paper on
+/// almost-paper is refused rather than answered from noise.
+const SMALLEST_EDGE_STEP: f32 = 14.0;
+
+/// How far above the table's own level the outside of an edge may still be. The
+/// point of measuring it against the table rather than against the inside is that a
+/// fold or a shadow gives a large step with paper still on both sides of it: the
+/// step alone says nothing, the level the step lands on does.
+const TABLE_SHARE_OF_CONTRAST: f32 = 0.25;
+
+/// How many pixels of the shrunk copy are averaged on each side of a candidate edge.
+/// Three, so a single speck cannot make an edge, and no more, because the shrunk
+/// copy has the whole edge in about two pixels.
+const EDGE_SAMPLES: i32 = 3;
+
+/// How far outward it has to stay table-dark for a step to be the edge of the sheet
+/// rather than something written on it. This is the whole difference between the two:
+/// a line of writing is at most three pixels thick on the shrunk copy and paper comes
+/// back after it, while the table does not come back. Without this the rays down the
+/// columns stop on a block of bold text and every top and bottom line is nonsense.
+const STAYS_DARK: i32 = 10;
+
+/// The share of a side skipped at each end. Corners are where a sheet is rounded,
+/// turned up or cut off, and a ray there stops on the wrong side of the paper, so
+/// the middle four sixths of each side are what the line is fitted through.
+const CORNER_SHARE: f32 = 1.0 / 6.0;
+
+/// How far apart two points have to be along a side before the slope between them is
+/// worth anything. Twenty pixels of the four hundred wide copy: closer than that and
+/// a pixel of wobble at either end swings the slope wildly.
+const SLOPE_SPAN: f32 = 20.0;
+
+/// How far off the line a point may be and still be taken for the edge of the sheet,
+/// in pixels of the shrunk copy. A sheet is never quite flat, so a real edge bows by
+/// a pixel or two along its length and all of it has to be kept. A ray that stopped
+/// somewhere else altogether misses by tens of pixels: on the chamfered corner of the
+/// `document_on_a_dark_table` fixture, or on the side next to the one it was fitting.
+/// Measured on the real photos: anything from six to twenty gives the same four
+/// corners, because nothing lands in between.
+const TRIM_ALLOWANCE: f32 = 12.0;
+
+/// The fewest rays that have to have stopped on a side before a line through them
+/// means anything.
+const FEWEST_EDGE_POINTS: usize = 8;
+
+/// How far from square two crossing sides have to stay. The crossing of a near
+/// vertical and a near horizontal line is a stable point; as the two turn towards
+/// each other the crossing runs off to infinity long before the arithmetic notices,
+/// so a shape that flat is refused instead.
+const SQUARE_ENOUGH: f32 = 0.5;
+
+/// The share of the quadrilateral that has to lie inside the rough area before the
+/// four lines are believed. A sheet fills its own quadrilateral, so anything much
+/// short of all of it means at least one line was fitted to something else.
+const QUAD_INSIDE_THE_ROUGH_AREA: f32 = 0.85;
+
+/// The two ways a quadrilateral can abandon the sheet instead of reaching out onto the
+/// table, which is what [`QUAD_INSIDE_THE_ROUGH_AREA`] catches. Both are needed for one
+/// mistake: a side fitted to something lying *on the page*.
+///
+/// A dark thing across the sheet that also runs off onto the table - a hand holding the
+/// page down, a pen, a phone, the shadow of any of them - passes every test a ray has
+/// for the end of the paper, including being reachable from the edge of the picture, so
+/// the rays through it stop on it, they are the majority of that side, and the whole
+/// side jumps onto the page. Nothing is wrong with the shape that comes out: it is a
+/// clean rectangle well inside the rough area. What is wrong is the bright area left
+/// outside it. Cutting a page short loses writing, which is the one failure this file
+/// may not have, so such a quadrilateral is dropped and the rough area answers instead
+/// - an uncut page is complete.
+///
+/// The first number is the share of one side's *length* that has bright area carrying on
+/// past it, which is what the paper beside the thing shows. Measured: at most 19 % on the
+/// twelve real photos, 23.2 % on the `document_beside_a_patch_of_sheen` fixture, where a
+/// lobe of sheen leans against the sheet and is meant to be left out, and 36 % on the
+/// thing lying across two thirds of the bottom side.
+///
+/// The second is the share of the rough area the shape keeps, which catches the thing
+/// that covers nearly the whole of a side, so that hardly any paper is left beside it to
+/// show: 95.5 % to 100 % on the real photos, 93.2 % on the sheen fixture, and 52.4 % on a
+/// bar right across the page and out to the edge of the picture, whose own length share
+/// is only 7.8 %.
+///
+/// ponytail: between the two there is still room for a thing that covers nearly the
+/// whole of one side and hides only a little paper behind it. What it hides is behind
+/// the thing itself, so nothing readable is lost, and closing that gap needs the page's
+/// real edge to be found through the object, which no arithmetic here can do.
+const SHEET_CARRYING_ON_PAST_A_SIDE: f32 = 0.3;
+const ROUGH_AREA_INSIDE_THE_QUAD: f32 = 0.9;
+
+/// How far past a fitted side the bright area is looked at, in pixels of the shrunk
+/// copy. Not from the line itself, where the edge's own wobble and the outward lean
+/// decide it, and not far, because a side's whole distance from the next one is only a
+/// few hundred.
+const JUST_PAST_A_SIDE: i32 = 4;
+const WELL_PAST_A_SIDE: i32 = 10;
+
+/// How far outward each fitted side is moved, in pixels of the shrunk copy - about
+/// four pixels of a photograph from a phone. The two ways a straight line can miss a
+/// slightly wavy edge are not worth the same: a sliver of desk left inside the page
+/// bends the straightening a little, a hairline taken off the page loses writing. So
+/// the miss is pushed into the harmless direction on purpose. Measured on real
+/// photos, one page had its bottom edge fitted a pixel inside the sheet and lost a
+/// hair of its white margin without this.
+const OUTWARD_BIAS: f32 = 0.5;
+
+/// One side of the sheet, as a straight line across the shrunk copy: `across` is
+/// where the side is at the position `along` down it.
+///
+/// The left and right side run `along` the rows and the top and bottom side along
+/// the columns, so that neither pair ever has to answer for a line that is straight
+/// up and down. One `y = a * x + b` for all four would, and its slope would be
+/// infinite exactly where a photographed page usually is.
+struct Side {
+    slope: f32,
+    offset: f32,
+}
+
+impl Side {
+    fn across(&self, along: f32) -> f32 {
+        self.slope * along + self.offset
+    }
+}
+
+/// What the picture itself says paper and table look like, and the three levels a
+/// ray needs to tell them apart.
+struct EdgeLevels {
+    /// The smallest step from paper to table worth stopping on.
+    step: f32,
+    /// The inside of an edge has to be at least this bright, or it is not paper.
+    paper: f32,
+    /// The outside of an edge has to be at most this bright, or it is not the table.
+    table: f32,
+}
+
+/// The levels, read off this picture rather than fixed: the middle brightness of the
+/// rough area and the middle brightness of everything else. Nothing is fixed for the
+/// same reason [`otsu_threshold`] exists - a dark wood desk and a grey desk want
+/// different numbers and the picture says which.
+///
+/// Nothing comes back when there is no outside to compare with, or when the outside
+/// is not darker than the inside. A picture that is all paper is the honest case of
+/// that, and it wants the rough area as the answer, not a set of lines.
+fn paper_and_table_levels(small: &image::GrayImage, rough: &[bool]) -> Option<EdgeLevels> {
+    let mut inside = [0u32; 256];
+    let mut outside = [0u32; 256];
+    for (index, pixel) in small.pixels().enumerate() {
+        let counts = if rough[index] {
+            &mut inside
+        } else {
+            &mut outside
+        };
+        counts[pixel[0] as usize] += 1;
+    }
+
+    let paper = middle_brightness(&inside)?;
+    let table = middle_brightness(&outside)?;
+    let contrast = paper - table;
+    if contrast <= 0.0 {
+        return None;
+    }
+
+    Some(EdgeLevels {
+        step: (contrast * EDGE_SHARE_OF_CONTRAST).max(SMALLEST_EDGE_STEP),
+        paper: table + contrast / 2.0,
+        table: table + contrast * TABLE_SHARE_OF_CONTRAST,
+    })
+}
+
+/// The brightness half the counted pixels are below. The middle rather than the
+/// average, so the writing on the paper and a shadow on the table pull neither
+/// level towards themselves.
+fn middle_brightness(counts: &[u32; 256]) -> Option<f32> {
+    let total: u64 = counts.iter().map(|&count| u64::from(count)).sum();
+    if total == 0 {
+        return None;
+    }
+
+    let mut seen = 0u64;
+    for (value, &count) in counts.iter().enumerate() {
+        seen += u64::from(count);
+        if seen * 2 >= total {
+            return Some(value as f32);
+        }
+    }
+
+    None
+}
+
+/// Casts one ray per row and one per column and fits a line through where the rays
+/// stopped, giving the left, right, top and bottom side of the sheet.
+///
+/// Each ray starts in the middle of the rough area on its own scanline, so it starts
+/// on paper, and walks outward. The first place it can honestly call the end of the
+/// paper is the one that counts: further out there may be a second step where the
+/// sheen beside the sheet ends, and that one is not the sheet.
+fn sides_of_the_sheet(
+    small: &image::GrayImage,
+    rough: &[bool],
+    background: &[bool],
+    bounds: Rect,
+    levels: &EdgeLevels,
+) -> Option<[Side; 4]> {
+    let (width, height) = (small.width() as i32, small.height() as i32);
+    let brightness = |x: i32, y: i32| f32::from(small.get_pixel(x as u32, y as u32)[0]);
+    let set = |x: i32, y: i32| rough[(y * width + x) as usize];
+    let table = |x: i32, y: i32| background[(y * width + x) as usize];
+
+    let inner = |start: u32, size: u32| {
+        let skipped = (size as f32 * CORNER_SHARE) as i32;
+        (start as i32 + skipped)..(start as i32 + size as i32 - skipped)
+    };
+
+    let (mut left, mut right) = (Vec::new(), Vec::new());
+    for y in inner(bounds.y, bounds.height) {
+        let Some(start) = middle_of_the_scanline((0..width).filter(|&x| set(x, y))) else {
+            continue;
+        };
+        let along_the_row = |x: i32| (brightness(x, y), table(x, y));
+
+        if let Some(x) = where_the_paper_stops(along_the_row, width, start, -1, levels) {
+            left.push((y as f32, x));
+        }
+        if let Some(x) = where_the_paper_stops(along_the_row, width, start, 1, levels) {
+            right.push((y as f32, x));
+        }
+    }
+
+    let (mut top, mut bottom) = (Vec::new(), Vec::new());
+    for x in inner(bounds.x, bounds.width) {
+        let Some(start) = middle_of_the_scanline((0..height).filter(|&y| set(x, y))) else {
+            continue;
+        };
+        let down_the_column = |y: i32| (brightness(x, y), table(x, y));
+
+        if let Some(y) = where_the_paper_stops(down_the_column, height, start, -1, levels) {
+            top.push((x as f32, y));
+        }
+        if let Some(y) = where_the_paper_stops(down_the_column, height, start, 1, levels) {
+            bottom.push((x as f32, y));
+        }
+    }
+
+    let outward = [-OUTWARD_BIAS, OUTWARD_BIAS, -OUTWARD_BIAS, OUTWARD_BIAS];
+    let mut sides = Vec::with_capacity(4);
+    for (points, bias) in [left, right, top, bottom].iter().zip(outward) {
+        let side = fit_a_side(points)?;
+        sides.push(Side {
+            offset: side.offset + bias,
+            ..side
+        });
+    }
+
+    sides.try_into().ok()
+}
+
+/// The middle of what the rough area covers on one scanline, as the place to start a
+/// ray from. The middle rather than an end, because an end of the rough area is
+/// exactly where a lobe of sheen hangs off it.
+fn middle_of_the_scanline(set: impl Iterator<Item = i32>) -> Option<i32> {
+    let places: Vec<i32> = set.collect();
+    places.get(places.len() / 2).copied()
+}
+
+/// Where the paper stops along one scanline: the innermost place that really looks
+/// like the edge of the sheet, or nothing when the ray never finds one.
+///
+/// Five things have to hold at once, and the last two are the ones that make the
+/// method work. The step has to be big enough, the inside of it has to be bright
+/// enough to be paper, the outside dark enough to be the table, it has to *stay*
+/// that dark for [`STAYS_DARK`] pixels further out, and what lies out there has to
+/// be background - dark and connected to the edge of the picture, which is what
+/// [`dark_area_reaching_the_border`] already worked out.
+///
+/// A block of writing is why both are needed. A shrunk line of writing is thinner
+/// than [`STAYS_DARK`], so the fourth test throws it out, but a whole paragraph is
+/// not, and looked at from below its lower edge is a perfect step from paper into
+/// something dark. What it is not is connected to the edge of the picture: ink is
+/// enclosed by paper and the table is not, and that is the difference the fifth test
+/// reads. Measured on the `document_on_a_dark_table` fixture, whose block of writing
+/// is a fifth of the way from the table's own level to the paper's and fifty rows
+/// thick on the shrunk copy: without the fifth test the top of the sheet came out
+/// under the writing, two hundred and fifty pixels down the page.
+///
+/// The ray also stops at the frame: the samples it needs have to be inside the
+/// picture, so a sheet that leaves the frame simply gives no point for that side
+/// instead of an invented one.
+fn where_the_paper_stops(
+    brightness_and_table: impl Fn(i32) -> (f32, bool),
+    span: i32,
+    start: i32,
+    outward: i32,
+    levels: &EdgeLevels,
+) -> Option<f32> {
+    let brightness = |at: i32| brightness_and_table(at).0;
+    let mean = |first: i32, step: i32, count: i32| {
+        (0..count)
+            .map(|sample| brightness(first + sample * step))
+            .sum::<f32>()
+            / count as f32
+    };
+    let all_background = |first: i32, count: i32| {
+        (0..count).all(|sample| brightness_and_table(first + sample * outward).1)
+    };
+
+    let mut position = start;
+    let innermost_sample = |position: i32| position - (EDGE_SAMPLES - 1) * outward;
+    let outermost_sample = |position: i32| position + (EDGE_SAMPLES + STAYS_DARK) * outward;
+    while (0..span).contains(&innermost_sample(position))
+        && (0..span).contains(&outermost_sample(position))
+    {
+        let inside = mean(position, -outward, EDGE_SAMPLES);
+        let outside = mean(position + outward, outward, EDGE_SAMPLES);
+        let further_out = mean(position + (EDGE_SAMPLES + 1) * outward, outward, STAYS_DARK);
+
+        if inside - outside >= levels.step
+            && inside >= levels.paper
+            && outside <= levels.table
+            && further_out <= levels.table
+            && all_background(position + (EDGE_SAMPLES + 1) * outward, STAYS_DARK)
+        {
+            // Between the last pixel of paper and the first of table.
+            return Some(position as f32 + 0.5 * outward as f32);
+        }
+        position += outward;
+    }
+
+    None
+}
+
+/// Fits one straight side through the places the rays stopped, as `(along, across)`
+/// pairs.
+///
+/// Some of those places are wrong: where sheen lies against the sheet a ray runs
+/// past the edge and stops at the far side of the sheen instead, and near a corner
+/// a ray down a column can stop on the left or right edge of the paper. So the fit
+/// has to ignore a minority of the points rather than average them in. It starts
+/// with Theil-Sen - the middle of the slopes of all pairs of points - which is not
+/// moved at all until more than half the points are wrong, then drops the points that
+/// line does not explain and fits the rest properly. One such round is enough: on the
+/// real photos two, four and eight gave the same four corners to the pixel.
+///
+/// Do not turn the Theil-Sen start into a plain least squares fit. That was tried:
+/// the fitted lines were quietly dragged sideways by the rays that had run past the
+/// edge, and the numbers still looked perfectly reasonable. It only showed up when
+/// the mask was painted over the photo.
+fn fit_a_side(points: &[(f32, f32)]) -> Option<Side> {
+    if points.len() < FEWEST_EDGE_POINTS {
+        return None;
+    }
+
+    let mut slopes = Vec::new();
+    for (index, &(along, across)) in points.iter().enumerate() {
+        for &(other_along, other_across) in &points[index + 1..] {
+            if (other_along - along).abs() >= SLOPE_SPAN {
+                slopes.push((other_across - across) / (other_along - along));
+            }
+        }
+    }
+
+    let mut side = Side {
+        slope: middle_of(&mut slopes)?,
+        offset: 0.0,
+    };
+    let mut offsets: Vec<f32> = points
+        .iter()
+        .map(|&(along, across)| across - side.slope * along)
+        .collect();
+    side.offset = middle_of(&mut offsets)?;
+
+    let miss = |&(along, across): &(f32, f32)| (across - side.across(along)).abs();
+    let kept: Vec<(f32, f32)> = points
+        .iter()
+        .filter(|point| miss(point) <= TRIM_ALLOWANCE)
+        .copied()
+        .collect();
+    if kept.len() * 2 < points.len() {
+        return None;
+    }
+
+    straight_through(&kept)
+}
+
+/// The middle value, which is what makes a fit ignore a minority of wrong points
+/// instead of being pulled by them.
+fn middle_of(values: &mut [f32]) -> Option<f32> {
+    values.sort_by(|one, other| one.total_cmp(other));
+    values.get(values.len() / 2).copied()
+}
+
+/// The line that passes closest to all of these points at once.
+fn straight_through(points: &[(f32, f32)]) -> Option<Side> {
+    let count = points.len() as f32;
+    let mean_along = points.iter().map(|&(along, _)| along).sum::<f32>() / count;
+    let mean_across = points.iter().map(|&(_, across)| across).sum::<f32>() / count;
+
+    let mut spread = 0.0;
+    let mut together = 0.0;
+    for &(along, across) in points {
+        spread += (along - mean_along) * (along - mean_along);
+        together += (along - mean_along) * (across - mean_across);
+    }
+    if spread <= 0.0 {
+        return None;
+    }
+
+    let slope = together / spread;
+    Some(Side {
+        slope,
+        offset: mean_across - slope * mean_along,
+    })
+}
+
+/// The sheet the four sides enclose: the box to cut to, which pixels are paper, and
+/// the four corners, all on the shrunk copy. Nothing comes back when the four lines
+/// do not describe a sheet, and then the rough area is the answer on its own.
+///
+/// The mask is the quadrilateral **and** the rough area, both ways round on purpose.
+/// The quadrilateral takes the sheen off the rough area, and the rough area takes the
+/// table out of the quadrilateral's corners, where a real sheet is rounded or the
+/// fitted line passes a pixel wide of it. Keeping them tied together is also what
+/// stops the stored corners from ever meaning something else than the mask does.
+///
+/// The two are also checked against each other both ways round: a quadrilateral that
+/// reaches out onto the table is wrong ([`QUAD_INSIDE_THE_ROUGH_AREA`]), and so is one
+/// that abandons a piece of the sheet ([`SHEET_CARRYING_ON_PAST_A_SIDE`] and
+/// [`ROUGH_AREA_INSIDE_THE_QUAD`]).
+fn the_sheet_between_the_sides(
+    sides: &[Side; 4],
+    rough: &[bool],
+    width: u32,
+    height: u32,
+) -> Option<(Rect, Vec<bool>, [Point; 4])> {
+    let [left, right, top, bottom] = sides;
+    let corners = [
+        crossing(left, top)?,
+        crossing(right, top)?,
+        crossing(right, bottom)?,
+        crossing(left, bottom)?,
+    ];
+
+    // A corner outside the picture was never seen, so it was invented, and a shape
+    // that is not convex is not a photographed sheet.
+    let inside_the_picture = |corner: &Point| {
+        (0.0..=(width - 1) as f32).contains(&corner.x)
+            && (0.0..=(height - 1) as f32).contains(&corner.y)
+    };
+    if !corners.iter().all(inside_the_picture) || !convex(&corners) {
+        return None;
+    }
+
+    let mut mask = vec![false; rough.len()];
+    let (mut quad_area, mut shared_area) = (0u32, 0u32);
+    let (mut min_x, mut min_y) = (width - 1, height - 1);
+    let (mut max_x, mut max_y) = (0u32, 0u32);
+
+    for y in 0..height {
+        let (from, to) = (left.across(y as f32), right.across(y as f32));
+        for x in 0..width {
+            let across = x as f32;
+            let down = y as f32;
+            if across < from
+                || across > to
+                || down < top.across(across)
+                || down > bottom.across(across)
+            {
+                continue;
+            }
+
+            quad_area += 1;
+            let index = (y * width + x) as usize;
+            if !rough[index] {
+                continue;
+            }
+            shared_area += 1;
+            mask[index] = true;
+            min_x = min_x.min(x);
+            max_x = max_x.max(x);
+            min_y = min_y.min(y);
+            max_y = max_y.max(y);
+        }
+    }
+
+    let carries_on = |side: &Side, down_the_rows: bool, outward: f32, span: (f32, f32)| {
+        sheet_carries_on_past(side, down_the_rows, outward, span, rough, width, height)
+    };
+    let too_much_left_out = carries_on(left, true, -1.0, (corners[0].y, corners[3].y))
+        .max(carries_on(right, true, 1.0, (corners[1].y, corners[2].y)))
+        .max(carries_on(top, false, -1.0, (corners[0].x, corners[1].x)))
+        .max(carries_on(bottom, false, 1.0, (corners[3].x, corners[2].x)));
+    if too_much_left_out > SHEET_CARRYING_ON_PAST_A_SIDE {
+        return None;
+    }
+
+    let rough_area = rough.iter().filter(|&&set| set).count();
+    if shared_area == 0
+        || (shared_area as f32) < quad_area as f32 * QUAD_INSIDE_THE_ROUGH_AREA
+        || (shared_area as f32) < rough_area as f32 * ROUGH_AREA_INSIDE_THE_QUAD
+    {
+        return None;
+    }
+
+    let bounds = Rect {
+        x: min_x,
+        y: min_y,
+        width: max_x - min_x + 1,
+        height: max_y - min_y + 1,
+    };
+    if !believable(shared_area, bounds, width, height) {
+        return None;
+    }
+
+    Some((bounds, mask, corners))
+}
+
+/// Over how much of one side's length the bright area plainly carries on past it,
+/// which is a side fitted in the wrong place.
+///
+/// `down_the_rows` says which way the side runs - `across` of a row for the left and
+/// right side, of a column for the top and bottom one - and `outward` which way is off
+/// the sheet. A place counts when every pixel from [`JUST_PAST_A_SIDE`] to
+/// [`WELL_PAST_A_SIDE`] beyond the line is bright area: near the line a pixel of wobble
+/// and the outward lean would decide it, and past that only more paper is left out
+/// there.
+fn sheet_carries_on_past(
+    side: &Side,
+    down_the_rows: bool,
+    outward: f32,
+    span: (f32, f32),
+    rough: &[bool],
+    width: u32,
+    height: u32,
+) -> f32 {
+    let (first, last) = (span.0.min(span.1) as i32, span.0.max(span.1) as i32);
+    let bright_at = |along: i32, offset: i32| {
+        let across = side.across(along as f32) + outward * offset as f32;
+        let (x, y) = if down_the_rows {
+            (across, along as f32)
+        } else {
+            (along as f32, across)
+        };
+        if x < 0.0 || y < 0.0 || x >= width as f32 || y >= height as f32 {
+            // Off the picture is not paper left out, it is nothing to see.
+            return false;
+        }
+        rough[(y as u32 * width + x as u32) as usize]
+    };
+
+    let carries_on = (first..=last)
+        .filter(|&along| {
+            (JUST_PAST_A_SIDE..=WELL_PAST_A_SIDE).all(|offset| bright_at(along, offset))
+        })
+        .count();
+
+    carries_on as f32 / (last - first + 1).max(1) as f32
+}
+
+/// Where two sides cross, or nothing when they are too near parallel for the
+/// crossing to mean anything.
+fn crossing(vertical: &Side, horizontal: &Side) -> Option<Point> {
+    let turned = 1.0 - vertical.slope * horizontal.slope;
+    if turned.abs() < SQUARE_ENOUGH {
+        return None;
+    }
+
+    let x = (vertical.slope * horizontal.offset + vertical.offset) / turned;
+    Some(Point {
+        x,
+        y: horizontal.across(x),
+    })
+}
+
+/// Whether these four corners, taken in order, turn the same way at every one of
+/// them. A quadrilateral that does not is a bow tie, and no sheet of paper is one.
+fn convex(corners: &[Point; 4]) -> bool {
+    let turn = |at: usize| {
+        let (from, corner, to) = (corners[at], corners[(at + 1) % 4], corners[(at + 2) % 4]);
+        (corner.x - from.x) * (to.y - corner.y) - (corner.y - from.y) * (to.x - corner.x)
+    };
+
+    (0..4).all(|at| turn(at) > 0.0) || (0..4).all(|at| turn(at) < 0.0)
 }
 
 /// Shrinks the image to [`WORK_WIDTH`] and drops the colour, since only

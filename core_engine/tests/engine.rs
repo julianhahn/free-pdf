@@ -10,6 +10,7 @@ use core_engine::{
     DynamicImage, Levels,
 };
 use image::{Rgb, RgbImage};
+use std::ops::Range;
 use std::path::PathBuf;
 
 /// A gradient, not one flat colour: a flat image compresses to almost nothing
@@ -548,6 +549,161 @@ fn a_scan_is_all_paper_with_nothing_to_cut_away() {
         sheet.contains(100, 100),
         "the writing was left off the sheet"
     );
+}
+
+#[test]
+fn a_page_that_fills_the_frame_is_still_one_whole_sheet() {
+    let sheet = find_paper(&photographed_document()).expect("a page is a sheet even edge to edge");
+
+    // There is no edge of the paper anywhere in this picture, so the search for the
+    // four sides has nothing to find and has to hand back the whole page instead of
+    // a shape it made up - or worse, nothing at all. A client reads nothing as
+    // "leave this photo alone", and one page answered that way stops a whole scan.
+    assert!(sheet.is_the_whole_image(), "{:?}", sheet.bounds);
+    assert!(sheet.contains(10, 10) && sheet.contains(190, 190));
+    let corners = sheet.corners();
+    assert!(
+        corners[0].x < 5.0 && corners[2].x > 195.0,
+        "the corners are not the corners of the picture: {corners:?}"
+    );
+}
+
+/// A sheet on a table with a patch of sheen beside it, exactly as bright as the
+/// paper and touching the sheet along a run of a hundred and forty rows, out to the
+/// right edge of the picture.
+///
+/// This is the photograph the whole search is built for. Being as bright as the
+/// paper, the patch cannot be told from it by brightness, so it joins the sheet as
+/// one shape; being one shape with it, it drags the outermost corner of that shape
+/// out to the corner of the frame; and reaching the edge of the picture, it makes
+/// the sheet look as if it ran off the photo, which stops the page being straightened
+/// at all. Only the edge of the paper between the two says where the sheet ends.
+fn document_beside_a_patch_of_sheen() -> DynamicImage {
+    let mut img = document_lying_on_a_table();
+    let table = img.as_mut_rgb8().expect("the fixture is an rgb image");
+
+    for y in 560..700 {
+        for x in 480..600 {
+            table.put_pixel(x, y, Rgb([196, 196, 196])); // sheen on the table
+        }
+    }
+
+    img
+}
+
+/// A sheet on a dark table with nothing else the matter with it: the picture the two
+/// fixtures below each add one difficulty to.
+fn document_lying_on_a_table() -> DynamicImage {
+    let mut img = RgbImage::from_pixel(600, 800, Rgb([28, 24, 20])); // dark table
+
+    for y in 100..700 {
+        for x in 100..480 {
+            let brightness = 190 + ((y - 100) / 60) as u8; // paper, lit unevenly
+            img.put_pixel(x, y, Rgb([brightness, brightness, brightness]));
+        }
+    }
+    for y in 200..260 {
+        for x in 160..420 {
+            img.put_pixel(x, y, Rgb([54, 52, 50])); // writing
+        }
+    }
+
+    DynamicImage::ImageRgb8(img)
+}
+
+#[test]
+fn a_patch_of_sheen_beside_the_sheet_is_not_part_of_it() {
+    let sheet = find_paper(&document_beside_a_patch_of_sheen()).expect("no sheet was found");
+
+    let found = sheet.corners();
+    for (found, expected) in found.iter().zip([
+        core_engine::Point { x: 100.0, y: 100.0 },
+        core_engine::Point { x: 480.0, y: 100.0 },
+        core_engine::Point { x: 480.0, y: 700.0 },
+        core_engine::Point { x: 100.0, y: 700.0 },
+    ]) {
+        // The search runs on a shrunk copy and leans every side a little outwards on
+        // purpose, so a corner lands within a few pixels rather than exactly.
+        let off_by = (found.x - expected.x).hypot(found.y - expected.y);
+        assert!(
+            off_by < 8.0,
+            "corner {found:?} is {off_by:.1} pixels away from {expected:?}, so the sheen moved it"
+        );
+    }
+    assert!(
+        !sheet.contains(550, 650),
+        "the patch of sheen was measured as paper"
+    );
+    // The patch reaches the right edge of the picture. Once it is off the sheet, the
+    // sheet plainly does not run off the photo, and straightening is offered again.
+    assert!(!sheet.runs_off_the_picture());
+}
+
+/// The same sheet, with a dark thing lying on it and running off it onto the table: a
+/// hand holding the page down, a phone, a pen, the shadow of any of them.
+///
+/// It is dark, it is as dark as the table, it is thicker than a line of writing, and
+/// because it runs off the paper onto the table it can be walked to from the edge of the
+/// picture just like the table can. So every test a ray has for "this is where the paper
+/// ends" says yes to its edge, the rays that stop on it are the majority of that side,
+/// and the whole side jumps onto the page. Nothing about the shape that comes out looks
+/// wrong; what is wrong is the paper left outside it.
+fn document_with_a_dark_thing_on_it(across: Range<u32>, down: Range<u32>) -> DynamicImage {
+    let mut img = document_lying_on_a_table();
+    let sheet = img.as_mut_rgb8().expect("the fixture is an rgb image");
+
+    for y in down {
+        for x in across.clone() {
+            sheet.put_pixel(x, y, Rgb([30, 26, 22]));
+        }
+    }
+
+    img
+}
+
+/// That the whole page is still there, however the sheet was arrived at: nothing may cut
+/// a page short, because everything below the cut is page and whatever is written there
+/// is gone.
+fn the_page_was_not_cut_short(sheet: &core_engine::Paper) {
+    let bottom = sheet.bounds.y + sheet.bounds.height;
+    assert!(
+        bottom > 660,
+        "the page was cut off at {bottom} instead of about 700: {:?}",
+        sheet.bounds
+    );
+    for corner in sheet.corners() {
+        assert!(
+            corner.y < 160.0 || corner.y > 660.0,
+            "corner {corner:?} sits in the middle of the page, so a side was fitted to the thing lying on it"
+        );
+    }
+    assert!(
+        sheet.contains(140, 680) && sheet.contains(440, 680),
+        "the page below the thing lying on it was left off the sheet"
+    );
+}
+
+#[test]
+fn a_dark_thing_lying_on_the_page_does_not_shorten_it() {
+    let photo = document_with_a_dark_thing_on_it(180..420, 600..760);
+
+    let sheet = find_paper(&photo).expect("no sheet was found");
+
+    // It covers two thirds of the bottom side and hides a hundred pixels of paper, so
+    // the shape it leads to is still nearly all of the sheet by area. What gives it away
+    // is the paper carrying on past the fitted side, on both sides of the thing.
+    the_page_was_not_cut_short(&sheet);
+}
+
+#[test]
+fn a_dark_bar_right_across_the_page_does_not_halve_it() {
+    let photo = document_with_a_dark_thing_on_it(0..450, 400..430);
+
+    let sheet = find_paper(&photo).expect("no sheet was found");
+
+    // This one leaves almost no paper beside it to give it away - it reaches the edge of
+    // the picture - but it abandons half the sheet, which the shape's area shows.
+    the_page_was_not_cut_short(&sheet);
 }
 
 #[test]

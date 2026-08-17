@@ -27,7 +27,7 @@ Every command in this file runs from the repository root, `/Users/julianhahn/fre
 cargo test --workspace
 ```
 
-46 green on a Mac, 43 elsewhere - three tests need `sips` for HEIC. Then read
+50 green on a Mac, 47 elsewhere - three tests need `sips` for HEIC. Then read
 [Next steps](#next-steps): it is the one place that says what is being built right now, and
 every session leaves it correct.
 
@@ -85,6 +85,7 @@ The order from here, and nothing after step 1 can start before it:
 | 1 | **done** on 2026-08-14 for the seven flow screens ([`TASKS.md`](./TASKS.md) task 12). What is still unapproved: the remaining components, one by one. Three stand there today - scan row, buttons, adjust; the rest of [`components.md`](./client-guide-design-system/components.md) still has to be drawn and looked at. | Julian, by looking |
 | 2 | **done** - the C boundary is wide enough for Adjust: `freepdf_adjust_page` takes the photo path, the page path and one `FreepdfAdjustments` struct of all the values. One function, not seven. | engine + ffi |
 | 3 | Rebuild the iPhone client against the approved components and the flows - which is also when the sixteen capabilities get their controls. Built, screen by screen: [`TASKS.md`](./TASKS.md) 14 to 28 are all done, so every screen exists, every value the user sets survives a kill in `state/NNNN.txt`, and the name he types is the scan's name. Adjust brought a fourth C function with it, `freepdf_suggest_adjustments`, so every control opens on what the engine would have chosen. | client agent |
+| 4 | **done** on 2026-08-17 ([`TASKS.md`](./TASKS.md) 29) - the engine could not find the sheet on a lit desk, so every page came out uncut. `find_paper` now takes the brightness area only as a rough guess and then follows the edges of the paper: it marches outward along every row and column until it crosses a step from paper to table, fits the four sides through those places, and takes the corners from where the sides cross. Checked by eye on twelve real photos, all twelve cut to the sheet. [`TASKS.md`](./TASKS.md) 30 is the small client half of it, and is still open. | engine agent |
 
 ```sh
 cd storybook && npm install && npm run storybook    # step 1 happens here
@@ -143,8 +144,9 @@ beside it - not this page.
 
 ## Limits worth knowing
 
-Finding the sheet goes by brightness, so a document on a white desk breaks it, and a sheet
-that runs off the edge of the photo cannot be straightened by its corners.
+Finding the sheet needs the paper to be brighter than what it lies on, so a document on a white
+desk breaks it, and a sheet that runs off the edge of the photo cannot be straightened by its
+corners.
 `find_paper` reports both cases instead of guessing, which is why `deskew` takes the corners
 as an argument: a user can place them by hand
 ([`core_engine/AGENTS.md`](./core_engine/AGENTS.md)).

@@ -63,6 +63,7 @@ themselves are drawn by Storybook.
 | 26 | iOS: every tool shows what it would do — DONE | 22 | bash ios/check/scan_check.sh, by hand |
 | 27 | iOS: the jump appears from ten pages — DONE | 17 | bash ios/check/scan_check.sh, by hand |
 | 28 | iOS: the typed name is the scan's name — DONE | 19 | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
+| 29 | The sheet is found by its edges, not by its brightness — DONE | - | cargo test --workspace, bash ffi/bridge_check.sh, by eye on real photos |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -772,6 +773,111 @@ both sentences are now false and are corrected, not extended.
 `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", plus by hand: name a
 scan "Rechnung", go back, the list row reads Rechnung; open it again and the field reads
 Rechnung, not empty; clear the field and the row reads the date again; a kill between the typing and the back is still named.
+
+---
+
+## 29. The sheet is found by its edges, not by its brightness - Julian, 2026-08-17
+
+**Why.** The automatic cut does not work on a desk with any shine on it, and it never has.
+Julian scanned seven pages on a real phone and every page came out `2250x3000` - exactly 3:4,
+the ratio of the uncut photo. Not one was cut to the sheet.
+
+The cause is not the cut and not the guard. It is what
+`/Users/julianhahn/free-pdf/core_engine/src/paper.rs` calls the paper. `find_paper` splits the
+picture into dark and bright by Otsu, walks the dark pixels in from the border to find the
+background, and takes the largest blob of what is left. On a lit desk the sheen beside the
+sheet is as bright as the paper, so it joins the blob. Then two things break at once:
+
+- `Paper::corners` (`paper.rs:78-106`) is a **global extremum along each diagonal over the
+  mask**. One leaked patch near a frame corner steals that corner. Measured on the real photo:
+  the corners come back `(336,253) (2695,291) (3020,4028) (253,3672)` on a `3024x4032` photo,
+  and the third one is the corner of the **frame**, not of the paper.
+- `Paper::runs_off_the_picture` is therefore true, so `scan_page` skips `deskew` entirely and
+  the page is the whole photo. That refusal is **correct and must be left alone**: pulling a
+  wrong quadrilateral flat bends the picture and loses writing, and an uncut page is complete.
+
+**Two things were already tried and both are reverted. Do not try them again.**
+
+1. **Loosening the border guard** into a share-per-side tolerance, so a small bleed no longer
+   counted as running off. The corners were still wrong, so `deskew` ran on the frame's corner
+   and **cut content out of the page** - a chopped letterhead and a cut-through text block.
+   Reverted the same day.
+2. **Opening the mask** (erode then dilate) before `largest_blob`, to snap thin bridges.
+   Committed as `bb66350` and reverted as `1e9b254`; read both messages, they carry the
+   measurements. It fixed one photo of seven and moved none of the rest, because sheet and
+   sheen do not meet over a thin bridge - they are one run across 32 consecutive rows. Cutting
+   that needs a radius of a twentieth of the picture width, and a real corner is gone at a
+   quarter of that. It also introduced two ways to fail that the old code did not have, both
+   spelt out in `1e9b254`.
+
+The lesson that cost two rounds: **look at the mask, do not count pixels of it.** Paint it over
+the photo and open the picture. Both wrong fixes came from reading numbers and inferring the
+wrong shape from them.
+
+**Read.** `/Users/julianhahn/free-pdf/core_engine/AGENTS.md` and
+`/Users/julianhahn/free-pdf/core_engine/tests/AGENTS.md` first, then `paper.rs` in full - its
+`ponytail:` note at the end of `find_paper` has named this task since the first commit
+(`d8052d8`): "brightness only. A document on a white desk breaks it... Following the edges of
+the sheet instead would fix that, and would also give the four corners a deskew needs." Then
+`/Users/julianhahn/free-pdf/ffi/src/lib.rs`, `scan_page` and `suggest_adjustments`, which are
+the only two callers, and `/Users/julianhahn/free-pdf/ffi/AGENTS.md`.
+
+**Build.** Find the sheet by its edges. The shape of the answer does not change: `find_paper`
+keeps its signature, returns `Option<Paper>`, and `Paper` keeps `bounds`, `contains`, `corners`,
+`runs_off_the_picture` and `is_the_whole_image`, because `scan_page`, `suggest_adjustments` and
+`suggest_levels` all read them and the C surface is frozen. What changes is how the four corners
+are arrived at: from the sheet's four sides rather than from the extremes of a brightness blob.
+
+Whatever the method, these have to come out true:
+
+- **The corners are the paper's corners**, so `contains` still answers for the pixels inside
+  them - `suggest_levels` measures the paper through it, and a mask that means the desk makes
+  the tones of every page wrong. That failure has no guard anywhere, which is why it decided
+  against the opening.
+- **`runs_off_the_picture` becomes rare and honest.** Once the corners are the paper's, it says
+  what its own doc claims: the sheet really does leave the frame. It stays as the guard.
+- **A picture that is all paper still finds a sheet.** This is the regression that
+  `ffi/bridge_check.sh` catches and **no Rust test does** - an earlier draft made the page fall
+  into seventeen pieces and `find_paper` return `None`, which kills the whole automatic run.
+  Add that Rust test as part of this task: a full-frame page, `find_paper` finds it,
+  `is_the_whole_image` is true.
+- **A photo of something that is not paper still returns `None`.** `SMALLEST_SHARE` and
+  `THINNEST_SIDE` exist for that and the existing tests cover it.
+
+**Do not.** Do not add a dependency - `image` is already there and this is a few hundred lines
+of arithmetic at `WORK_WIDTH`. Do not touch `ffi/include/freepdf.h`, `ffi/bridge_check.sh` or
+any existing assertion in `core_engine/tests/engine.rs`; they staying green unchanged is the
+proof no boundary moved. Do not put a tolerance back into `runs_off_the_picture`. Do not make
+this a client-side change - the phone must not learn a second way to find paper.
+
+**The photos, and the rule about them.** Seven real photos are the only honest evidence, and
+they are private correspondence with a home address and a contract number on them.
+`/Users/julianhahn/free-pdf/test_images/` is gitignored for exactly this reason
+(`/Users/julianhahn/free-pdf/AGENTS.md`, Repo hygiene): **never commit one, never name its
+contents in a comment, a test or a report.** Every test that ships is synthetic. To fetch a
+fresh scan off the phone over the cable, with the phone unlocked and plugged in:
+
+```sh
+xcrun devicectl list devices
+xcrun devicectl device info files -d <device-id> \
+  --domain-type appDataContainer --domain-identifier com.julianhahn.freepdf \
+  --subdirectory Documents/Scans --no-recurse
+xcrun devicectl device copy from -d <device-id> \
+  --domain-type appDataContainer --domain-identifier com.julianhahn.freepdf \
+  --source Documents/Scans/<folder> --destination <somewhere outside the repo>
+```
+
+**Check.** `cargo test --workspace` passes with the new synthetic tests,
+`bash /Users/julianhahn/free-pdf/ffi/bridge_check.sh` says "bridge ok", and - the part that
+actually decides it - **by eye on every real photo**: paint the mask over the photo, save a
+PNG, open it, and confirm the red is the sheet and nothing else. Then run
+`cargo build -p backend-core-runner --release` and
+`./target/release/backend-core-runner <photo> --scan -o <page>` on each, open each page, and
+confirm two things: the page is cut to the sheet, and it is cut **nowhere into** it. No
+chopped letterhead, no cut-through text, no desk left in a corner. A number is not a
+substitute for that look.
+
+**Blocked by.** Nothing.
 
 ---
 

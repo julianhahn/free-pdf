@@ -8,6 +8,43 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-17 - the sheet is found by its edges now, so the cut works on a lit desk
+
+TASKS.md 29. `find_paper` keeps the whole brightness pipeline, but only as a rough guess: from
+inside it a ray marches outward along every row and column until it crosses a real paper-to-table
+step, a line is fitted through those places per side, and the corners are where the sides cross.
+Sheen cannot steal a corner any more because a corner is no longer a pixel of the mask, and the
+mask is the quadrilateral **and** the rough area, so neither can claim what the other calls
+table. The two are checked against each other both ways round: a quadrilateral reaching out onto
+the table is wrong, and so is one that abandons the sheet, which is what a hand or a pen lying
+across the page and out onto the table caused - it is dark, it reaches the frame through the
+table, so the rays stopped on it, they were the majority of that side, and the page came out cut
+short. Two numbers catch that, and each is needed for a case the other misses: how much of one
+side's length has paper carrying on past it, and how much of the bright area the shape keeps.
+Every new way to fail falls back to the old blob answer; `None` still comes from exactly the two
+places it did before, because one `None` stops a whole automatic run. Four new synthetic tests,
+`a_patch_of_sheen_beside_the_sheet_is_not_part_of_it` (it fails on the old code with the
+corner at the frame's edge, which is the bug),
+`a_page_that_fills_the_frame_is_still_one_whole_sheet` (the fallback, which only
+`bridge_check.sh` covered), `a_dark_thing_lying_on_the_page_does_not_shorten_it` and
+`a_dark_bar_right_across_the_page_does_not_halve_it` - each of the last two fails if its own
+guard is taken out. Judged by painting the mask over twelve real photos and looking:
+all twelve come out cut to the sheet. Curled sheets lean their side a percent or two outwards on
+purpose (`OUTWARD_BIAS`) - swallowed desk bends a straightening, lost paper loses writing.
+
+## 2026-08-17 - the automatic cut has never worked on a lit desk, and why
+
+Julian's pages come out uncut. `find_paper`'s mask leaks onto reflections on the desk, and
+`Paper::corners` is a global extremum over that mask, so a sheen patch in a frame corner
+steals that corner - `(3020,4028)` of a `3024x4032` photo. `runs_off_the_picture` is
+therefore true and rightly refuses: unbeschnitten but complete beats bent. Two small fixes
+were tried and both reverted, `bb66350`/`1e9b254` and one before it that got as far as
+cutting content out of a page - measure the mask by *looking* at it, not by counting border
+pixels, or you will fix the wrong thing twice. The way up is TASKS.md 29, following the
+sheet's edges, which the `ponytail:` note in `find_paper` has named since the first commit.
+Seven real photos are the evidence and stay out of the repository; `test_images/` is
+gitignored for that reason.
+
 ## 2026-08-17 - the typed name is the scan's name
 
 TASKS.md 28. The done screen's name field no longer throws the name away: `Scan.writeName`
