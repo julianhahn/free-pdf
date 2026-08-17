@@ -69,7 +69,7 @@ themselves are drawn by Storybook.
 | 32 | iOS: Adjust and Shoot another page are controls, not menu items | - | bash ios/check/scan_check.sh, by hand |
 | 33 | iOS: shooting another page does not stop after one | - | bash ios/check/scan_check.sh, by hand |
 | 34 | iOS: after the first page, the app shows what it is about to do | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
-| 35 | iOS: the viewfinder shows the last page photographed | - | bash ios/check/scan_check.sh, by hand |
+| 35 | iOS: the viewfinder shows the last page photographed | 34 | bash ios/check/scan_check.sh, by hand |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -1156,11 +1156,25 @@ sentence only; the left control reuses the words the pages screen already uses f
 ```
 | Where | English | German |
 | --- | --- | --- |
-| Above the picture | This is how your pages will come out. | So werden deine Seiten aussehen. |
+| Above the two pictures | This is how your pages will come out. | So werden deine Seiten aussehen. |
+| Between or under them | Your photo becomes this page. | Aus deinem Foto wird diese Seite. |
 | The line under it | Not right? More light or a plainer surface fixes most of it. | Nicht richtig? Mehr Licht oder eine ruhigere Unterlage hilft meistens. |
 | Left control | Scan this page again | Diese Seite neu scannen |
 | Right control | Photograph the rest | Restliche Seiten fotografieren |
 ```
+
+**It shows the photo as well as the page, and that is what makes task 35 readable.** Julian
+spotted this: this screen shows a cut, straightened, brightened page, and seconds later the
+viewfinder shows a small raw photo with the desk still in it. Two pictures of the same sheet,
+looking nothing alike, half a minute apart - and nothing anywhere says why.
+
+So the pair is taught here, once, where there is room for it: the shot he took beside the page
+it becomes, in that order, with the sentence above naming the relationship. After that the
+thumbnail in the corner needs no caption, because he has already seen which of the two it is.
+The photo is the small one and the page is the large one - the page is what he is judging.
+
+This is the cheap half of the fix. The alternative was a caption on the thumbnail, which means
+words over a live viewfinder on every single shot to explain something that has to be said once.
 
 **Do not.** Do not show it after every page, and do not make it a setting - it is once per scan
 or it is nothing. Do not put Adjust on it: this screen answers "carry on or start over", and a
@@ -1210,8 +1224,18 @@ appearing when the first shot of the session lands and replaced by each shot aft
   precisely so other screens can use it). It already decodes at a maximum pixel size off the
   main thread and shows the paper colour until it is ready. A thumbnail is that view with a
   small `maxPixels` and a frame - do not write a second decoder.
-- **It shows a photo, not a page.** During shooting no page exists yet. What it confirms is what
-  he pointed the camera at, which is the question being asked.
+- **It shows a photo, not a page.** During shooting no page exists yet, and making one per shot
+  would put an engine run between him and the shutter. What it confirms is what he pointed the
+  camera at, which is the question being asked: *which sheet was that*, not *how good is it*.
+  Those are two different questions and they want two different pictures.
+
+**Why that is not confusing, which it would be on its own.** Task 34 shows a cut, straightened,
+brightened page after the first shot, and this shows a small raw photo with the desk still in it.
+Same sheet, nothing alike, half a minute apart. Task 34 therefore shows the photo beside the
+page it becomes, with one sentence naming the relationship, so the pair is taught once on a
+screen with room for it. That is why this thumbnail carries no caption of its own: words over a
+live viewfinder, on every shot, to explain something that needs saying once, is the expensive
+way round.
 - **It appears when a shot lands, not when one is pressed.** A file earns its name by rename
   (`/Users/julianhahn/free-pdf/ios/AGENTS.md`), so the thumbnail follows the newest photo that
   really is on disk. Nothing is held in memory that has not been written - the same rule the
@@ -1245,7 +1269,10 @@ hand on a phone: start a scan, no thumbnail before the first shot; shoot three p
 thumbnail is each one in turn as it lands; force-quit and relaunch into the viewfinder, no
 thumbnail until the next shot; a retake shows none.
 
-**Blocked by.** Nothing. It touches only the camera and can run beside 32, 33 and 34.
+**Blocked by.** 34, and only for the reason above: the thumbnail is readable because the check
+screen has already shown what a photo and a page each look like. Building it first is allowed;
+shipping it to a phone before 34 is what leaves the question unanswered. It touches only the
+camera and can run beside 32 and 33.
 
 ---
 
