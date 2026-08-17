@@ -65,6 +65,7 @@ themselves are drawn by Storybook.
 | 28 | iOS: the typed name is the scan's name — DONE | 19 | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
 | 29 | The sheet is found by its edges, not by its brightness — DONE | - | cargo test --workspace, bash ffi/bridge_check.sh, by eye on real photos |
 | 30 | iOS: Pull the sheet flat starts on — DONE | 29 | bash ios/check/scan_check.sh, by hand |
+| 31 | A sheet that leaves the frame is cut anyway, and the page says so | - | cargo test --workspace, bash ios/check/scan_check.sh, by eye on real photos |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -923,6 +924,108 @@ overwrite a stored "off" and break task 21's rule that the tools open on what wa
 **Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by
 hand on a phone: open Adjust on a page, the switch reads on, Apply cuts the page without
 touching the switch first.
+
+---
+
+## 31. A sheet that leaves the frame is cut anyway, and the page says so - Julian, 2026-08-17
+
+**Why.** Julian photographed a letter that runs off the frame at the lower left and right,
+scanned it on a phone carrying task 29, and the page came out `2250x3000` - the whole photo,
+desk and a furniture edge along the top included. Then he opened Adjust, changed nothing, and
+Apply gave him a clean `2183x3000` page with the desk gone.
+
+Both are today's code working as written. `scan_page`
+(`/Users/julianhahn/free-pdf/ffi/src/lib.rs`) skips `deskew` when
+`Paper::runs_off_the_picture` is true, so the automatic run refuses; Adjust sends the four
+corners itself and so is not asking. The corners it sent were
+`(374,359) (2604,359) (3020,3884) (3,4005)` on a `3024x4032` photo - the two real sheet
+corners at the top, and at the bottom the two places where the sheet crosses the left and
+right edge of the frame.
+
+**Julian's decision on 2026-08-17: the automatic run does what Adjust already does.** Those
+two crossing points become the lower corners, `deskew` runs, and the page is cut. Where this
+contradicts a rule written earlier in this file or in
+`/Users/julianhahn/free-pdf/core_engine/AGENTS.md`, his decision wins and the old rule is
+deleted, not argued with. Two sentences go: task 29's "Do not put a tolerance back into
+`runs_off_the_picture`", and whatever `runs_off_the_picture`'s own doc comment says about not
+straightening. It stays a true report about the photo; it stops being a veto.
+
+**What it costs, and what pays for it.** The two lower points are not corners of the sheet, so
+the quadrilateral is only an honest perspective picture of a piece of the page when the sheet
+leaves the frame roughly along one line - which is Julian's photo. A sheet crossing a frame
+corner at an angle gives a quadrilateral that slices diagonally through the paper, and `deskew`
+then shears the writing. That does not look wrong, it looks slightly stretched, which is worse.
+
+It is paid for by the other half of his decision: **the page says it is not the whole sheet,
+and offers a retake.** An incomplete page the user is told about is not a silent failure, and a
+retake is the one repair that always works.
+
+**Read.** `/Users/julianhahn/free-pdf/ffi/src/lib.rs` - `scan_page` and its one
+`runs_off_the_picture` branch, and `suggest_adjustments`, which already reports the same fact
+across the boundary as `FreepdfSuggestion.runs_off_the_picture`
+(`/Users/julianhahn/free-pdf/ffi/include/freepdf.h`). Swift already reads it as
+`Engine.Suggestion.runsOffThePicture`
+(`/Users/julianhahn/free-pdf/ios/FreePDF/Engine.swift`).
+`/Users/julianhahn/free-pdf/ios/FreePDF/PagesView.swift` - the carousel, the page menu and
+Retake. `/Users/julianhahn/free-pdf/user-flows.md` section 6.
+
+**Build.**
+
+- **The engine.** Delete the `if !sheet.runs_off_the_picture()` guard in `scan_page`, so the
+  automatic run always straightens on the corners it found. One line. Nothing else in
+  `core_engine` moves: `find_paper`, `corners`, `contains` and `runs_off_the_picture` are all
+  unchanged, and this is the only caller that was refusing.
+- **The warning.** The pages screen says, for the page on screen and only when the sheet ran
+  off, that this page is not the whole sheet. It is a calm note and **not** an `ErrorLine` -
+  nothing failed, the same rule as the removed-PDF note in task 11.
+- **Where the fact comes from: the photo, at the moment the page is shown.** `runsOffThePicture`
+  comes back from `Engine.suggest` on that page's photo, which is one engine run for the page on
+  screen - the same call Adjust already makes when it opens, not forty runs when a scan is
+  opened. Nothing is stored and no boundary is widened. This also settles the awkward case for
+  free: the note and the retake both need the photo, so when the photos are deleted both are
+  gone together, and there is nothing to explain.
+- **The retake is the one that exists.** "Scan this page again", the same words and the same
+  path the refused page already uses. Do not add a second way to retake a page.
+- **The words.** No sentence for this exists in either copy table, so they are drafted here and
+  are Julian's to change, exactly as the sixteen in task 4 were:
+
+```
+| Where | English | German |
+| --- | --- | --- |
+| The note under the page | Not the whole sheet - it ran off the edge of the photo. | Nicht das ganze Blatt - es lief aus dem Foto heraus. |
+```
+
+  Put the answer into the copy tables in `/Users/julianhahn/free-pdf/user-flows.md` section 6,
+  which is where the app reads its words from.
+
+**Do not.** Do not widen the C boundary - the fact already crosses. Do not store the flag in
+`state/NNNN.txt`: that file holds what the user asked for, and this is a fact about the photo,
+which is why it is read off the photo instead. Do not run the engine for pages that are not on
+screen. Do not put a threshold on how far a sheet may run off - a threshold would be a second
+judgement to get wrong, and the note plus the retake covers the bad case. Do not change Adjust,
+which already behaves this way.
+
+**Cut on purpose:** a sheet crossing a frame corner at an angle comes out sheared. Ceiling: the
+note says the page is incomplete and the retake fixes it; if someone reports the shear itself,
+the way up is to cut to the found edges without straightening when the two crossing points sit
+on different edges of the frame.
+
+**Docs.** `/Users/julianhahn/free-pdf/core_engine/AGENTS.md` and
+`/Users/julianhahn/free-pdf/README.md` under "Limits worth knowing" both say a sheet that runs
+off the photo cannot be straightened by its corners - now false for the automatic run, and
+corrected in one line, not extended. `/Users/julianhahn/free-pdf/ios/AGENTS.md`: one sentence
+next to the drain saying an incomplete page is cut and says so.
+
+**Check.** `cargo test --workspace` passes, `bash /Users/julianhahn/free-pdf/ffi/bridge_check.sh`
+says "bridge ok", `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok". A new
+synthetic Rust test: a sheet running off one edge is now cut, and the page is smaller than the
+photo. Then by eye, which is what decides it: run the twelve photos in
+`/Users/julianhahn/free-pdf/test_images/phone/` through
+`backend-core-runner --scan` and open every page - the eleven that do not run off must come out
+exactly as they do today, and `runs_off_1.jpg` must lose the furniture edge along its top. By
+hand on a phone: shoot a page that hangs off the frame, see it cut, see the note, tap the retake.
+
+**Blocked by.** Nothing. 29 is done, which is what makes the corners worth trusting.
 
 ---
 
