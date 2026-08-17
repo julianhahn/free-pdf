@@ -310,6 +310,59 @@ precondition(!titled.title.isEmpty && titled.title != titled.url.lastPathCompone
 let foreign = Scan(url: rows.appendingPathComponent("not-a-scan", isDirectory: true))
 precondition(foreign.title == "not-a-scan", "an unreadable name reads \"\(foreign.title)\"")
 
+// A name he typed on the done screen is the scan's name, and the row reads it instead of
+// the date. The folder is not renamed: it is still the sort key and the id.
+let dated = titled.title
+titled.writeName("Rechnung")
+precondition(titled.title == "Rechnung", "the named scan's row reads \"\(titled.title)\"")
+precondition(titled.url.lastPathComponent.hasPrefix("2027-"),
+             "the folder was renamed to \(titled.url.lastPathComponent)")
+
+// A name that would not be one path component is stored the way the share sheet's copy is
+// named - one sanitised string, `Scan.sanitised`, and nowhere else.
+titled.writeName("  Miete 03/2026: Kopie  ")
+precondition(titled.title == "Miete 03-2026- Kopie",
+             "the stored name reads \"\(titled.title)\"")
+
+// A pasted subject line is cut, because the same string has to name the copy that leaves,
+// and a path component the file system refuses would leave the row named and the share
+// sheet not.
+titled.writeName(String(repeating: "A", count: 300))
+precondition(titled.title.count == 60, "the pasted name reads \(titled.title.count) characters")
+let link = FileManager.default.temporaryDirectory.appending(path: titled.title + ".pdf")
+try? FileManager.default.removeItem(at: link)
+precondition((try? Data().write(to: link)) != nil, "the share sheet's copy cannot be named")
+try? FileManager.default.removeItem(at: link)
+
+// Clearing the field puts the date back. It is not an error line and leaves no file.
+titled.writeName("   ")
+precondition(!exists(titled.nameURL), "the cleared name left a file behind")
+precondition(titled.title == dated, "the cleared row reads \"\(titled.title)\", not the date")
+
+// The sweep keeps the name and takes the half-written one a kill left behind - the name
+// file earns its name by rename like every other file in the app.
+let named = newScan(in: rows)
+shoot(named, [1])
+scanned(named, [1])
+named.writeName("Vertrag")
+write("half a nam", to: named.url.appendingPathComponent("name.part"))
+named.sweep()
+precondition(fileNames(in: named.url) == ["name.txt", "page", "photo", "state"],
+             "the scan folder after the sweep: \(fileNames(in: named.url))")
+precondition(named.title == "Vertrag", "the sweep ate the name: \"\(named.title)\"")
+
+// And the name is no more the manifest than the state files are: it moves neither the step
+// nor the sentence under the row.
+precondition(named.state == .ready, "the name moved the scan to \(named.state)")
+rowReads(named, "1 page — ready to check")
+precondition(named.photos == [1] && named.pages == [1] && named.nextPage == 2,
+             "the name was counted as a page: \(named.photos) \(named.pages)")
+
+// A scan nobody named keeps the date exactly as it read before any of this existed.
+let unnamed = newScan(in: rows, at: Date(timeIntervalSince1970: 1_799_150_400))
+precondition(unnamed.name == nil, "an unnamed scan read a name back")
+precondition(unnamed.title == dated, "an unnamed scan reads \"\(unnamed.title)\"")
+
 // Confirming takes the whole folder - photos, pages and PDF. There is no trash for a
 // sandbox folder, so this is the one moment the files really go.
 let doomed = newScan(in: rows)

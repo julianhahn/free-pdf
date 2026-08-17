@@ -25,7 +25,8 @@ Row subtitles — seven, all of them required:
 | done | 40 pages — PDF ready | 40 Seiten — PDF fertig |
 | done, photos gone | 40 pages — PDF ready, photos deleted | 40 Seiten — PDF fertig, Fotos gelöscht |
 
-The title is the folder date, e.g. `11 Aug 2026, 20:14`. There is no rename.
+The title is the name typed on the done screen, or the folder date, e.g. `11 Aug 2026, 20:14`,
+when none was typed. The row itself is never editable.
 
 ## Camera
 

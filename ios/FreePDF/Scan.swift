@@ -33,7 +33,8 @@ struct Scan: Hashable {
         .urls(for: .documentDirectory, in: .userDomainMask)[0]
         .appendingPathComponent("Scans", isDirectory: true)
 
-    /// The scan's own folder. Its name is the sort key, the id and the title at once.
+    /// The scan's own folder. Its name is the sort key and the id, and the title too until
+    /// the user types one of his own.
     let url: URL
 
     // MARK: - Where the files are
@@ -64,12 +65,73 @@ struct Scan: Hashable {
         stateDirectory.appendingPathComponent(String(format: "%04d.txt", number))
     }
 
-    /// What the user reads on the row: `11 Aug 2026, 20:14`. The folder name is the
-    /// title, which is why there is no title field and nothing to rename - see `create`.
+    /// The name the user typed on the done screen, or `nil` if he typed none. One line of
+    /// UTF-8 in `name.txt`, written by `writeName` and swept like everything else.
+    ///
+    /// No error sentence anywhere, exactly like `readState`: an absent or empty file is a
+    /// scan whose title is its date, which is what every scan starts as.
+    var name: String? {
+        guard let text = try? String(contentsOf: nameURL, encoding: .utf8) else { return nil }
+        let typed = Self.sanitised(text)
+        return typed.isEmpty ? nil : typed
+    }
+
+    /// The name file sits next to `state/` rather than inside it: `state/` is per page and
+    /// this is about the whole scan. The folder itself is never renamed - its name is the
+    /// date, and every file in the app is found through it.
+    var nameURL: URL { url.appendingPathComponent("name.txt") }
+
+    /// Writes the typed name, or deletes the file when what he typed comes to nothing -
+    /// clearing the field puts the date back on the row, and an empty name is a normal
+    /// case rather than a failure.
+    ///
+    /// The same earn-your-name rule as `writeState`, and here Foundation keeps it on its own:
+    /// `.atomic` writes the bytes under a temporary name and renames that over `name.txt`,
+    /// and a rename over a file never leaves the destination absent. So a kill mid-write
+    /// leaves the old name or none at all, never half a name and never a lost name - which
+    /// `writeState`'s remove-then-move cannot promise, because a kill in that gap would take
+    /// the name that was already there with it.
+    func writeName(_ typed: String) {
+        let wanted = Self.sanitised(typed)
+        guard !wanted.isEmpty else {
+            try? FileManager.default.removeItem(at: nameURL)
+            return
+        }
+        try? Data(wanted.utf8).write(to: nameURL, options: .atomic)
+    }
+
+    /// The one place a typed name is cleaned up, because the name that leaves in the share
+    /// sheet and the name on the row are the same string: a name is one path component, so
+    /// the two characters that are not allowed in one are replaced, and the ends trimmed.
+    ///
+    /// Cut to 60 characters, because a path component has a length the file system refuses:
+    /// a pasted subject line would still make a title, but the hard link the share sheet
+    /// carries could not be made, and the row and the share sheet would then read
+    /// differently - which is the one thing this function exists to prevent.
+    ///
+    /// ponytail: 60 characters, not 255 bytes. The longest character UTF-8 knows is four
+    /// bytes, so 60 of them always fit next to `.pdf`; count the bytes if a name ever has
+    /// to be longer than a line.
+    /// A pasted name can carry a newline or a tab in the middle, which no trim at the ends
+    /// takes out - it would wrap the row that is laid out for one line, and the file system
+    /// would happily accept it in the shared copy's name. So the whole run of whitespace
+    /// becomes one space, which also settles the trimming.
+    static func sanitised(_ typed: String) -> String {
+        typed.replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: ":", with: "-")
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+            .prefix(60)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// What the user reads on the row: the name he typed, or `11 Aug 2026, 20:14` when he
+    /// typed none. The folder is never renamed either way - see `create`.
     ///
     /// A folder whose name does not parse is shown as it is. That is not a scan this app
     /// made, and hiding it would be worse than an ugly row.
     var title: String {
+        if let name { return name }
         // Built here rather than kept as a `static let`, because `DateFormatter` is not
         // Sendable and one row is far cheaper than making the model thread-unsafe.
         let reader = DateFormatter()
@@ -306,7 +368,7 @@ struct Scan: Hashable {
             }
         }
         for name in (try? manager.contentsOfDirectory(atPath: url.path)) ?? []
-        where !["photo", "page", "state", "scan.pdf"].contains(name) {
+        where !["photo", "page", "state", "scan.pdf", "name.txt"].contains(name) {
             try? manager.removeItem(at: url.appendingPathComponent(name))
         }
     }

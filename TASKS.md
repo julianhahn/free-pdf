@@ -62,6 +62,7 @@ themselves are drawn by Storybook.
 | 25 | iOS: a magnifier for the corner drags — DONE | 22 | bash ios/check/scan_check.sh, by hand |
 | 26 | iOS: every tool shows what it would do — DONE | 22 | bash ios/check/scan_check.sh, by hand |
 | 27 | iOS: the jump appears from ten pages — DONE | 17 | bash ios/check/scan_check.sh, by hand |
+| 28 | iOS: the typed name is the scan's name — DONE | 19 | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -734,6 +735,43 @@ always there, that sentence is now false - correct it in one line.
 **Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by
 hand: a three page scan shows no jump, a twelve page scan does and page 11 is still reachable
 by it.
+
+## 28. The typed name is the scan's name - Julian, 2026-08-17
+
+**Why.** At the end of a scan the app already asks for a name, and then throws it away. In
+`/Users/julianhahn/free-pdf/ios/FreePDF/DoneView.swift` the field is a `@State` that only builds
+the hard link the share sheet carries ("Nothing is stored", `nameTheCopy()`), so the name lives
+until the screen closes - so coming back to Done, from the overview or from the pages, opens on
+an empty field and the name he typed a minute ago is gone. Meanwhile the scans list shows the
+folder's timestamp -
+`/Users/julianhahn/free-pdf/ios/FreePDF/Scan.swift`, `title`. Julian's decision: a name he has
+already typed is the scan's name, and the front list shows it.
+
+**Read.** `DoneView.swift` - `name`, `nameField`, `nameTheCopy()`. `Scan.swift` - `title`, and
+how the state files are read and written, because the name is stored the same way and never by
+listing a directory. `ScanList.swift` - `row`.
+
+**Build.** The typed name is written into the scan folder as its own small file, next to the
+existing per-page state, and `Scan.title` reads it: a stored name is the row's title, and a scan
+with none keeps the date exactly as it reads today. Writing happens as the name is typed - the
+same moment the copy is renamed - so there is no Save button and nothing to lose by leaving. The
+field itself opens on the stored name, so coming back to Done shows what was typed last time and
+the next visit is an edit rather than a retype. Clearing the field puts the date back. The name that leaves in the share sheet and the name in
+the list are the same string sanitised the same way, in one place, not two.
+
+**Do not.** Do not rename the scan folder - its name is the date and every file in the app is
+found through it. Do not add a name field anywhere but Done, do not make the list rows editable,
+and do not invent a second title for the pages screen. A missing name is not an error line: it
+is the date.
+
+**Docs.** `/Users/julianhahn/free-pdf/user-flows.md` section 9 and
+`/Users/julianhahn/free-pdf/ios/AGENTS.md` both say the name belongs to the shared copy only -
+both sentences are now false and are corrected, not extended.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/run.sh` says "resume ok" and
+`bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", plus by hand: name a
+scan "Rechnung", go back, the list row reads Rechnung; open it again and the field reads
+Rechnung, not empty; clear the field and the row reads the date again; a kill between the typing and the back is still named.
 
 ---
 

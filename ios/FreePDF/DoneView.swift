@@ -14,9 +14,15 @@ import PDFKit
 import SwiftUI
 
 struct DoneView: View {
-    /// The finished file. On disk it is always `scan.pdf` - the name below belongs to the
-    /// copy that leaves and to nothing else.
+    /// The finished file. On disk it is always `scan.pdf`; the name below is the scan's own
+    /// name and rides out on the copy that leaves.
     let pdf: URL
+    /// The name the files already hold, so the field opens on what was typed last time and
+    /// the next visit is an edit rather than a retype. Empty means the row reads the date.
+    let storedName: String
+    /// Where a typed name goes. `ScanFlow` writes it, because this screen owns no file but
+    /// the temporary hard link ([`../AGENTS.md`](../AGENTS.md)).
+    var onName: (String) -> Void
     /// How many photos are left and what they cost. Both come out of `ScanFlow`'s cache of
     /// the files, never read here, which is the rule the pages screen keeps too.
     let photos: Int
@@ -35,12 +41,30 @@ struct DoneView: View {
     var onChangePages: () -> Void
     var onDeletePhotos: () -> Void
 
-    /// The name for the copy that leaves, and the temporary link that carries it. Nothing
-    /// is stored: both die with the screen, and the file on disk is always `scan.pdf`.
-    @State private var name = ""
+    /// What is in the field, and the temporary link that carries it. The field starts on
+    /// the stored name and every keystroke goes back to the files, so there is no Save
+    /// button and nothing to lose by leaving. The link dies with the screen; the file on
+    /// disk is always `scan.pdf`.
+    @State private var name: String
     @State private var shareCopy: URL?
     @State private var confirmingPhotos = false
     @State private var reading = false
+
+    /// Written out only to seed the field from the files. Everything else is the memberwise
+    /// init this replaces.
+    init(pdf: URL, storedName: String, photos: Int, photoBytes: Int,
+         focusTaken: Binding<Bool>, onName: @escaping (String) -> Void,
+         onChangePages: @escaping () -> Void, onDeletePhotos: @escaping () -> Void) {
+        self.pdf = pdf
+        self.storedName = storedName
+        self.photos = photos
+        self.photoBytes = photoBytes
+        _focusTaken = focusTaken
+        self.onName = onName
+        self.onChangePages = onChangePages
+        self.onDeletePhotos = onDeletePhotos
+        _name = State(initialValue: storedName)
+    }
 
     var body: some View {
         ScrollView {
@@ -75,23 +99,31 @@ struct DoneView: View {
         .navigationTitle("PDF ready")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $reading) { reader }
-        // The copy that leaves carries the typed name; nothing is stored, so leaving the
-        // scan and coming back empties the field again.
-        .onChange(of: name) { nameTheCopy() }
-        // Once, when this screen opens. It belongs to this screen and not to `ScanFlow`'s
-        // own `.onAppear`, which is shared with the camera, the takeover, Adjust and the
-        // pages - screens with no name field. The sheets need no guard of their own: the
-        // reader and the share sheet present over this screen without removing it.
+        // Both halves of the same keystroke: the copy that leaves is renamed and the scan
+        // is named on disk, from one sanitised string, so the share sheet and the list row
+        // can never disagree.
+        .onChange(of: name) {
+            nameTheCopy()
+            onName(name)
+        }
         .onAppear {
+            // The stored name already names the copy, before anything is typed.
+            nameTheCopy()
+            // The keyboard once, when this screen opens. It belongs to this screen and not
+            // to `ScanFlow`'s own `.onAppear`, which is shared with the camera, the
+            // takeover, Adjust and the pages - screens with no name field. The sheets need
+            // no guard of their own: the reader and the share sheet present over this
+            // screen without removing it.
             guard !focusTaken else { return }
             focusTaken = true
             naming = true
         }
     }
 
-    /// The name for the copy that leaves. On disk the file is always `scan.pdf`, so this
-    /// is the one field in the app and it holds nothing: the share sheet reads it and it
-    /// dies with the screen ([`../../user-flows.md`](../../user-flows.md) section 10).
+    /// The one name field in the app, and the one place the scan gets a name of its own:
+    /// on disk the file is always `scan.pdf`, and what he types names both the copy that
+    /// leaves and the row in the list ([`../../user-flows.md`](../../user-flows.md)
+    /// section 10).
     private var nameField: some View {
         VStack(alignment: .leading, spacing: Token.Size.space1) {
             Text("Name for the shared copy")
@@ -162,16 +194,13 @@ struct DoneView: View {
     /// A hard link in the temporary directory carrying the typed name, so the share sheet
     /// offers `Rental contract.pdf` while the file on disk stays `scan.pdf`. A link rather
     /// than a copy: it costs no bytes and no time, and the same volume is the app's own
-    /// container. Nothing is stored - the link is temporary and the field is empty at the
-    /// next open.
+    /// container. The link is temporary; the name itself is on disk in the scan's folder.
     private func nameTheCopy() {
         if let old = shareCopy { try? FileManager.default.removeItem(at: old) }
         shareCopy = nil
-        // A name is one path component, so the two characters that are not allowed in one
-        // are the only thing taken out of what he typed.
-        let wanted = name.trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: "/", with: "-")
-            .replacingOccurrences(of: ":", with: "-")
+        // `Scan.sanitised` and nowhere else, so the file name the share sheet offers and
+        // the title on the row are the same string.
+        let wanted = Scan.sanitised(name)
         guard !wanted.isEmpty else { return }
         let url = FileManager.default.temporaryDirectory.appending(path: wanted + ".pdf")
         try? FileManager.default.removeItem(at: url)

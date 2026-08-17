@@ -75,8 +75,8 @@ with spaces separates a count from its state: `40 pages — PDF ready`. An ellip
 running action: `Applying…`, `Making the PDF…`. No exclamation marks anywhere.
 
 **Numbers.** Always digits, always concrete, always tabular: `12 of 40 pages scanned`,
-`Delete the 40 photos (78 MB)`, `Page 3 of 12`. Titles are dates, `11 Aug 2026, 20:14`, and a
-scan cannot be renamed — the date is the title.
+`Delete the 40 photos (78 MB)`, `Page 3 of 12`. A scan's title is the name typed on the done
+screen, and a date, `11 Aug 2026, 20:14`, when none was typed.
 
 **Errors.** The engine's own finished sentence, printed unchanged; the client never rewrites it.
 Per-page camera failures use one shape, and it always ends by saying what survived:

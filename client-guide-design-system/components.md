@@ -42,8 +42,8 @@ a 96 px **Delete** action in destructive colour.
 | Swipe action | Delete | Löschen |
 ```
 
-The title is the folder date, e.g. `11 Aug 2026, 20:14`. There is no rename: the date is the
-title.
+The title is the name typed on the done screen, or the folder date, e.g. `11 Aug 2026, 20:14`,
+when none was typed. The row itself is never editable.
 
 ## Buttons - in Storybook
 

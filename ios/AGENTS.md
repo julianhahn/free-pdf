@@ -10,10 +10,11 @@ here.
 
 ```
 Documents/Scans/
-  2026-08-11_201403_8F3A/          <- the scan. Folder name = sort key + id + title.
+  2026-08-11_201403_8F3A/          <- the scan. Folder name = sort key + id.
     photo/0001.jpg 0002.jpg 0004.jpg   <- 0003 was deleted. Gaps stay. Never renumbered.
     page/ 0001.jpg 0002.jpg            <- 0004 unscanned = the resume point
     state/0001.txt 0002.txt            <- what the user last asked for on that page
+    name.txt                           <- the name he typed, if he typed one. The title.
     scan.pdf                           <- exists => finished. Arrives only by rename.
   2026-08-09_093207_1C7D/ ...
 ```
@@ -26,8 +27,9 @@ own input offline. iCloud is where the finished PDF is exported to.
 The folder name is `<yyyy-MM-dd>_<HHmmss>_<4 hex>`, written in the Gregorian calendar
 whatever the phone is set to, and in local time. A reverse lexicographic sort over those
 names is newest first with no attribute reads, and the hex tail survives a double tap on
-New scan inside one second. The formatted date is also the title, so there is no title
-field - and that is what the local time buys: flying west, or the hour that repeats when
+New scan inside one second. The formatted date is the title of every scan the user has not
+named himself, and `name.txt` wins wherever it exists - the folder is never renamed either
+way. That is what the local time buys: flying west, or the hour that repeats when
 summer time ends, can list a newer scan below an older one for a few hours. It costs the
 order of two rows and no data.
 
@@ -40,7 +42,8 @@ order of two rows and no data.
    ([`../core_engine/AGENTS.md`](../core_engine/AGENTS.md)). A real name is proof of a
    complete file - that is what replaces checksums and a validation pass.
 3. **Debris is invisible and swept.** Readers accept `0007.jpg` and nothing else inside
-   `photo/` and `page/`, `0007.txt` and nothing else inside `state/`, plus `scan.pdf`.
+   `photo/` and `page/`, `0007.txt` and nothing else inside `state/`, plus `scan.pdf` and
+   `name.txt`.
    `Scan.sweep()` deletes the rest - `.part` files,
    Foundation's `.dat.nosync…`, anything hand-copied in - and puts back a directory that is
    missing. Call it at launch, on every scan, before the list is shown: it is the only
@@ -93,7 +96,7 @@ it:
 
 | Field it would hold | What killed it |
 | --- | --- |
-| title | the folder date |
+| title | the folder date, or `name.txt` when he typed one |
 | pageOrder | zero-padded filenames, lexicographic |
 | step | `Scan.state`, five lines |
 | pageCount | a count of files, which cannot disagree with the disk |
@@ -328,12 +331,17 @@ are: the PDF's URL, the photo count and what the photos cost go in, `onChangePag
 `onDeletePhotos` come out, and `ScanFlow` makes every file move. The keyboard flag is the one
 thing it cannot hold itself - see below.
 
-- **The name is for the copy that leaves and nothing else.** On disk the file is always
-  `scan.pdf`. What he types becomes a hard link in the temporary directory called
-  `<name>.pdf`, which is what `ShareLink` hands the system - a link rather than a copy,
-  because it costs no bytes and the temporary directory is on the same volume. Nothing is
-  stored, so reopening the scan shows an empty field, and a name that would not be one path
-  component (`/`, `:`) has those two characters replaced.
+- **The name he types is the scan's name.** On disk the file is always `scan.pdf`. What he
+  types becomes a hard link in the temporary directory called `<name>.pdf`, which is what
+  `ShareLink` hands the system - a link rather than a copy, because it costs no bytes and
+  the temporary directory is on the same volume - and it is written into the scan's folder
+  as `name.txt` at the same moment, which is what the list row then reads instead of the
+  date. One sanitised string for both, `Scan.sanitised` and nowhere else: a name that would
+  not be one path component (`/`, `:`) has those two characters replaced and the ends
+  trimmed. There is no Save button and nothing to lose by leaving, the field opens on the
+  stored name, and clearing it deletes the file and puts the date back. The write is
+  `ScanFlow`'s, like every other file move (Julian, 2026-08-17: a name he has already typed
+  is the scan's name).
 - **The field is focused when the screen opens, once.** Make PDF always means a copy is
   about to leave, so the keyboard comes up with the screen and its first load is paid
   there instead of on the first tap - which is the wait Julian felt on the phone

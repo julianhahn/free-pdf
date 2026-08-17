@@ -68,8 +68,8 @@ A red line at the top of the list, the system's own sentence, cleared on the nex
 
 1. The list is the landing screen. Rows sorted newest first by folder name, no attribute
    reads.
-2. The title is the folder date, e.g. `11 Aug 2026, 20:14`. There is no rename, by design:
-   the date **is** the title.
+2. The title is the name typed on the done screen, or the folder date, e.g.
+   `11 Aug 2026, 20:14`, when none was typed (section 9). The rows are never editable.
 3. The subtitle is derived from the files each draw.
 4. Tap a row → ScanFlow, which lands on whatever step the files say.
 5. Swipe a row → **Delete** → confirm → the whole folder goes.
@@ -504,6 +504,9 @@ something. One function, not seven.
    spotted late does not cost the scan.
 3. Photos already deleted → the destructive button and its footnote are simply gone, and
    Change pages still works on the pages alone.
+4. The name field is the scan's name: it opens on what was typed last time, every keystroke
+   is stored in the scan's folder, and the list row reads it instead of the date. Clear it
+   and the row reads the date again.
 
 ---
 
@@ -517,8 +520,8 @@ something. One function, not seven.
 4. The copy leaves; the original stays in the app's own folder until the scan is deleted.
 
 On disk the file is always `scan.pdf`. A name field on the done screen lets the user name
-the copy that leaves: type a name, share, and the share sheet carries that name. Nothing
-is stored — reopen the scan and the field is empty again.
+the scan: type a name, share, and the share sheet carries that name — and the name stays
+with the scan, so reopening it shows what was typed and the list row reads it.
 
 ```
 | Where | English | German |
@@ -592,8 +595,8 @@ All settled, Julian, 2026-08-12. Each one is written into the section named besi
 7. **The 3000 px cap stays.** No quality picker. Not built — it is the memory guarantee.
    (Section 7a.)
 
-8. **Renaming the PDF is built**: a text field on the done screen. The name is used only
-   for the shared copy, nothing is stored. (Sections 9 and 10.)
+8. **Renaming the PDF is built**: a text field on the done screen. The name is stored with
+   the scan and is also the list row's title. (Sections 9 and 10.)
 
 9. **"Shoot another page" on a finished scan is built.** The PDF is built again
    afterwards. (Section 6.)

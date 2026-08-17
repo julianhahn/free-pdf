@@ -28,6 +28,10 @@ struct ScanFlow: View {
     /// cache and for the same reason: `scan.state` lists two directories, and a body that
     /// lists a directory the drain is writing into answers differently twice in a frame.
     @State private var finished = false
+    /// The scan's stored name, part of the same cache and for the same reason: the done
+    /// screen's field opens on it, and a view body must not read a file itself. Empty means
+    /// the list row reads the date.
+    @State private var name = ""
     /// The page the carousel is on, by its number.
     @State private var showing = 0
     @State private var message: String?
@@ -83,9 +87,16 @@ struct ScanFlow: View {
                            })
             } else if finished {
                 DoneView(pdf: scan.pdf,
+                         storedName: name,
                          photos: photos.count,
                          photoBytes: photoBytes,
                          focusTaken: $focusTaken,
+                         onName: {
+                             // Every keystroke, because there is no Save button: the write
+                             // is one small file renamed into place, and the list reads it
+                             // off the disk the next time it draws.
+                             scan.writeName($0)
+                         },
                          onChangePages: {
                              // Safe precisely because the PDF is derived: every page file
                              // is still there and rebuilding costs two seconds. Without
@@ -474,6 +485,7 @@ struct ScanFlow: View {
         pages = scan.pages
         photoBytes = scan.photoBytes
         finished = scan.finished
+        name = scan.name ?? ""
         // The lowest-numbered page that has a state file answers for the scan.
         grey = Array(Set(photos + pages)).sorted().lazy.compactMap(scan.readState).first?.grey ?? false
         if !numbers.contains(showing) { showing = numbers.first ?? 0 }

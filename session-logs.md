@@ -8,6 +8,18 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-17 - the typed name is the scan's name
+
+TASKS.md 28. The done screen's name field no longer throws the name away: `Scan.writeName`
+puts it in the scan's folder as `name.txt` (`.part`, then rename), `Scan.name` reads it and
+`Scan.title` prefers it over the folder date. `ScanFlow` does the write, as it does every
+file move, and the field opens on what is stored - clearing it deletes the file and the date
+comes back. One sanitiser, `Scan.sanitised`, for both the share sheet's copy and the row.
+`sweep()` keeps `name.txt` and takes `name.part`. Six new blocks in section 15 of
+`ios/check/main.swift`, two of them mutation-tested. `user-flows.md` 9, 10 and DECISIONS 8
+and `ios/AGENTS.md` said the name was for the shared copy only; those sentences are replaced,
+not extended.
+
 ## 2026-08-16 - the loop closes, and the map is true again
 
 Last iteration of the architecture loop. `ARCHITECTURE.md` items 9, 11, 12, 13, 14, 15 and 16
