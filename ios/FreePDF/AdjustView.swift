@@ -82,9 +82,19 @@ struct AdjustView: View {
     /// What the engine said about a preview that failed, in its own sentence. The last
     /// good picture stays up under it.
     @State private var previewFailure: String?
-    /// Which corner is under the finger right now, and so where the magnifier is. `nil`
-    /// between drags, which is when there is no magnifier at all.
+    /// Which corner is under the finger right now, and so where the magnifier is. Set the
+    /// moment a finger lands on a corner, not once it has moved. `nil` when no corner is
+    /// touched, which is when there is no magnifier at all.
     @State private var held: Int?
+    /// Which corner was grabbed and where it sat when the finger landed on it. The drag
+    /// moves the corner from there by how far the finger has travelled, so a touch that
+    /// lands off centre - anywhere in the 44 point target - does not teleport the corner
+    /// under the fingertip.
+    ///
+    /// The corner's own number is stored with the point because a second finger on a second
+    /// handle would otherwise read the first one's starting point and throw its corner
+    /// across the picture. Two fingers on two handles is a thing a hand does by accident.
+    @State private var grabbed: (corner: Int, at: CGPoint)?
     /// The sheet the numbers on screen were measured against.
     ///
     /// The angle and the two levels points only mean something against one set of
@@ -356,8 +366,8 @@ struct AdjustView: View {
         return quarter % 2 == 0 ? file.width / file.height : file.height / file.width
     }
 
-    /// Four draggable corners over the picture, and while one is held, the magnifier that
-    /// makes it aimable.
+    /// Four draggable corners over the picture, and while one is touched, the magnifier
+    /// that makes it aimable.
     private func handles(_ points: Binding<[CGPoint]>, colour: Color) -> some View {
         GeometryReader { geo in
             ForEach(0..<4, id: \.self) { i in
@@ -370,11 +380,33 @@ struct AdjustView: View {
                     .contentShape(Circle())
                     .position(x: points.wrappedValue[i].x * geo.size.width,
                               y: points.wrappedValue[i].y * geo.size.height)
-                    .gesture(DragGesture().onChanged { move in
+                    // One gesture, doing both jobs. It was two for a while - a
+                    // `minimumDistance: 0` one to raise the loupe on touch down and a
+                    // travelling one to move the corner - and the corner then stopped moving
+                    // at all (Julian, on the phone): two drags on one view are exclusive, so
+                    // the zero-distance one recognises first and the other never fires.
+                    //
+                    // `minimumDistance: 0` is what the loupe needs, because a loupe that
+                    // appears only after the finger has already travelled shows up too late
+                    // to aim with. It costs the enclosing `ScrollView` its pan on these four
+                    // 44 point circles, which is the cheap half of the trade: nobody scrolls
+                    // the screen by putting a thumb exactly on a corner handle.
+                    //
+                    // The corner moves *from where it was* by the distance travelled, never
+                    // to `move.location`: a touch that lands 20 points off centre inside the
+                    // target would otherwise shift the sheet by 20 points before the user has
+                    // dragged anything at all. A stationary touch has no translation, so it
+                    // raises the loupe and moves nothing.
+                    .gesture(DragGesture(minimumDistance: 0).onChanged { move in
                         held = i
-                        points.wrappedValue[i] = CGPoint(x: move.location.x / geo.size.width,
-                                                         y: move.location.y / geo.size.height)
-                    }.onEnded { _ in held = nil })
+                        let from = grabbed?.corner == i
+                            ? grabbed!.at
+                            : points.wrappedValue[i]
+                        grabbed = (i, from)
+                        points.wrappedValue[i] = CGPoint(
+                            x: from.x + move.translation.width / geo.size.width,
+                            y: from.y + move.translation.height / geo.size.height)
+                    }.onEnded { _ in letGo() })
                     .accessibilityLabel(Self.cornerNames[i])
                     .accessibilityHint("Swipe up or down to move it.")
             }
@@ -452,6 +484,13 @@ struct AdjustView: View {
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+
+    /// The finger is off the corner: no magnifier, and the next touch grabs afresh from
+    /// wherever the corner ended up.
+    private func letGo() {
+        held = nil
+        grabbed = nil
     }
 
     private static let cornerNames = ["Top left corner", "Top right corner",
