@@ -117,12 +117,7 @@ struct ScanList: View {
                 .multilineTextAlignment(.center)
                 .padding(.bottom, Token.Size.space4)
             Button("New scan", action: newScan)
-                .font(Token.Face.heading(Token.Size.textControl))
-                .padding(.vertical, Token.Size.buttonPaddingY)
-                .padding(.horizontal, Token.Size.buttonPaddingX)
-                .frame(minHeight: Token.Size.touchMin)
-                .background(Token.Palette.accent, in: RoundedRectangle(cornerRadius: Token.Size.radiusMd))
-                .foregroundStyle(Token.Palette.onAccent)
+                .buttonStyle(PrimaryStyle())
                 .accessibilityHint("Photograph the pages of a new scan.")
         }
         .padding(Token.Size.screenPadding)

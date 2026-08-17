@@ -123,6 +123,31 @@ ScanFlow - one screen, and it switches on what the files say
    └─ done       Open PDF │ Change pages
 ```
 
+### A tappable control is built from the inside out
+
+**Never chain padding, a frame, a background or a stroke onto a `Button` value.** A
+`Button` hit-tests its *label*. Modifiers written after `Button(...)` decorate the wrapper
+around that label, so they paint a box whose tappable part is still only the words - and a
+trailing `.contentShape` does not rescue it, because it lands on that same wrapper. The
+result is a control that looks 44 points tall and answers on 17.
+
+This bug has been shipped twice and felt on the phone twice, the second time with six
+`.contentShape` lines written to fix it. So there are exactly two shapes allowed:
+
+- a **`ButtonStyle`**, which decorates `configuration.label` - the thing the tap is tested
+  against. `PrimaryStyle` and `GhostStyle` in
+  [`FreePDF/ButtonStyles.swift`](./FreePDF/ButtonStyles.swift) are the two more than one
+  screen uses; `SecondaryStyle`, `RowStyle`, `ChipStyle`, `ShutterStyle` and the done
+  screen's `OutlineStyle` stay private beside the screen each belongs to.
+- **`Button { } label: { <decorated label> }`**, with every modifier inside the closure.
+
+Two things carry a hit area and nothing else does: a `.background(colour, in: shape)` and a
+`.contentShape`. A `.frame` alone is layout, and a `.overlay(Shape().stroke(…))` is a
+painted line - a shape is hit-tested on its own path, so an outlined box answers on the
+outline and not inside it. Where a style paints nothing at rest, the press state is what
+tells the user the tap landed: `pressAccent` behind unpainted words, `pressNeutral` as a
+veil over a filled one.
+
 `ScanFlow` owns three pieces of view state that decide a screen - `shooting`,
 `applyingAll` and `adjusting`. Everything else it shows is read from the files; `photos`
 and `pages` are a copy for SwiftUI to redraw on, refreshed at every moment the files

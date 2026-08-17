@@ -177,10 +177,7 @@ struct PagesView: View {
                         .frame(width: Token.Size.hairlineW, height: Token.Size.touchMin)
                     // Words, not a glyph, and always in the same place at the rail's end.
                     Button("Go to page") { jumping.toggle() }
-                        .font(Token.Face.heading(Token.Size.textControl))
-                        .tracking(Token.Size.textControl * Token.Number.trackingHeading)
-                        .foregroundStyle(Token.Palette.accent)
-                        .frame(minHeight: Token.Size.touchMin)
+                        .buttonStyle(GhostStyle())
                         .accessibilityHint("Go to a page number. Page \(position) of \(numbers.count) shown.")
                 }
             }
@@ -270,13 +267,7 @@ struct PagesView: View {
             // to a PDF the user thought was whole.
             if complete {
                 Button(making ? "Making the PDF…" : "Make PDF", action: onMakePDF)
-                    .font(Token.Face.heading(Token.Size.textControl))
-                    .padding(.vertical, Token.Size.buttonPaddingY)
-                    .padding(.horizontal, Token.Size.buttonPaddingX)
-                    .frame(maxWidth: .infinity, minHeight: Token.Size.touchMin)
-                    .background(making ? Token.Palette.disabledBorder : Token.Palette.accent,
-                                in: RoundedRectangle(cornerRadius: Token.Size.radiusMd))
-                    .foregroundStyle(making ? Token.Palette.disabledText : Token.Palette.onAccent)
+                    .buttonStyle(PrimaryStyle(wide: true, off: making))
                     .disabled(making)
                     .accessibilityHint("Makes one PDF from the \(numbers.count) pages.")
             }

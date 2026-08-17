@@ -166,6 +166,10 @@ struct CameraView: View {
                     .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
                         .stroke(off ? Token.Palette.disabledBorder : Token.Palette.accent,
                                 lineWidth: Token.Size.hairlineW))
+                    // The box is a stroke round an empty frame, and neither of those takes
+                    // a touch, so without this the tap area is the centred words and most
+                    // of a full-width button is dead.
+                    .contentShape(Rectangle())
             }
             .disabled(off)
             .padding(Token.Size.screenPadding)
@@ -187,16 +191,25 @@ struct CameraView: View {
                 .foregroundStyle(Token.Palette.text)
                 .multilineTextAlignment(.center)
             if settings {
-                Button("Open Settings") {
+                Button {
                     UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+                } label: {
+                    // The box is drawn inside the label, the way the footer's button above
+                    // draws its own: a box painted on the Button instead decorates a
+                    // wrapper, and the words stay the only thing that answers a tap.
+                    Text("Open Settings")
+                        .font(Token.Face.heading(Token.Size.textControl))
+                        .foregroundStyle(Token.Palette.accent)
+                        .padding(.vertical, Token.Size.buttonPaddingY)
+                        .padding(.horizontal, Token.Size.buttonPaddingX)
+                        .frame(minHeight: Token.Size.touchMin)
+                        .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
+                            .stroke(Token.Palette.accent, lineWidth: Token.Size.hairlineW))
+                        // A stroke answers a touch on its own hairline and a frame answers
+                        // none at all, so the box needs a shape of its own - the one way
+                        // out of this screen may not have a dead middle.
+                        .contentShape(Rectangle())
                 }
-                .font(Token.Face.heading(Token.Size.textControl))
-                .foregroundStyle(Token.Palette.accent)
-                .padding(.vertical, Token.Size.buttonPaddingY)
-                .padding(.horizontal, Token.Size.buttonPaddingX)
-                .frame(minHeight: Token.Size.touchMin)
-                .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
-                    .stroke(Token.Palette.accent, lineWidth: Token.Size.hairlineW))
                 .padding(.top, Token.Size.space4)
                 .accessibilityHint("Opens the iPhone's settings for FreePDF, "
                                    + "where the camera can be allowed.")
@@ -506,6 +519,12 @@ private struct ShutterStyle: ButtonStyle {
                     .padding(Token.Size.shutterRing + Token.Size.shutterGap)
             }
             .frame(minWidth: Token.Size.touchMin, minHeight: Token.Size.touchMin)
+            // One control, so one target. A stroked circle answers a touch on its 2 point
+            // band and the disc inside answers on its own 60 points, which leaves the gap
+            // between them - the ground the ring stands on - taking nothing. This is on the
+            // style's own body rather than on the Button, so it is the shape the tap is
+            // tested against.
+            .contentShape(Circle())
     }
 }
 

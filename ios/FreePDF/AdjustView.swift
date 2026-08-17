@@ -465,15 +465,7 @@ struct AdjustView: View {
                 ForEach(Tool.allCases, id: \.self) { one in
                     let chosen = one == tool
                     Button(one.rawValue) { tool = one }
-                        .font(Token.Face.heading(Token.Size.textControl))
-                        .tracking(Token.Size.textControl * Token.Number.trackingHeading)
-                        .padding(.horizontal, Token.Size.buttonPaddingX)
-                        .frame(minHeight: Token.Size.touchMin)
-                        .background(chosen ? Token.Palette.accent : Token.Palette.bg,
-                                    in: RoundedRectangle(cornerRadius: Token.Size.radiusMd))
-                        .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
-                            .stroke(Token.Palette.divider, lineWidth: Token.Size.hairlineW))
-                        .foregroundStyle(chosen ? Token.Palette.onAccent : Token.Palette.text)
+                        .buttonStyle(ChipStyle(chosen: chosen))
                         .accessibilityAddTraits(chosen ? [.isSelected] : [])
                 }
             }
@@ -520,6 +512,11 @@ struct AdjustView: View {
                         .frame(width: Token.Size.touchMin, height: Token.Size.touchMin)
                         .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
                             .stroke(Token.Palette.divider, lineWidth: Token.Size.hairlineW))
+                        // The decoration is in the label, which is the half that was
+                        // already right, but a frame and a stroke hold no hit region
+                        // between them: without this the ring of empty box around the
+                        // glyph answers nothing.
+                        .contentShape(Rectangle())
                 }
                 .accessibilityLabel("A quarter turn clockwise")
                 .accessibilityValue("Page \(position), turned \(turns) quarter turns clockwise.")
@@ -582,10 +579,7 @@ struct AdjustView: View {
     /// engine's own answer.
     private func reset(_ tool: Tool) -> some View {
         Button("Back to the suggestion") { seed(tool) }
-            .font(Token.Face.heading(Token.Size.textControl))
-            .tracking(Token.Size.textControl * Token.Number.trackingHeading)
-            .foregroundStyle(Token.Palette.accent)
-            .frame(minHeight: Token.Size.touchMin)
+            .buttonStyle(GhostStyle())
     }
 
     // MARK: - The footer
@@ -710,5 +704,31 @@ struct AdjustView: View {
         else { return .zero }
         let turned = (all[kCGImagePropertyOrientation] as? Int ?? 1) >= 5
         return CGSize(width: turned ? tall : wide, height: turned ? wide : tall)
+    }
+}
+
+/// One tool chip: the word in a pill, filled in the accent while it is the tool on screen.
+///
+/// A `ButtonStyle` and not modifiers on the Button, because the pill itself has to answer
+/// the tap. Six of these sit in a strip that scrolls, so a touch on the dead padding
+/// between two chips is not merely a miss - it pans the strip instead of switching tool.
+private struct ChipStyle: ButtonStyle {
+    let chosen: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Token.Face.heading(Token.Size.textControl))
+            .tracking(Token.Size.textControl * Token.Number.trackingHeading)
+            .padding(.horizontal, Token.Size.buttonPaddingX)
+            .frame(minHeight: Token.Size.touchMin)
+            .background(chosen ? Token.Palette.accent : Token.Palette.bg,
+                        in: RoundedRectangle(cornerRadius: Token.Size.radiusMd))
+            // The dark veil rather than the accent tint, because it has to show on the
+            // chosen chip's accent fill as well as on the plain ground of the other five.
+            .background(configuration.isPressed ? Token.Palette.pressNeutral : .clear,
+                        in: RoundedRectangle(cornerRadius: Token.Size.radiusMd))
+            .overlay(RoundedRectangle(cornerRadius: Token.Size.radiusMd)
+                .stroke(Token.Palette.divider, lineWidth: Token.Size.hairlineW))
+            .foregroundStyle(chosen ? Token.Palette.onAccent : Token.Palette.text)
     }
 }
