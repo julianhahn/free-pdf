@@ -155,25 +155,6 @@ const SMALLEST_SHARE: f32 = 0.15;
 /// out a bright strip along one edge.
 const THINNEST_SIDE: f32 = 0.25;
 
-/// How far the mask is pulled in, and pushed back out again, before the sheet is
-/// picked out of it. In pixels of the [`WORK_WIDTH`] wide copy, so 3 px is 0.75%
-/// of the width of the picture.
-///
-/// Measured on seven photos of a letter on a metal table. On one of them the sheen
-/// down the right of the frame hangs on the sheet by 2 px: at 2 it comes off and the
-/// bottom right corner moves from the corner of the frame back onto the paper, at 1
-/// it stays. So this is one pixel of margin over what was needed. The other way
-/// round, the corners of the tilted sheet in `the_corners_of_the_sheet_are_found`
-/// move 1.6 px at 2, 2.5 px at 3 and 4.5 px at 8, of the 6 px that test allows - and
-/// that picture is 200 px wide, so it is not shrunk at all and the same radius costs
-/// a full sized photo half as much. On five of the seven the box moves by at most one
-/// pixel of this copy, 7 px of a 4032 px high photo. On the other two a piece of
-/// reflection leaves the box with the mask: one loses 310 px of height, the other
-/// 279 px of width and 378 px of height. Neither is the sheet giving anything up -
-/// the sides of the sheet come back where they were, which is what the opening is
-/// built to do.
-const OPENING_RADIUS: u32 = 3;
-
 /// Finds the sheet of paper in a photograph.
 ///
 /// It works from two ideas. The paper is brighter than what it lies on, and the
@@ -186,12 +167,6 @@ const OPENING_RADIUS: u32 = 3;
 /// the border, so they end up inside the sheet where they belong. Without that a
 /// measurement inside the sheet would never see any ink.
 ///
-/// Bright is not the same as paper, though - a lit table is bright as well - so
-/// what is not background is opened before the largest area is taken from it
-/// ([`without_thin_bridges`]). That cuts the thin bridge a reflection hangs onto the
-/// sheet by, which leaves the reflection as an area of its own for the largest one
-/// to beat, and leaves the sides of the sheet where they were.
-///
 /// The result is a **suggestion**, like [`crate::suggest_levels`]: the client is
 /// meant to show the box as a rectangle the user can drag before anything is cut.
 ///
@@ -199,22 +174,10 @@ const OPENING_RADIUS: u32 = 3;
 /// thin to be a document. It does not judge whether what it found is really paper
 /// - on a picture of something else it returns the largest bright thing in it.
 ///
-/// ponytail: brightness only, and the opening is a thin fix on top of it. A document
-/// on a white desk breaks it outright, because paper and desk are then the same
-/// brightness. A table lit brightly right beside the sheet breaks it whenever the
-/// sheen touches the paper over more than twice [`OPENING_RADIUS`], because then the
-/// two are not joined by a bridge the opening can cut but by a broad front. Measured on
-/// seven photos of a letter on a metal table: one had no sheen in the mask at all,
-/// one hangs it on a 2 px bridge and the opening takes it off, and the remaining five
-/// need a radius of 20, 21, 22, 24 and more than 24 before the sheet comes off the
-/// frame - a twentieth of the width of the picture, where the tilted sheet loses its
-/// corners altogether. So those five keep a bottom right corner that is the corner of
-/// the frame, and no radius that leaves a real corner alive will change that. Nothing
-/// is straightened wrongly there, because
-/// [`Paper::runs_off_the_picture`] sees it and the client then skips the deskew, so
-/// the cost is a page that stays uncut rather than a page bent out of shape.
-/// Following the edges of the sheet instead would fix all of it, and would also give
-/// the four corners a deskew needs - that, not a bigger radius, is the way up.
+/// ponytail: brightness only. A document on a white desk breaks it, because paper
+/// and desk are then the same brightness. Following the edges of the sheet instead
+/// would fix that, and would also give the four corners a deskew needs - worth
+/// doing when either shows up.
 pub fn find_paper(img: &DynamicImage) -> Option<Paper> {
     let (image_width, image_height) = (img.width(), img.height());
     if image_width == 0 || image_height == 0 {
@@ -228,7 +191,6 @@ pub fn find_paper(img: &DynamicImage) -> Option<Paper> {
     let bright: Vec<bool> = small.pixels().map(|pixel| pixel[0] > threshold).collect();
     let background = dark_area_reaching_the_border(&bright, width, height);
     let candidate: Vec<bool> = background.iter().map(|outside| !outside).collect();
-    let candidate = without_thin_bridges(&candidate, width, height);
 
     let (area, bounds, on_paper) = largest_blob(&candidate, width, height)?;
 
@@ -349,67 +311,6 @@ fn dark_area_reaching_the_border(bright: &[bool], width: u32, height: u32) -> Ve
     }
 
     outside
-}
-
-/// The mask with everything narrower than [`OPENING_RADIUS`] taken out of it.
-///
-/// A morphological opening: pull every edge in by the radius, then push it back
-/// out again. An edge wider than the radius comes back exactly where it was, so the
-/// sheet keeps its own sides; what was narrower than the radius is gone after the
-/// first pass and has nothing left to grow back from. Only a corner pays, because
-/// the square cannot reach into a wedge: the corners of the tilted sheet in
-/// `the_corners_of_the_sheet_are_found` come back 2.5 px short of where they were,
-/// at an [`OPENING_RADIUS`] of 3, which is why that number has to stay small.
-///
-/// That is what stops a reflection on the table from being counted as paper. A
-/// sheen next to the sheet is bright, so it is not background, and where it
-/// touches the sheet the two are one shape - and the corner of that shape is not
-/// a corner of the paper.
-fn without_thin_bridges(mask: &[bool], width: u32, height: u32) -> Vec<bool> {
-    let mut pulled_in = vec![false; mask.len()];
-    let mut pushed_out = vec![false; mask.len()];
-
-    square_pass(mask, &mut pulled_in, width, height, false);
-    square_pass(&pulled_in, &mut pushed_out, width, height, true);
-
-    pushed_out
-}
-
-/// One pass over every pixel, looking at the square of [`OPENING_RADIUS`] around
-/// it: `grow` set means a pixel comes out set when any pixel of the square is,
-/// unset means only when all of them are.
-///
-/// Off the edge of the picture counts as nothing at all: the square is cut to the
-/// picture and only the pixels that exist are looked at. It has to stay that way.
-/// Counting the missing pixels as unset instead pulls the mask in from the frame as
-/// though the frame were table, and that cuts a page apart. On a picture that is all
-/// paper the lines of writing reach the border, so the background walks in along them
-/// and leaves the rows of the page joined only by the paper between a line's end and
-/// the frame - which is exactly the strip this rule would take away. The picture
-/// `../ffi/bridge_check.sh` draws, turned six degrees, then falls from one area of
-/// 99078 pixels to seventeen of 5600, each one too thin for [`THINNEST_SIDE`], and the
-/// sheet comes back as `None`. It buys nothing either: on the seven photos of a letter
-/// on a metal table, pulling in from the frame as well changed no corner and no box.
-fn square_pass(from: &[bool], into: &mut [bool], width: u32, height: u32, grow: bool) {
-    let radius = OPENING_RADIUS;
-
-    for y in 0..height {
-        for x in 0..width {
-            let across = x.saturating_sub(radius)..=(x + radius).min(width - 1);
-            let down = y.saturating_sub(radius)..=(y + radius).min(height - 1);
-            let mut square = down.flat_map(|row| {
-                across
-                    .clone()
-                    .map(move |column| (row * width + column) as usize)
-            });
-
-            into[(y * width + x) as usize] = if grow {
-                square.any(|neighbour| from[neighbour])
-            } else {
-                square.all(|neighbour| from[neighbour])
-            };
-        }
-    }
 }
 
 /// The biggest run of pixels that are set and touch each other: its size, the box
