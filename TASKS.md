@@ -69,6 +69,7 @@ themselves are drawn by Storybook.
 | 32 | iOS: Adjust and Shoot another page are controls, not menu items | - | bash ios/check/scan_check.sh, by hand |
 | 33 | iOS: shooting another page does not stop after one | - | bash ios/check/scan_check.sh, by hand |
 | 34 | iOS: after the first page, the app shows what it is about to do | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
+| 35 | iOS: the viewfinder shows the last page photographed | - | bash ios/check/scan_check.sh, by hand |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -1169,12 +1170,8 @@ already puts the camera back on that page number. Do not write the previewed pag
 and do not let it stand in for the drain's own run: the drain writes every page from every
 photo, exactly as it does today.
 
-**Open, and Julian's to settle, not this task's to invent.** He also asked for "a little preview
-of the last taken photo, just so they know which one they took last". On this screen that is
-what the picture already is. If he means a thumbnail in the corner of the **viewfinder** during
-a long run, that is a different thing and `/Users/julianhahn/free-pdf/user-flows.md` DECISIONS
-rules a corner thumbnail out - his decision would win and that line would be deleted, but he has
-to make it first. Ask before building it.
+**The thumbnail he also asked for is task 35**, not this screen. On this screen the picture
+already is the last photo taken.
 
 **Read.** `/Users/julianhahn/free-pdf/ios/FreePDF/CameraView.swift` - where a shot lands and
 what `photos` and `slot` mean. `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift` - the
@@ -1191,6 +1188,64 @@ another scan, shoot one page, tap the left control and land back on the viewfind
 kill the app on the check screen and find one photo, no page, and the viewfinder on relaunch.
 
 **Blocked by.** Nothing. It shares the scratch-file rule with task 26, which is built.
+
+---
+
+## 35. The viewfinder shows the last page photographed - Julian, 2026-08-17
+
+**Why.** This was decided against and is now decided for; the reason it was skipped was wrong.
+`/Users/julianhahn/free-pdf/user-flows.md` DECISIONS point 10 says a corner thumbnail is not
+needed because "retaking from the pages already works" - but retaking is not what it is for.
+Julian, working through seven double-sided sheets: the counter says "Page 8" and that is a
+number, not an answer to the question he actually has, which is *which sheet did I just
+photograph*. Turning a stack of paper over is exactly where a person loses their place, and a
+picture answers in a glance what a number cannot answer at all.
+
+Nothing else in the camera gives any feedback that a shot landed except the counter going up.
+
+**Build.** A small picture of the newest photo of this scan, in a corner of the viewfinder,
+appearing when the first shot of the session lands and replaced by each shot after it.
+
+- **Reuse `PageImage`** (`/Users/julianhahn/free-pdf/ios/FreePDF/PagesView.swift`, not private
+  precisely so other screens can use it). It already decodes at a maximum pixel size off the
+  main thread and shows the paper colour until it is ready. A thumbnail is that view with a
+  small `maxPixels` and a frame - do not write a second decoder.
+- **It shows a photo, not a page.** During shooting no page exists yet. What it confirms is what
+  he pointed the camera at, which is the question being asked.
+- **It appears when a shot lands, not when one is pressed.** A file earns its name by rename
+  (`/Users/julianhahn/free-pdf/ios/AGENTS.md`), so the thumbnail follows the newest photo that
+  really is on disk. Nothing is held in memory that has not been written - the same rule the
+  rest of the app keeps.
+- **Nothing before the first shot of the session.** A fresh scan starts with no thumbnail;
+  "Shoot another page" on an existing scan also starts with none, because the point is to
+  confirm what *he* just took, not to show him a photo from an hour ago. It never appears at all
+  during a retake, which is one shot that leaves immediately.
+- **It sits clear of everything that takes a touch** - the shutter, the counter, the footer and
+  the error line, which may all be on screen at once. Its size, corner inset and radius come
+  from `Token`; a missing token is a token to add to
+  `/Users/julianhahn/free-pdf/design/system/tokens/*.css` and regenerate with
+  `node design/system/tokens/build-tokens.mjs`, never a number typed into the screen.
+- **VoiceOver:** it is confirmation of something the counter already announces, so it is
+  decoration a screen reader skips. The counter keeps naming the page.
+
+**Do not.** Do not make it tappable, do not open a gallery, do not let it grow into a filmstrip
+of every page - the rail on the pages screen is where pages are browsed, and a second browser in
+the camera is a second place to keep true. Do not decode the full 12 MP photo to draw a small
+picture. Do not delay the shutter for it: a thumbnail that is still decoding must never be a
+reason a shot cannot be taken. Do not put the page count or any words on it; it is a picture.
+
+**Docs.** `/Users/julianhahn/free-pdf/user-flows.md` DECISIONS point 10 is now false and is
+replaced, not extended - one line saying the thumbnail is built and what it is for. Task 6's
+"Do not add a corner thumbnail" in this file is false for the same reason and goes; the other
+three things it rules out - a flash control, a landscape frame, a photo-library import - all
+stand. `/Users/julianhahn/free-pdf/user-flows.md` section 4 gains one line describing it.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by
+hand on a phone: start a scan, no thumbnail before the first shot; shoot three pages and the
+thumbnail is each one in turn as it lands; force-quit and relaunch into the viewfinder, no
+thumbnail until the next shot; a retake shows none.
+
+**Blocked by.** Nothing. It touches only the camera and can run beside 32, 33 and 34.
 
 ---
 
