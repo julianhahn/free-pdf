@@ -66,6 +66,9 @@ themselves are drawn by Storybook.
 | 29 | The sheet is found by its edges, not by its brightness — DONE | - | cargo test --workspace, bash ffi/bridge_check.sh, by eye on real photos |
 | 30 | iOS: Pull the sheet flat starts on — DONE | 29 | bash ios/check/scan_check.sh, by hand |
 | 31 | A sheet that leaves the frame is cut anyway, and the page says so | - | cargo test --workspace, bash ios/check/scan_check.sh, by eye on real photos |
+| 32 | iOS: Adjust and Shoot another page are controls, not menu items | - | bash ios/check/scan_check.sh, by hand |
+| 33 | iOS: shooting another page does not stop after one | - | bash ios/check/scan_check.sh, by hand |
+| 34 | iOS: after the first page, the app shows what it is about to do | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -1026,6 +1029,168 @@ exactly as they do today, and `runs_off_1.jpg` must lose the furniture edge alon
 hand on a phone: shoot a page that hangs off the frame, see it cut, see the note, tap the retake.
 
 **Blocked by.** Nothing. 29 is done, which is what makes the corners worth trusting.
+
+---
+
+## 32 and 33. What the phone showed on the pages screen - Julian, 2026-08-17
+
+Two more things Julian found using the finished app. Both are about the pages screen and the
+camera it opens, they touch the same two files, and they can run at the same time.
+
+## 32. Adjust and Shoot another page are controls, not menu items
+
+**Why.** Task 24 moved Adjust onto the pages screen because Julian could not find it, and left
+it in the "…" menu as well - "only if that costs nothing". It costs something: the same action
+in two places is a choice the user has to make before he can act, and the menu is still where
+the eye goes looking. "Shoot another page" never came out at all and is still only in the menu,
+behind a glyph, on exactly the screen where a user notices a page is missing.
+
+Today in `/Users/julianhahn/free-pdf/ios/FreePDF/PagesView.swift`: Adjust is a control under
+the carousel (`Button("Adjust page")`) **and** a menu item; "Shoot another page" is a menu item
+only, shown on a finished scan.
+
+**Build.** Both are controls on the pages screen, visible without opening a menu. Adjust loses
+its menu entry - one way in, not two. "Shoot another page" gets a control of its own and keeps
+the rule task 24 set for Adjust: the same place for every page, and disabled rather than hidden
+where it does not apply, so nothing moves under the thumb.
+
+The menu keeps what is left - retake and delete - and stays where it is.
+
+**Do not.** Do not invent a word or a glyph meaning: "Adjust page" and "Shoot another page" are
+the words, unchanged. Do not add a third entry point to either from Done or from the camera.
+Do not make the controls appear and disappear - task 24's whole point was that a control which
+moves cannot be found twice. No new colour, size or spacing: the dead look is the
+`--disabled-*` colour role from task 1, never an opacity.
+
+**Docs.** Task 24's sentence allowing Adjust to stay in the menu is now false and goes. The
+flow 5 document and `/Users/julianhahn/free-pdf/user-flows.md` section 6 describe a menu of
+three and four items - correct the count in one line, do not extend it.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by
+hand: a three page scan, both controls reachable in one tap from the page on screen, neither of
+them in the "…" menu, and on a page whose photo was deleted Adjust is there and refuses.
+
+## 33. Shooting another page does not stop after one
+
+**Why.** Julian's words: "add a page" stops immediately after one photo. Adding three pages to a
+finished scan should be three presses of the shutter and then one "Scan 3 pages", the same as
+the first run of a scan - not going back to the pages screen and reaching for the menu again
+between every shot.
+
+**What the code says today, which is the awkward part of this task.** Reading it, this should
+already work, and the cause is not visible from the source:
+
+- `/Users/julianhahn/free-pdf/ios/FreePDF/CameraView.swift:284`, `if slot != nil { finished() }`
+  is the one-shot path, and it belongs to a **retake** - one shot that takes itself back, by
+  design.
+- `ScanFlow.shootAnother()` sets `slot = nil`, which is not that path.
+- The footer, the way out of the camera, is drawn only when `slot == nil` - so on this path it
+  is there.
+
+So do not start by rewriting the camera. Start by reproducing it on a real phone and finding out
+what actually ends the screen: whether `slot` is not `nil` when it should be, whether the
+enclosing `ScanFlow` tears the camera down for its own reason, or whether the footer's own
+`finished()` is being reached without a tap. **Write what it turned out to be into the report** -
+if the reading above is wrong somewhere, that is worth more than the fix.
+
+**Build.** Shooting another page keeps the camera up until the user says he is done, exactly as
+the first run of a scan does, with the same footer and the same words. Every shot lands on the
+next free number, and the counter names it.
+
+**Do not.** Do not change the retake: one shot that returns is what a retake is. Do not add a
+"done" control of a second kind - the footer is the way out and it already exists. Do not
+change what the footer says; if its wording is wrong for a scan that already has pages, that is
+task 4's open pairing question and is Julian's to answer, not this task's to invent.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok", and by
+hand on a phone: a scan of two pages, Shoot another page, three shots without leaving the
+viewfinder, the counter reading 3, 4 and 5 as they land, then the footer once - and five pages
+on the carousel.
+
+**Blocked by.** Nothing. Runs alongside 32.
+
+---
+
+## 34. After the first page, the app shows what it is about to do - Julian, 2026-08-17
+
+**Why.** A scan is photographed blind. Every page is shot, and only when the user says he is
+done does the engine turn any of them into pages - so a whole scan can be photographed on a desk
+the engine cannot read, and the news arrives twenty pages too late. Nobody knows in advance how
+long a scan will be, so there is no good moment to check except the earliest one.
+
+Julian's decision on 2026-08-17: after the first photo of a scan, and only after that one, the
+app shows what the page made from it would look like, and asks whether to carry on.
+
+**The two ways out, which is the whole point of the screen.** Left: the surroundings are the
+problem and the shot is taken again - more light, a plainer surface, less shine. Right: this is
+right, carry on and photograph the rest in one go. The second is the normal answer and the
+screen must not slow it down.
+
+**Build.**
+
+- **Once per scan, after the first photo lands, before the second shot.** Never again in that
+  scan, whatever happens later - a check the user has to dismiss on every page is a different
+  app, and a slow one. A scan that already has photos - resumed after a kill, or "Shoot another
+  page" on a finished scan - does not show it at all: he has seen his pages by then.
+- **The picture is a real engine run, not an approximation.** What is shown is the page that
+  would be written, for the same reason task 26 gives on the Adjust screen: a picture drawn to
+  look about right is a promise the app cannot keep. It costs one engine run, once per scan,
+  and that is what the screen is buying.
+- **The scratch file rule is task 26's, unchanged.** The preview goes to a file that is not
+  `photo/`, `page/`, `state/` or `scan.pdf`, `sweep()` stays true afterwards, and if that means
+  it lives outside the scan folder, it lives outside the scan folder. The real page is still
+  written by the drain and by nothing else.
+- **It names the shot it came from**, so there is no doubt which photo is being judged - the
+  page number, in the words the counter already uses.
+- **A kill costs nothing.** The photo is on disk before this screen exists, so a kill here
+  leaves a scan with one photo and no page, which is exactly the state the app already resumes
+  from today.
+- **A preview that fails shows the engine's sentence unchanged**, as everywhere else, and the
+  two controls still work - a page the engine refused is a reason to retake, and the screen must
+  say so rather than trap him.
+
+**The words**, drafted here and Julian's to change, as the sixteen in task 4 were. One new
+sentence only; the left control reuses the words the pages screen already uses for a retake:
+
+```
+| Where | English | German |
+| --- | --- | --- |
+| Above the picture | This is how your pages will come out. | So werden deine Seiten aussehen. |
+| The line under it | Not right? More light or a plainer surface fixes most of it. | Nicht richtig? Mehr Licht oder eine ruhigere Unterlage hilft meistens. |
+| Left control | Scan this page again | Diese Seite neu scannen |
+| Right control | Photograph the rest | Restliche Seiten fotografieren |
+```
+
+**Do not.** Do not show it after every page, and do not make it a setting - it is once per scan
+or it is nothing. Do not put Adjust on it: this screen answers "carry on or start over", and a
+page fixed by hand here would still leave the next twenty shot on the same bad desk. Do not
+build a second retake path - the left control is `ScanFlow.retake`, which already exists and
+already puts the camera back on that page number. Do not write the previewed page into `page/`,
+and do not let it stand in for the drain's own run: the drain writes every page from every
+photo, exactly as it does today.
+
+**Open, and Julian's to settle, not this task's to invent.** He also asked for "a little preview
+of the last taken photo, just so they know which one they took last". On this screen that is
+what the picture already is. If he means a thumbnail in the corner of the **viewfinder** during
+a long run, that is a different thing and `/Users/julianhahn/free-pdf/user-flows.md` DECISIONS
+rules a corner thumbnail out - his decision would win and that line would be deleted, but he has
+to make it first. Ask before building it.
+
+**Read.** `/Users/julianhahn/free-pdf/ios/FreePDF/CameraView.swift` - where a shot lands and
+what `photos` and `slot` mean. `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift` - the
+step, `retake`, and the drain that owns page writing.
+`/Users/julianhahn/free-pdf/ios/FreePDF/AdjustView.swift` and task 26 - the preview into a
+scratch file, which is the pattern to copy rather than reinvent. `/Users/julianhahn/free-pdf/ios/AGENTS.md`
+in full, especially the storage model and the sweep.
+
+**Check.** `bash /Users/julianhahn/free-pdf/ios/check/run.sh` says "resume ok" and
+`bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` says "scan ok" - `sweep()` unchanged
+by the scratch file. By hand on a phone: start a scan, shoot one page, see the page as it would
+come out; tap the right control and photograph four more without being asked again; start
+another scan, shoot one page, tap the left control and land back on the viewfinder for page 1;
+kill the app on the check screen and find one photo, no page, and the viewfinder on relaunch.
+
+**Blocked by.** Nothing. It shares the scratch-file rule with task 26, which is built.
 
 ---
 
