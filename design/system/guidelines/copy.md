@@ -49,9 +49,9 @@ when none was typed. The row itself is never editable.
 | Title | Page 3 of 12 | Seite 3 von 12 |
 | Menu | Page | Seite |
 | Menu item | Retake this page | Diese Seite neu fotografieren |
-| Menu item | Adjust page | Seite anpassen |
+| Button | Adjust page | Seite anpassen |
 | Menu item | Delete page | Seite löschen |
-| Menu item (finished scan) | Shoot another page | Weitere Seite fotografieren |
+| Button (finished scan) | Shoot another page | Weitere Seite fotografieren |
 | Refused page | This page could not be scanned. | Diese Seite konnte nicht gescannt werden. |
 | Retry | Scan this page again | Diese Seite noch einmal scannen |
 | Button | Make PDF | PDF erstellen |

@@ -281,7 +281,7 @@ only lives in memory today and a relaunch is the only retry there is.
 | Menu | Page | Seite |
 | Menu, spoken | Page menu | Seitenmenü |
 | Menu item | Retake this page | Diese Seite neu fotografieren |
-| Menu item | Adjust page | Seite anpassen |
+| Button | Adjust page | Seite anpassen |
 | Menu item | Delete page | Seite löschen |
 | Refused page | This page could not be scanned. | Diese Seite konnte nicht gescannt werden. |
 | Incomplete page | Not the whole sheet - it ran off the edge of the photo. | Nicht das ganze Blatt - es lief aus dem Foto heraus. |
@@ -299,11 +299,12 @@ Changes to today: pinch-to-zoom on the page (this screen exists to check small p
 1600 px flat is too little), a **Retry** on a refused page, a confirmation on delete, and
 a page-jump so a 40-page scan is not 40 swipes, shown only from ten pages up.
 
-Adding a page to a finished scan is built: **Shoot another page** in the Page menu. It
+Adding a page to a finished scan is built: **Shoot another page**, a control under the
+carousel beside **Adjust page**. It
 deletes `scan.pdf` first, exactly as **Change pages** does, then opens the camera at
 `nextPage` — otherwise the scan keeps reading `.done` and the new photo is never scanned.
-The new page is scanned like any other and the PDF is built again afterwards. It appears
-only on a finished scan; while checking, the menu has the three items above.
+The new page is scanned like any other and the PDF is built again afterwards. It is dead,
+never hidden, while checking; the menu has two items, retake and delete.
 
 Not built, on purpose: reorder, insert in the middle. The page number is the filename and
 is never renumbered.

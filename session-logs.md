@@ -8,6 +8,15 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-18 - Adjust and Shoot another page are controls, not menu items
+
+TASKS.md 32. `PagesView` now draws both under the carousel, in the same place for every page:
+Adjust page, disabled where the photo is gone, and Shoot another page, disabled until every
+photo has a page. The "…" menu lost both entries and keeps retake and delete, so no action has
+two ways in. Nothing appears or disappears - the dead look is the `--disabled-*` role. Corrected
+alongside: task 24's sentence that let Adjust stay in the menu, `user-flows.md` section 6, the
+flow 5 document and the copy tables' "Menu item" labels for the two words.
+
 ## 2026-08-18 - a sheet that leaves the frame is cut anyway, and the page says so
 
 TASKS.md 31. `scan_page` in `ffi/` lost its `if !sheet.runs_off_the_picture()` guard, so the

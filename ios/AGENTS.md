@@ -311,7 +311,7 @@ out of it:
   the corners come back in photo pixels and are only a fraction of the picture once the
   photo has been measured. If the engine refuses the photo, its sentence is the screen and
   Apply stays dead - a page whose photo is gone cannot be adjusted at all, and the pages
-  screen already leaves **Adjust page** out of the menu for exactly those pages.
+  screen's own **Adjust page** control is dead for exactly those pages.
 - **Apply is refused while the numbers belong to a sheet that is no longer on screen.**
   From the moment a corner moves until the re-measure lands, Apply is dead, because
   `write` stores exactly what it sent - a tap in that gap would run and record numbers

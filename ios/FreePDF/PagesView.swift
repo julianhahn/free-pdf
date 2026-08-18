@@ -24,7 +24,7 @@ struct PagesView: View {
     /// place the user can do something about them.
     let failed: Set<Int>
     /// True when every photo has a page - which is both what makes Make PDF appear and
-    /// what puts "Shoot another page" in the menu.
+    /// what lets "Shoot another page" be tapped.
     let complete: Bool
     let making: Bool
     let message: String?
@@ -79,6 +79,12 @@ struct PagesView: View {
                     .buttonStyle(SecondaryStyle(off: !photos.contains(showing)))
                     .disabled(!photos.contains(showing))
                     .accessibilityHint("Opens the tools for page \(position).")
+                // The same rule: its own control, always in the same place, dead rather
+                // than gone while a page is still waiting for the engine.
+                Button("Shoot another page") { onShootAnother() }
+                    .buttonStyle(SecondaryStyle(off: !complete))
+                    .disabled(!complete)
+                    .accessibilityHint("Photographs one more page at the end of this scan.")
                 if failed.contains(showing) || ranOff == showing {
                     Button("Scan this page again") { onRetake(showing) }
                         .buttonStyle(SecondaryStyle())
@@ -317,19 +323,6 @@ struct PagesView: View {
             Menu {
                 Button("Retake this page", systemImage: "camera") { onRetake(showing) }
                     .accessibilityHint("Photographs page \(position) again.")
-                // Only where there is a photo left: Adjust re-runs the recipe from
-                // `photo/NNNN.jpg`, so a page whose photo was deleted cannot be adjusted
-                // at all ([`../../user-flows.md`](../../user-flows.md) section 7).
-                if photos.contains(showing) {
-                    Button("Adjust page", systemImage: "slider.horizontal.3") {
-                        onAdjust(showing)
-                    }
-                    .accessibilityHint("Opens the tools for page \(position).")
-                }
-                if complete {
-                    Button("Shoot another page", systemImage: "plus") { onShootAnother() }
-                        .accessibilityHint("Photographs one more page at the end of this scan.")
-                }
                 Divider()
                 Button("Delete page", systemImage: "trash", role: .destructive) {
                     confirmingDelete = true

@@ -66,7 +66,7 @@ themselves are drawn by Storybook.
 | 29 | The sheet is found by its edges, not by its brightness — DONE | - | cargo test --workspace, bash ffi/bridge_check.sh, by eye on real photos |
 | 30 | iOS: Pull the sheet flat starts on — DONE | 29 | bash ios/check/scan_check.sh, by hand |
 | 31 | A sheet that leaves the frame is cut anyway, and the page says so — DONE | - | cargo test --workspace, bash ios/check/scan_check.sh, by eye on real photos |
-| 32 | iOS: Adjust and Shoot another page are controls, not menu items | - | bash ios/check/scan_check.sh, by hand |
+| 32 | iOS: Adjust and Shoot another page are controls, not menu items — DONE | - | bash ios/check/scan_check.sh, by hand |
 | 33 | iOS: shooting another page does not stop after one | - | bash ios/check/scan_check.sh, by hand |
 | 34 | iOS: after the first page, the app shows what it is about to do | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
 | 35 | iOS: the viewfinder shows the last page photographed | 34 | bash ios/check/scan_check.sh, by hand |
@@ -626,8 +626,7 @@ whatever the flow 5 document draws under the carousel. The flow 5 document in
 
 **Build.** Adjust gets a control of its own on the pages overview, visible without opening a
 menu, in the same place for every page, and disabled - not hidden - where the photo is gone, so
-it never moves. It keeps its existing words ("Adjust page") and its existing hint, and it stays
-in the menu as well only if that costs nothing. No new colour, size or spacing: the disabled
+it never moves. It keeps its existing words ("Adjust page") and its existing hint. No new colour, size or spacing: the disabled
 look is the `--disabled-*` colour role from task 1, not an opacity.
 
 **Do not.** Do not invent a word, a glyph meaning or a second entry point into Adjust from
@@ -1038,7 +1037,7 @@ hand on a phone: shoot a page that hangs off the frame, see it cut, see the note
 Two more things Julian found using the finished app. Both are about the pages screen and the
 camera it opens, they touch the same two files, and they can run at the same time.
 
-## 32. Adjust and Shoot another page are controls, not menu items
+## 32. Adjust and Shoot another page are controls, not menu items — DONE
 
 **Why.** Task 24 moved Adjust onto the pages screen because Julian could not find it, and left
 it in the "…" menu as well - "only if that costs nothing". It costs something: the same action
