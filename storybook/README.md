@@ -18,7 +18,7 @@ the app is iPhone-portrait-only.
 
 - All 21 delivered components, grouped as the system groups them: Core, Forms, Document, Lists,
   Feedback. Every state named in a component's `.prompt.md` / `.d.ts` is its own story.
-- **Brand/AppIcon** — the decided app icon (6c), rendered from `../design/brand/app-icon.svg` at the sizes the delivered document shows.
+- **Brand/AppIcon** — the decided app icon (6c), rendered from `../design/flows/brand/app-icon.svg` at the sizes the delivered document shows.
 - **Flows** — the seven flow stories, each a whole screen of the app built from those components
   and the kit's chrome (`design/system/ui_kits/iphone/Chrome.jsx`).
 

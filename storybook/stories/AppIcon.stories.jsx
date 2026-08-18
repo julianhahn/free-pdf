@@ -1,5 +1,5 @@
-import icon from "../../design/brand/app-icon.svg";
-import tinted from "../../design/brand/app-icon-tinted.svg";
+import icon from "../../design/flows/brand/app-icon.svg";
+import tinted from "../../design/flows/brand/app-icon-tinted.svg";
 
 export default { title: "Brand/AppIcon" };
 

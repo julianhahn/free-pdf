@@ -658,16 +658,17 @@ file plus rename, the sweep, the C boundary and the streamed PDF.
 
 `FreePDF/Assets.xcassets/AppIcon.appiconset` holds two rasterised 1024 px PNGs of the
 decided icon (variant 6c), and the drawing they come from is
-[`../design/brand/app-icon.svg`](../design/brand/app-icon.svg) plus its tinted twin - the
+[`../design/flows/brand/app-icon.svg`](../design/flows/brand/app-icon.svg) plus its tinted twin - the
 same relation `build-tokens.mjs` has to `Tokens.swift`. Never redraw them by hand; run:
 
 ```sh
-rsvg-convert -w 1024 -h 1024 -b '#1b1a19' -o ios/FreePDF/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png design/brand/app-icon.svg
-rsvg-convert -w 1024 -h 1024 -b '#1b1a19' -o ios/FreePDF/Assets.xcassets/AppIcon.appiconset/AppIcon-1024-tinted.png design/brand/app-icon-tinted.svg
+rsvg-convert -w 1024 -h 1024 -o ios/FreePDF/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png design/flows/brand/app-icon.svg
+rsvg-convert -w 1024 -h 1024 -o ios/FreePDF/Assets.xcassets/AppIcon.appiconset/AppIcon-1024-tinted.png design/flows/brand/app-icon-tinted.svg
 ```
 
-`-b` paints the ground colour in, so the PNG has no alpha channel - iOS rejects a
-transparent app icon. Xcode scales every smaller size off the 1024 itself.
+The SVG paints its own opaque ground across the whole square, so the PNG carries no
+alpha channel - iOS rejects a transparent app icon. Xcode scales every smaller size off
+the 1024 itself.
 
 ## What is not written here
 

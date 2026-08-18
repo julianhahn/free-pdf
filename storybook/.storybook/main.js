@@ -4,7 +4,7 @@ import path from "node:path";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ds = path.resolve(here, "../../design/system");
 const kit = path.join(ds, "ui_kits/iphone");
-const brand = path.resolve(here, "../../design/brand");
+const brand = path.resolve(here, "../../design/flows/brand");
 
 /**
  * The delivered iPhone kit is written for <script type="text/babel"> globals:
