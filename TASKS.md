@@ -70,6 +70,7 @@ themselves are drawn by Storybook.
 | 33 | iOS: shooting another page does not stop after one — DONE | - | bash ios/check/scan_check.sh, by hand |
 | 34 | iOS: after the first page, the app shows what it is about to do — DONE | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
 | 35 | iOS: the viewfinder shows the last page photographed — DONE | 34 | bash ios/check/scan_check.sh, by hand |
+| 36 | The bottom edge still overshoots, and cropping in is allowed | - | cargo run --example edge_error, cargo test --workspace, by eye on a phone |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -1278,6 +1279,144 @@ thumbnail until the next shot; a retake shows none.
 screen has already shown what a photo and a page each look like. Building it first is allowed;
 shipping it to a phone before 34 is what leaves the question unanswered. It touches only the
 camera and can run beside 32 and 33.
+
+---
+
+## 36. The bottom edge still overshoots, and cropping in is allowed - Julian, 2026-08-18
+
+**Read this whole section before you touch anything.** Three attempts at this have already
+been made today, two of them wrong, and the wrong ones are written down here so you do not
+repeat them. The person who made them is the agent handing over; the numbers are all
+measured and reproducible.
+
+**What Julian sees, on a phone, on the current build.** The top corners are exactly right.
+The bottom corners still overshoot - less than before, but the page still carries a strip of
+his table along the bottom. His words: "we could easily crop in more and would be rid of the
+table." That sentence is a decision, and it is the one thing this task turns on. His build was
+verified current: the app was built at 15:02:43 and the engine library it links at 15:02,
+after the last engine change.
+
+**The instrument. Use it, do not reason without it.**
+
+```sh
+cargo run --release --example edge_error -- test_images/phone/*.jpg
+```
+
+`core_engine/examples/edge_error.rs` walks across each found side in the FULL sized photo and
+finds the true paper-to-table step. It prints two numbers per side, `middle/worst`, over nine
+places along that side. **Sign: positive means the side sits INSIDE the paper. Negative means
+it sits outside it - a strip of desk in the page, which is the bug.** The middle says whether
+the side sits on the edge at all; the worst says whether any part of it is outside. They
+disagree because a sheet on a desk bows, and that gap is this task's whole subject.
+
+The state as this is written, `INWARD_HAIR = 1.5`, twelve photos, `runs_off_1.jpg` excluded
+because its lower corners come from where the paper leaves the frame (task 31) and not from a
+fitted side:
+
+```
+| photo | left mid/worst | right | top | bottom |
+| --- | --- | --- | --- | --- |
+| extra_1 | +1 / -3 | +2 / -3 | +1 / -16 | +1 / -8 |
+| extra_2 | +2 / -12 | +2 / -5 | +1 / -13 | +2 / -57 |
+| extra_3 | +2 / -3 | +0 / -6 | +0 / -11 | +1 / -37 |
+| extra_4 | +2 / -4 | +2 / -3 | +1 / -36 | +2 / -37 |
+| extra_5 | +1 / -4 | +2 / -2 | +1 / -8 | +1 / -20 |
+| sheen_1 | +1 / -2 | +1 / -9 | +0 / -13 | +3 / -18 |
+| sheen_2 | +1 / -4 | +2 / -10 | +0 / -13 | +1 / -16 |
+| sheen_3 | +1 / -6 | +1 / -8 | +1 / -45 | +1 / -15 |
+| sheen_4 | +1 / -1 | +1 / -10 | +1 / -11 | +0 / -18 |
+| sheen_5 | +2 / -3 | +0 / -9 | +0 / -41 | +1 / -24 |
+| sheen_6 | +1 / -4 | +1 / -16 | +1 / -14 | +2 / -7 |
+| sheen_7 | +1 / -2 | +1 / -10 | +2 / -47 | +0 / -5 |
+```
+
+Every middle is 0 to +3, which is why the last change was called done. Every worst is
+negative, which is why Julian still sees his table. **The middle was the wrong number to
+finish on.**
+
+**What the code does today.** `find_paper` in
+`/Users/julianhahn/free-pdf/core_engine/src/paper.rs`: brightness gives a rough area, rays
+along rows and columns find where the paper stops on a 400 pixel wide copy (`WORK_WIDTH`),
+four straight sides are fitted through those places, and then
+`sides_read_again_in_the_photo` moves each side onto the **middle** of nine readings taken in
+the full sized photo, minus `INWARD_HAIR = 1.5` pixels. The corners are where the sides
+cross. One working pixel is 7.6 photo pixels, which is why the second reading exists at all.
+
+**The three attempts already made, so you do not make them again.**
+
+1. **Flipping `OUTWARD_BIAS` to `INWARD_BIAS`** (committed, `4819c32`). Moved all four sides
+   inward by the same amount. It cannot work: the miss was asymmetric, so it traded desk on
+   three sides for cutting 7 pixels into the sheet on those three while the top kept its desk.
+2. **Turning that constant up.** 0.5, 1.0, 1.5, 2.0 were all measured. Same problem, further
+   along. A single scalar cannot fix a per-side error, and this is why Julian saw "better but
+   still wrong" twice in a row.
+3. **Aiming at the worst reading instead of the middle** (second smallest of nine, to leave no
+   place outside the paper). Tried and reverted: it lets a single misread place - a fold, a
+   shadow, a second sheet inside the 60 pixel search window - drag a whole side deep into the
+   page. Some readings jumped between -25 and -59 without tracking the constant at all, which
+   is the signature of a misread edge rather than a real miss: **a real miss moves by exactly
+   as much as the constant is moved, an artefact jumps about.** Use that test.
+4. **`INWARD_HAIR = 6.0`**, which does put every place of every left and right side inside the
+   paper. Reverted because it cuts 6 pixels off a **flat** sheet and two synthetic tests in
+   `core_engine/tests/engine.rs` fail:
+   `a_patch_of_sheen_beside_the_sheet_is_not_part_of_it` and
+   `the_corners_are_found_in_the_photo_and_not_only_in_the_shrunk_copy`.
+
+**Point 4 is where the previous agent got stuck, and it is the thing you are being handed.**
+Two truths disagreed and it kept the wrong one. The synthetic tests draw a perfectly flat
+sheet and demand the corners land within a few pixels of it. Julian's paper is not flat and
+his phone is the truth. **His decision on 2026-08-18: crop in more.** A few pixels of white
+margin are invisible; a strip of his desk is not. So the synthetic tests' expectation is what
+gives way here - they are a fixture the previous agent wrote this morning, not a rule Julian
+set - and they are corrected to expect a page cut slightly inside the drawn sheet, with the
+reason written next to them.
+
+**Build.**
+
+- **Ask why the bottom is the worst side before you change anything.** It is the only side
+  Julian named, and the numbers agree with him: bottom worst runs -5 to -57 while left is -1
+  to -12. Find out why, and write it into your report. Two things worth measuring first: a
+  sheet photographed from above lifts at the edge nearest the camera, and the shadow under
+  that lifted edge is wider - so ask whether the reading is landing on the shadow's outer
+  boundary rather than on the paper. If the bottom has a cause of its own, fixing that cause
+  beats any margin.
+- **Then make the page cut inside the paper everywhere, not on average.** The straightforward
+  way is a margin that covers the bow. Measure what it costs on all twelve photos and on the
+  synthetic fixtures, and say the cost in your report in pixels and in millimetres of an A4
+  page. Do not exceed what the acceptance below allows.
+- **Whatever you build must be measured with the instrument, not argued.** Paste the table.
+
+**Do not.**
+
+- Do not tune per photo, and do not add a constant read from the image's own name or size.
+- Do not raise the margin until the worst column is positive everywhere: `sheen_3`'s top and
+  `extra_2`'s bottom are misread places, not 45 pixels of desk, and chasing them would cut
+  half a centimetre off every page. Prove which is which with the tracking test above.
+- Do not widen the C boundary, do not touch the iOS client, do not change `WORK_WIDTH`, and do
+  not read the whole full sized photo into memory - only along the four sides (see the memory
+  budget in `/Users/julianhahn/free-pdf/ios/AGENTS.md`).
+- Do not let a side invent an edge. A place with no clear step is dropped, and a side with
+  fewer than five answers keeps the rough fit's position. That rule stays.
+- Do not delete `core_engine/examples/edge_error.rs`. It is not shipped and it is the only
+  reason any of this is known.
+
+**Acceptance.** Not a feeling, and not the middle column:
+
+- On the twelve photos, every side's **worst** reading is at least -3, except where you have
+  shown with the tracking test that a reading is a misread edge rather than desk - and each
+  such exception is named in your report with its evidence.
+- No side's middle reading exceeds +12, so no page loses more than about a millimetre of its
+  margin.
+- `cargo test --workspace` passes. `bash /Users/julianhahn/free-pdf/ffi/bridge_check.sh` says
+  "bridge ok". All thirteen photos still produce a page through
+  `target/release/backend-core-runner <photo> --scan -o <out.jpg>`.
+- `bash /Users/julianhahn/free-pdf/ffi/build-ios.sh` at the end, or Julian's phone runs
+  yesterday's engine. His Xcode now runs cargo itself through a "Build the engine" phase
+  (uncommitted at handover time, in `ios/FreePDF.xcodeproj/project.pbxproj`), so a Cmd+R is
+  enough for him - but a library built here has to be fresh for the checks.
+- Then Julian looks at a page on his phone. That is what decides it.
+
+**Blocked by.** Nothing.
 
 ---
 
