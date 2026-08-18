@@ -36,10 +36,14 @@ struct FirstPageCheck: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Token.Size.space4) {
             if let failure { ErrorLine(sentence: failure) }
-            Text("This is how your pages will come out.")
-                .font(Token.Face.heading(Token.Size.textH4))
-                .tracking(Token.Size.textH4 * Token.Number.trackingHeading)
-                .foregroundStyle(Token.Palette.text)
+            // Only when there is a page to look at: the promise over an empty slot reads
+            // as a second failure.
+            if failure == nil {
+                Text("This is how your pages will come out.")
+                    .font(Token.Face.heading(Token.Size.textH4))
+                    .tracking(Token.Size.textH4 * Token.Number.trackingHeading)
+                    .foregroundStyle(Token.Palette.text)
+            }
             // The photo small and the page large, in that order: the page is what he is
             // judging. One column of three for the photo, so no width is invented here.
             HStack(alignment: .top, spacing: Token.Size.space3) {

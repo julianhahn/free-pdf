@@ -12,6 +12,9 @@ struct ScanFlow: View {
     /// The one piece of view state the design allows: the camera is shown while it is
     /// true. Everything else on this screen comes from the files.
     @State private var shooting: Bool
+    /// The photo the check screen sent him back from, or nil. Handed to the camera once so
+    /// the corner picture survives that trip, and cleared by every other way in.
+    @State private var carriedOn: URL?
     /// The page number the next shot lands on. `nil` while shooting new pages, a number
     /// while retaking one.
     @State private var slot: Int?
@@ -70,7 +73,7 @@ struct ScanFlow: View {
     var body: some View {
         Group {
             if shooting {
-                CameraView(scan: scan, slot: slot, onFirstPhoto: {
+                CameraView(scan: scan, slot: slot, taken: carriedOn, onFirstPhoto: {
                     shooting = false
                     checkingFirst = true
                     refresh()
@@ -91,6 +94,10 @@ struct ScanFlow: View {
                                onCarryOn: {
                                    checkingFirst = false
                                    slot = nil
+                                   // The shot he just judged is still the newest one he
+                                   // took, so the viewfinder shows it rather than going
+                                   // blank until the second page lands.
+                                   carriedOn = scan.photoURL(first)
                                    shooting = true
                                })
             } else if applyingAll != nil {
@@ -462,6 +469,7 @@ struct ScanFlow: View {
     private func shootAnother() {
         scan.deletePDF()
         slot = nil
+        carriedOn = nil
         shooting = true
         refresh()
     }
@@ -473,6 +481,7 @@ struct ScanFlow: View {
         try? FileManager.default.removeItem(at: scan.pageURL(number))
         failed.remove(number)
         slot = number
+        carriedOn = nil
         shooting = true
         refresh()
     }

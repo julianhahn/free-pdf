@@ -208,6 +208,25 @@ Screen-level, not a page:
 3. Denied → the whole screen becomes the sentence above plus **Open Settings**.
 4. On a simulator nothing is asked at all, and the shutter draws a page.
 
+### 4c. The check after the first photo
+
+Once per scan, after the first photo lands and before the second shot, the app shows that
+photo beside the page the engine really makes from it - a whole scan can otherwise be shot
+on a desk the engine cannot read, and the news arrives twenty pages too late. Never again in
+that scan, and not at all on a scan that already has photos (resumed, or one more page on a
+finished scan). The right control is the normal answer. A refused page shows the engine's
+sentence and both controls still work.
+
+```
+| Where | English | German |
+| --- | --- | --- |
+| Above the two pictures | This is how your pages will come out. | So werden deine Seiten aussehen. |
+| Under them | Your photo becomes this page. | Aus deinem Foto wird diese Seite. |
+| The line under it | Not right? More light or a plainer surface fixes most of it. | Nicht richtig? Mehr Licht oder eine ruhigere Unterlage hilft meistens. |
+| Left control | Scan this page again | Diese Seite noch einmal scannen |
+| Right control | Photograph the rest | Restliche Seiten fotografieren |
+```
+
 ---
 
 ## 5. The drain (scanning)

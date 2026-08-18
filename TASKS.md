@@ -68,7 +68,7 @@ themselves are drawn by Storybook.
 | 31 | A sheet that leaves the frame is cut anyway, and the page says so — DONE | - | cargo test --workspace, bash ios/check/scan_check.sh, by eye on real photos |
 | 32 | iOS: Adjust and Shoot another page are controls, not menu items — DONE | - | bash ios/check/scan_check.sh, by hand |
 | 33 | iOS: shooting another page does not stop after one — DONE | - | bash ios/check/scan_check.sh, by hand |
-| 34 | iOS: after the first page, the app shows what it is about to do | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
+| 34 | iOS: after the first page, the app shows what it is about to do — DONE | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
 | 35 | iOS: the viewfinder shows the last page photographed — DONE | 34 | bash ios/check/scan_check.sh, by hand |
 ```
 

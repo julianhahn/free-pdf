@@ -21,6 +21,10 @@ struct CameraView: View {
     /// The page number a shot lands on. `nil` means the next one, which is what
     /// shooting normally does; a number is a retake of that page.
     let slot: Int?
+    /// The newest photo the user took before this screen was built, or nil. It is only
+    /// ever set when the check screen sent him straight back here, so his first shot is
+    /// still his - a resumed scan and one more page on a finished scan both start blank.
+    var taken: URL? = nil
     /// Called when the first photo of the whole scan is on disk, so the flow can show what
     /// that photo becomes before the rest of the scan is shot blind
     /// ([`FirstPageCheck.swift`](./FirstPageCheck.swift)). Once per scan and never on a
@@ -86,7 +90,7 @@ struct CameraView: View {
                     .foregroundStyle(Token.Palette.text)
             }
         }
-        .onAppear { photos = scan.photos }
+        .onAppear { photos = scan.photos; latest = latest ?? taken }
         // The session goes before the drain does its work: the pipeline holds about
         // 200 MB, and the drain peaks near 280 MB on its own
         // ([plan section 9](../../iphone-client-plan.md#9-memory)).
