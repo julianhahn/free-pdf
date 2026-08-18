@@ -96,8 +96,13 @@ Why the page path exists at all, so nobody simplifies it away later:
 Finding the sheet starts from brightness and then follows the edges of the paper, so a document
 on a white desk still breaks it: there is no step from paper to desk for a ray to stop on. That
 is recorded as a `ponytail:` note in `src/paper.rs` with the way up; do not paper over it with a
-threshold. Every fitted side is then moved slightly inward (`INWARD_BIAS`), so a page loses the
-outer pixels of its white margin rather than keeping a hair of desk - Julian's decision on
-2026-08-18, on real scans; a page whose writing runs to the very edge of the paper needs Adjust.
+threshold. Every fitted side is then read again in the full sized photo and laid on the edge
+it finds there (`sides_read_again_in_the_photo`), a hair inside the sheet: measured with
+`examples/edge_error.rs`, the middle of every side of twelve real photos lands 0 to 3 pixels inside the paper -
+the middle of it, not all of it: a sheet on a desk bows, and a straight side on a bowed edge is outside
+the paper wherever the bow runs the other way, which is the ceiling of this approach and not a knob,
+so a page loses the outer pixels of its white margin rather than keeping a strip of desk -
+Julian's decision on 2026-08-18, on real scans; a page whose writing runs to the very edge of
+the paper needs Adjust.
 HEIC decoding stays out of this crate, the client's own system does it. And widening
 `MOST_TILT` is not how a page held sideways gets fixed; that is `rotate`.

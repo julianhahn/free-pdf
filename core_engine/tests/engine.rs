@@ -760,6 +760,96 @@ fn photo_of_a_tilted_sheet() -> (DynamicImage, [core_engine::Point; 4]) {
     (DynamicImage::ImageRgb8(img), corners)
 }
 
+/// The same tilted sheet, eight times larger, and its four exact corners.
+///
+/// The only fixture that can see the error the shrunk copy makes. At 200 pixels wide
+/// nothing is shrunk at all, so a side fitted on the copy is already a side of the photo;
+/// at 1600 one pixel of the 400 pixel copy is four of these. Drawn at this size rather
+/// than resized from the small one, because a resized sheet grows by a source pixel on
+/// two of its sides and then nobody knows where its true edge is to within eight pixels -
+/// which is the whole size of the error being measured.
+fn photo_of_a_big_tilted_sheet() -> (DynamicImage, [core_engine::Point; 4]) {
+    let corner = |x: f32, y: f32| core_engine::Point { x, y };
+    let corners = [
+        corner(480.0, 160.0),
+        corner(1120.0, 160.0),
+        corner(1440.0, 1440.0),
+        corner(160.0, 1440.0),
+    ];
+
+    // The sheet, and the shadow a real sheet casts on the table around it. The shadow is
+    // what makes this fixture hard: it is twenty pixels of the photograph wide, so on the
+    // 400 pixel copy it is five pixels of a much softer step, and a side fitted there
+    // lands in the shadow instead of on the paper.
+    const SHADOW: Rgb<u8> = Rgb([70, 68, 62]);
+    const SHADOW_WIDE: f32 = 20.0;
+    let mut img = RgbImage::from_pixel(1600, 1600, Rgb([20, 15, 10])); // dark table
+    for y in 0..1600 {
+        let share = (y as f32 - 160.0) / 1280.0;
+        let left = corners[0].x + (corners[3].x - corners[0].x) * share;
+        let right = corners[1].x + (corners[2].x - corners[1].x) * share;
+        for x in 0..1600 {
+            let x = x as f32;
+            let on_paper = (160.0..=1440.0).contains(&(y as f32)) && (left..=right).contains(&x);
+            let in_shadow = (160.0 - SHADOW_WIDE..=1440.0 + SHADOW_WIDE).contains(&(y as f32))
+                && (left - SHADOW_WIDE..=right + SHADOW_WIDE).contains(&x);
+            if on_paper {
+                img.put_pixel(x as u32, y, PAPER);
+            } else if in_shadow {
+                img.put_pixel(x as u32, y, SHADOW);
+            }
+        }
+    }
+
+    (DynamicImage::ImageRgb8(img), corners)
+}
+
+#[test]
+fn the_corners_are_found_in_the_photo_and_not_only_in_the_shrunk_copy() {
+    let (photo, sheet) = photo_of_a_big_tilted_sheet();
+
+    let found = find_paper(&photo).expect("no sheet was found").corners();
+
+    for (corner, expected) in found.iter().zip(sheet) {
+        // Six pixels: the hair each side is moved inward, and no more. A corner is where
+        // two sides cross, so a miss on either of them shows up here. Without the sides
+        // being read again in the full sized photo, the corners land 4 to 6 pixels the
+        // other way - out in the shadow, which is what the assertion below catches.
+        let off_by = (corner.x - expected.x).hypot(corner.y - expected.y);
+        assert!(
+            off_by < 6.0,
+            "corner {corner:?} is {off_by:.1} pixels away from {expected:?}"
+        );
+    }
+
+    // And every side of the found page has to lie on the paper, not beside it: a side
+    // outside the sheet is the bug this watches, it leaves a strip of table in the page.
+    // Measured along the middle of each side, because a corner is where two sides cross
+    // and the tilt of a side is only ever as good as the rough fit made it.
+    for index in 0..4 {
+        let (from, to) = (found[index], found[(index + 1) % 4]);
+        let middle = core_engine::Point {
+            x: (from.x + to.x) / 2.0,
+            y: (from.y + to.y) / 2.0,
+        };
+        assert!(
+            inside_the_sheet(middle, &sheet),
+            "the side from {from:?} to {to:?} runs outside the sheet, so the page keeps a strip of table"
+        );
+    }
+}
+
+/// Whether a point is on the sheet the four corners describe, the corners running
+/// clockwise. A point is on it when it stays on the same side of all four edges.
+fn inside_the_sheet(point: core_engine::Point, sheet: &[core_engine::Point; 4]) -> bool {
+    (0..4).all(|index| {
+        let (from, to) = (sheet[index], sheet[(index + 1) % 4]);
+        let edge = (to.x - from.x, to.y - from.y);
+        let corner = (point.x - from.x, point.y - from.y);
+        edge.0 * corner.1 - edge.1 * corner.0 >= 0.0
+    })
+}
+
 /// Which of the marks a pixel is closest to, so a slightly mixed edge pixel still
 /// counts as the mark it came from.
 fn nearest_mark(pixel: &Rgb<u8>) -> usize {

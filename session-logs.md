@@ -8,6 +8,28 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-18 - Every side is read again in the photo, not only in the shrunk copy
+
+A page still came out with a strip of desk along its edges. The four sides were fitted on the
+400 pixel copy alone, where one pixel is 7.6 pixels of a phone photo, and the miss was
+different on each side, so `INWARD_BIAS` could not fix it - measured at 0.5, three sides cut
+up to 17 pixels into the sheet while the top still left desk. `find_paper` now calls
+`sides_read_again_in_the_photo` (core_engine/src/paper.rs): nine places along each side, the
+photo walked across the side at each, the steepest paper-to-table step taken as the edge, and
+the whole side moved onto the middle of those readings, 1.5 pixels inside. The slope stays as
+the rough fit found it. Fewer than five answering places leaves the side alone, so no edge is
+invented.
+
+Measured with the ruler `core_engine/examples/edge_error.rs` (keep it, it is what this was
+judged with): all twelve real photos now read 0 to +3 pixels inside the paper on all four
+sides, nothing outside. `LOOK_FOR_THE_EDGE = 60` and `INWARD_HAIR = 1.5` were both measured -
+at 32 the folded letter `extra_4` found no edge on its bottom side and fell back 14 pixels
+into the sheet, at hair 1.0 three sides read outside the paper. `find_paper` went from 18.9 ms
+to 19.3 ms on a 3024 pixel photo, about 2 percent; only the four sides are read, some 15,000
+pixels. New test `the_corners_are_found_in_the_photo_and_not_only_in_the_shrunk_copy` draws a
+big tilted sheet with the shadow a real sheet casts: without the refinement its corners land 4
+to 6 pixels out in that shadow.
+
 ## 2026-08-18 - The viewfinder shows the last page photographed
 
 TASKS.md 35. [`ios/FreePDF/CameraView.swift`](./ios/FreePDF/CameraView.swift) keeps one

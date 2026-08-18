@@ -6,7 +6,7 @@
 //! brightness stretch measured over the whole image then comes out wrong. Telling
 //! the two apart needs to know *where* the paper is, which is what this does.
 
-use image::DynamicImage;
+use image::{DynamicImage, GenericImageView};
 
 /// A box inside an image, in pixels from the top left corner.
 ///
@@ -244,7 +244,12 @@ pub fn find_paper(img: &DynamicImage) -> Option<Paper> {
     }
 
     let fitted = paper_and_table_levels(&small, &on_paper)
-        .and_then(|levels| sides_of_the_sheet(&small, &on_paper, &background, bounds, &levels))
+        .and_then(|levels| {
+            let sides = sides_of_the_sheet(&small, &on_paper, &background, bounds, &levels)?;
+            Some(sides_read_again_in_the_photo(
+                img, sides, &levels, width, height,
+            ))
+        })
         .and_then(|sides| the_sheet_between_the_sides(&sides, &on_paper, width, height));
     let (bounds, on_paper, corners) = match fitted {
         Some((bounds, mask, corners)) => (bounds, mask, Some(corners)),
@@ -375,8 +380,9 @@ const ROUGH_AREA_INSIDE_THE_QUAD: f32 = 0.9;
 const JUST_PAST_A_SIDE: i32 = 4;
 const WELL_PAST_A_SIDE: i32 = 10;
 
-/// How far inward each fitted side is moved, in pixels of the shrunk copy - about
-/// four pixels of a photograph from a phone.
+/// How far inward a fitted side is moved when it could not be read again in the photo
+/// ([`sides_read_again_in_the_photo`]), in pixels of the shrunk copy - about four
+/// pixels of a photograph from a phone.
 ///
 /// A straight line through slightly wavy edge points misses by a pixel or two either
 /// way, and the miss is pushed into the harmless direction on purpose. Which
@@ -390,6 +396,202 @@ const WELL_PAST_A_SIDE: i32 = 10;
 /// of the paper. That page needs Adjust, which sends its own corners, and no bias in
 /// either direction saves it.
 const INWARD_BIAS: f32 = 0.5;
+
+/// How many places along each side are measured again in the full sized photo, spread
+/// evenly between its two ends and none of them at an end. Nine, over the whole side: a
+/// photographed sheet is never flat, so its edge bows by up to twenty pixels along its
+/// length and the places have to be spread over the whole of it for the middle of them to
+/// be the middle of the edge. The ends are left out because a corner is where two edges
+/// meet and neither is clean there.
+const PLACES_READ_AGAIN: usize = 9;
+
+/// How far either way the true edge is looked for, in pixels of the photograph. Sixty,
+/// because a real sheet is not flat: on `extra_4`, a letter with a fold in it, the bottom
+/// edge wanders far enough from the fitted side that at thirty two most of its places
+/// found no edge at all, the side fell back on the rough fit, and the page was cut
+/// fourteen pixels into the sheet.
+const LOOK_FOR_THE_EDGE: i32 = 60;
+
+/// How many pixels of the photograph are averaged on each side of a candidate step, and
+/// how far off the step itself they start. Averaging kills the film grain, and the gap
+/// keeps the samples out of the two or three pixels the edge itself is smeared over.
+const PHOTO_EDGE_SAMPLES: i32 = 3;
+const PHOTO_EDGE_GAP: i32 = 2;
+
+/// The fewest places along a side that have to find an edge before the side is moved
+/// onto them. Below that the side keeps the position the rough fit gave it: a page cut
+/// by two or three readings on a shadow is worse than a page cut a few pixels wide.
+const FEWEST_PLACES_READ_AGAIN: usize = 5;
+
+/// How far inward the refined side is put, in pixels of the photograph.
+///
+/// A hair, now that the side sits on the measured edge rather than on a guess. Inward
+/// rather than outward because a sliver of desk in the page bends the
+/// straightening while a hair off the white margin
+/// costs nothing. Measured with `examples/edge_error.rs`: at this value the middle of all
+/// four sides of all twelve real photos reads 0 to +3 pixels inside the paper; at 1.0 three
+/// middles read a pixel outside it, and at 2.0 one read +4.
+///
+/// Do not raise it to cover a bowed edge. That was tried, on the reading that six pixels
+/// would put the worst place of a left or right side inside the paper too: it does, and it
+/// then cuts six pixels off a flat sheet, which two synthetic tests caught. A straight side
+/// on a bowed edge is the ceiling here, not this number - see `sides_read_again_in_the_photo`.
+const INWARD_HAIR: f32 = 1.5;
+
+/// Moves each fitted side onto the edge of the paper as the full sized photo shows it.
+///
+/// The rough fit runs on a 400 pixel wide copy, where one pixel is about eight pixels of
+/// the photo, so its four sides are only ever right to within a pixel or two of that
+/// copy - and the miss is not the same on all four, which is why no single bias can take
+/// it out. So each side is read again where it matters: at [`PLACES_READ_AGAIN`] places
+/// along it the photo is walked across the side, the steepest step from paper to table
+/// is taken as the true edge, and the whole side is moved onto the middle of those
+/// readings. The slope stays as the rough fit found it, because the slope is an average
+/// over the whole length of the side and is already as good as the edge is straight.
+///
+/// Only these few lines of the photo are ever read - a page is a few thousand pixels,
+/// not the twelve million of the picture, which the phone has no room for.
+///
+/// Where a place finds no clear step it is left out, and where fewer than
+/// [`FEWEST_PLACES_READ_AGAIN`] places answer the side is returned untouched: an invented
+/// edge cuts writing off the page.
+///
+/// ponytail: the side stays straight, so on a bowed edge it sits inside the paper in the
+/// middle and outside it towards the ends - a local strip of desk that the middle reading
+/// cannot see. Ceiling of moving a straight line. The way up is a corner of its own for
+/// each end, or four sides that may bend; both are more than a constant, and neither is
+/// worth building until someone has looked at a page and said the strip still shows.
+fn sides_read_again_in_the_photo(
+    img: &DynamicImage,
+    sides: [Side; 4],
+    levels: &EdgeLevels,
+    width: u32,
+    height: u32,
+) -> [Side; 4] {
+    let [left, right, top, bottom] = &sides;
+    // Where the side begins and ends: the corners the rough fit already implies, so the
+    // places are spread over the side itself and not over the box around the sheet.
+    let (Some(top_left), Some(top_right), Some(bottom_right), Some(bottom_left)) = (
+        crossing(left, top),
+        crossing(right, top),
+        crossing(right, bottom),
+        crossing(left, bottom),
+    ) else {
+        return sides;
+    };
+    let ends = [
+        (top_left.y, bottom_left.y),
+        (top_right.y, bottom_right.y),
+        (top_left.x, top_right.x),
+        (bottom_left.x, bottom_right.x),
+    ];
+    let (across_x, across_y) = (
+        img.width() as f32 / width as f32,
+        img.height() as f32 / height as f32,
+    );
+    // Each side, as: does it run along the rows, and which way across it points off the
+    // paper. The same order and the same directions as the rays that fitted it.
+    let shape = [(true, -1.0), (true, 1.0), (false, -1.0), (false, 1.0)];
+
+    std::array::from_fn(|index| {
+        let (along_the_rows, outward) = shape[index];
+        let side = &sides[index];
+        let scale = if along_the_rows { across_x } else { across_y };
+        let (first, last) = ends[index];
+
+        let mut misses = Vec::new();
+        for place in 1..=PLACES_READ_AGAIN {
+            let along = first + (last - first) * place as f32 / (PLACES_READ_AGAIN + 1) as f32;
+            let across = side.across(along);
+            let at = if along_the_rows {
+                Point {
+                    x: (across + 0.5) * across_x,
+                    y: (along + 0.5) * across_y,
+                }
+            } else {
+                Point {
+                    x: (along + 0.5) * across_x,
+                    y: (across + 0.5) * across_y,
+                }
+            };
+            if let Some(miss) = edge_across_the_side(img, at, along_the_rows, outward, levels.step)
+            {
+                misses.push(miss);
+            }
+        }
+
+        // The rough side, moved inward by the hair that used to be the whole
+        // correction. Left and top move down the axis, right and bottom up it, so every
+        // side moves towards the middle of the sheet.
+        let unmoved = Side {
+            slope: side.slope,
+            offset: side.offset - outward * INWARD_BIAS,
+        };
+        if misses.len() < FEWEST_PLACES_READ_AGAIN {
+            return unmoved;
+        }
+        match middle_of(&mut misses) {
+            Some(middle) => Side {
+                offset: side.offset + outward * (middle - INWARD_HAIR) / scale,
+                ..unmoved
+            },
+            None => unmoved,
+        }
+    })
+}
+
+/// How far off the fitted side the real edge of the paper lies at one place, in pixels of
+/// the photograph, walking across the side. Positive means further out, so the side is
+/// standing inside the paper.
+///
+/// The steepest step from bright to dark within [`LOOK_FOR_THE_EDGE`] wins, and nothing
+/// comes back unless that step is as big as the edge of a sheet in this picture -
+/// otherwise it is a line of writing, a shadow, or the grain of a flat surface.
+fn edge_across_the_side(
+    img: &DynamicImage,
+    at: Point,
+    along_the_rows: bool,
+    outward: f32,
+    step: f32,
+) -> Option<f32> {
+    let brightness = |offset: f32| -> Option<f32> {
+        let moved = outward * offset;
+        let (x, y) = if along_the_rows {
+            (at.x + moved, at.y)
+        } else {
+            (at.x, at.y + moved)
+        };
+        if x < 0.0 || y < 0.0 || x >= img.width() as f32 || y >= img.height() as f32 {
+            return None;
+        }
+        let pixel = img.get_pixel(x as u32, y as u32).0;
+        // The same grey the rest of the file works in.
+        Some(0.299 * pixel[0] as f32 + 0.587 * pixel[1] as f32 + 0.114 * pixel[2] as f32)
+    };
+    let mean = |from: f32, step: f32| -> Option<f32> {
+        let mut total = 0.0;
+        for sample in 0..PHOTO_EDGE_SAMPLES {
+            total += brightness(from + step * sample as f32)?;
+        }
+        Some(total / PHOTO_EDGE_SAMPLES as f32)
+    };
+
+    let mut steepest = (0.0, 0.0);
+    for offset in -LOOK_FOR_THE_EDGE..=LOOK_FOR_THE_EDGE {
+        let offset = offset as f32;
+        let (Some(inside), Some(outside)) = (
+            mean(offset - PHOTO_EDGE_GAP as f32, -1.0),
+            mean(offset + PHOTO_EDGE_GAP as f32, 1.0),
+        ) else {
+            continue;
+        };
+        if inside - outside > steepest.0 {
+            steepest = (inside - outside, offset);
+        }
+    }
+
+    (steepest.0 >= step).then_some(steepest.1)
+}
 
 /// One side of the sheet, as a straight line across the shrunk copy: `across` is
 /// where the side is at the position `along` down it.
@@ -528,16 +730,9 @@ fn sides_of_the_sheet(
         }
     }
 
-    // Left and top move down the axis, right and bottom up it, so every side moves
-    // towards the middle of the sheet.
-    let inward = [INWARD_BIAS, -INWARD_BIAS, INWARD_BIAS, -INWARD_BIAS];
     let mut sides = Vec::with_capacity(4);
-    for (points, bias) in [left, right, top, bottom].iter().zip(inward) {
-        let side = fit_a_side(points)?;
-        sides.push(Side {
-            offset: side.offset + bias,
-            ..side
-        });
+    for points in [left, right, top, bottom].iter() {
+        sides.push(fit_a_side(points)?);
     }
 
     sides.try_into().ok()

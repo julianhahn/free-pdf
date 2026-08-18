@@ -27,7 +27,7 @@ Every command in this file runs from the repository root, `/Users/julianhahn/fre
 cargo test --workspace
 ```
 
-50 green on a Mac, 47 elsewhere - three tests need `sips` for HEIC. Then read
+52 green on a Mac, 49 elsewhere - three tests need `sips` for HEIC. Then read
 [Next steps](#next-steps): it is the one place that says what is being built right now, and
 every session leaves it correct.
 
@@ -92,6 +92,7 @@ camera; [`TASKS.md`](./TASKS.md) 34 is done too - after the first photo of a sca
 shows the page that photo becomes, once, with retake or "Photograph the rest". [`TASKS.md`](./TASKS.md) 35
 closes the camera work - the last photo taken sits small in a corner of the viewfinder, so he
 sees which sheet that was and not only a number. | client agent |
+| 7 | **done** on 2026-08-18 - a page still came out with a strip of desk along its edges, because the four sides were only ever fitted on the 400 pixel copy, where one pixel is about eight of a phone photo, and the miss was different on each side, so no single bias could take it out. `find_paper` now reads each fitted side again in the full sized photo, at nine places along it, and moves the whole side onto the middle of those readings. Measured with `core_engine/examples/edge_error.rs` on the twelve real photos: the middle of every side lands 0 to 3 pixels inside the paper, where before three sides cut up to 17 pixels into the sheet and the top left desk in the page. The middle of it, not all of it - a sheet on a desk bows, so a straight side still leaves a local strip of desk where the bow runs the other way, and that is the next thing to fix, not a number to turn up: raising the inward hair to cover a bow cuts a flat sheet, which two tests catch. Costs about half a millisecond of the nineteen a search takes. | engine agent |
 | 5 | **done** on 2026-08-18 ([`TASKS.md`](./TASKS.md) 31) - the automatic run no longer refuses a sheet that leaves the frame. It cuts on the points where the paper crosses the edge, exactly as Adjust already did, and the pages screen puts a calm note under such a page saying it is not the whole sheet, with the retake that already exists. Checked against the twelve real photos: eleven byte for byte as before, `runs_off_1.jpg` cut. | engine + client |
 
 ```sh
