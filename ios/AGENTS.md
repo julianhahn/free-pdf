@@ -654,6 +654,21 @@ file plus rename, the sweep, the C boundary and the streamed PDF.
   because it left a variable unused and `SWIFT_TREAT_WARNINGS_AS_ERRORS` stopped the
   build - which is that setting earning its place.
 
+## The app icon is generated, not drawn here
+
+`FreePDF/Assets.xcassets/AppIcon.appiconset` holds two rasterised 1024 px PNGs of the
+decided icon (variant 6c), and the drawing they come from is
+[`../design/brand/app-icon.svg`](../design/brand/app-icon.svg) plus its tinted twin - the
+same relation `build-tokens.mjs` has to `Tokens.swift`. Never redraw them by hand; run:
+
+```sh
+rsvg-convert -w 1024 -h 1024 -b '#1b1a19' -o ios/FreePDF/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png design/brand/app-icon.svg
+rsvg-convert -w 1024 -h 1024 -b '#1b1a19' -o ios/FreePDF/Assets.xcassets/AppIcon.appiconset/AppIcon-1024-tinted.png design/brand/app-icon-tinted.svg
+```
+
+`-b` paints the ground colour in, so the PNG has no alpha channel - iOS rejects a
+transparent app icon. Xcode scales every smaller size off the 1024 itself.
+
 ## What is not written here
 
 The export is [plan section 3](../iphone-client-plan.md#3-screens); the memory budget is

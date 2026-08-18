@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="kit/doc.css">
+<script src="_ds/freepdf-design-system-43ff3180-7882-4c67-b12c-6446959ac47c/_ds_bundle.js"></script>
+</helmet>
+<div class="pg">
+
+<div class="sec" style="border-top:0;padding-top:0">
+<h1 style="margin:0;font:600 32px/1.12 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em">App icon — achtzehn Kandidaten in sechs Runden</h1>
+<p class="note">Der Guide sagt: es wurde kein Logo geliefert, also wird keines gezeichnet, und wo eine Marke stehen würde, steht der Name in Cormorant Garamond 600. Kein Entwurf hier erfindet ein Zeichen im Sinne einer Bildmarke; sie arbeiten alle mit dem Namen, mit Papiergeometrie oder mit Formen, die das System schon besitzt. Was sich über die sechs Runden geändert hat, ist die Bauweise — von der Abbildung eines Gegenstands zur konstruierten Geometrie. Durchgehend gilt: kein Verlauf, keine Textur, kein zweiter Akzent, nur #fdfcfa Papier, #b68235 Akzent, #1b1a19 Sucher und #201f1d Tinte. Die jüngste Runde steht oben.</p>
+<p class="note">Ein iOS-Icon ist ein volles Quadrat ohne Transparenz; die Ecken rundet das System selbst. Gezeigt wird jedes bei 1024 px (hier skaliert) und daneben bei 60 px und 29 px, weil sich dort entscheidet, ob es funktioniert.</p>
+<p class="docnav"><a href="FreePDF Foundation.dc.html">Foundation</a></p>
+</div>
+
+<div class="sec" id="final" style="border-top:0;padding-top:0">
+<div class="shd"><a class="sid" href="#final">Entschieden</a><h2 class="stitle">Die Marke — 6c</h2></div>
+<p class="note">Gegenwechsel mit hoher schräger Naht: Gold als Band über dem Zeichen, der Buchstabe wechselt an der Naht die Farbe. Der obere Arm liegt frei im Gold, die Naht streift den mittleren Arm. Zwei Farben, keine Verläufe, keine Effekte, volles Quadrat ohne Transparenz.</p>
+<div style="display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap">
+  <div style="display:grid;gap:10px;justify-items:center">
+    <img src="brand/app-icon.svg" alt="FreePDF App-Icon" style="width:240px;height:240px;display:block;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+    <span class="note" style="font-size:11px">1024 · Auslieferung</span>
+  </div>
+  <div style="display:grid;gap:10px;justify-items:center">
+    <img src="brand/app-icon.svg" alt="" style="width:120px;height:120px;display:block;border-radius:27px">
+    <span class="note" style="font-size:11px">120 · Homescreen @2x</span>
+  </div>
+  <div style="display:grid;gap:10px;justify-items:center">
+    <img src="brand/app-icon.svg" alt="" style="width:60px;height:60px;display:block;border-radius:13px">
+    <span class="note" style="font-size:11px">60</span>
+  </div>
+  <div style="display:grid;gap:10px;justify-items:center">
+    <img src="brand/app-icon.svg" alt="" style="width:40px;height:40px;display:block;border-radius:9px">
+    <span class="note" style="font-size:11px">40 · Spotlight</span>
+  </div>
+  <div style="display:grid;gap:10px;justify-items:center">
+    <img src="brand/app-icon.svg" alt="" style="width:29px;height:29px;display:block;border-radius:7px">
+    <span class="note" style="font-size:11px">29 · Einstellungen</span>
+  </div>
+  <div style="display:grid;gap:10px;justify-items:center">
+    <img src="brand/app-icon-tinted.svg" alt="FreePDF App-Icon, getönte Fassung" style="width:120px;height:120px;display:block;border-radius:27px">
+    <span class="note" style="font-size:11px">120 · getönt</span>
+  </div>
+</div>
+<div style="background:#14161a;border-radius:10px;padding:20px;display:grid;gap:18px;margin-top:8px">
+  <div style="display:flex;gap:16px;align-items:center">
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <img src="brand/app-icon.svg" alt="" style="width:60px;height:60px;display:block;border-radius:13px">
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#454b57"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+  </div>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Geometrie, 1024 × 1024</h4>
+<ul>
+<li><strong>Grund</strong> #1b1a19 (<code>--viewfinder</code>), randlos, kein Alphakanal.</li>
+<li><strong>Band</strong> #b68235 (<code>--accent</code>), Polygon 0,0 → 1024,0 → 1024,287 → 0,635. Die Naht fällt von y 635 links auf y 287 rechts, Gefälle 348 px.</li>
+<li><strong>Das F</strong> Strich 123 · Stamm 123 × 573 auf x 297 / y 225 · oberer Arm 430 × 123 auf y 225 · mittlerer Arm 348 × 123 auf y 461. Zeichen 430 × 573.</li>
+<li><strong>Der Wechsel</strong> derselbe Buchstabe zweimal gezeichnet, an der Naht beschnitten: im Band in #1b1a19, darunter in #b68235.</li>
+<li><strong>Getönte Fassung</strong> Band accent-700 #7d5411, Buchstabe im Band accent-300 #facb8d, darunter accent-700 — der Wechsel läuft über zwei Stufen derselben Farbe, weil eine getönte Fassung nur eine Farbe hat.</li>
+</ul>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Dateien</h4>
+<p><code>brand/app-icon.svg</code> und <code>brand/app-icon-tinted.svg</code>, beide 1024 × 1024, reine Pfade ohne Schrift und ohne Effekte — daraus lässt sich das ganze iOS-Set ohne Nacharbeit rastern. Eine dunkle Fassung braucht es nicht: der Grund ist bereits <code>--viewfinder</code>.</p>
+<p>Was noch fehlt: die gerasterten PNGs (1024, 180, 120, 87, 80, 60, 58, 40) und die Entscheidung, ob die Marke außerhalb des Icons benutzt wird — im Interface steht bisher der Name in Cormorant Garamond, und dabei sollte es bleiben, bis Julian etwas anderes sagt. Der Gegenwechsel an einer Kante ist damit ein Prinzip, das das System neu besitzt; es gilt vorerst nur für das Icon.</p>
+</div>
+</div>
+
+<div class="sec" id="turn6">
+<h2 class="stitle">Runde 6 — 5a, hohe schräge Naht</h2>
+<p class="note">Unruhig war an 5a nicht der Gegenwechsel, sondern die Naht: von Ecke zu Ecke halbiert sie die Kachel und zerlegt den Buchstaben in vier gleich wichtige Stücke. Hier bleibt sie schräg, wandert aber nach oben — Gold wird zum Band über dem Zeichen, und der Wechsel betrifft nur den oberen Teil des F. Drei Tiefen im Abstand von je 5 %, damit die Höhe genau gewählt werden kann; die Neigung ist in allen drei gleich.</p>
+<div style="display:grid;grid-template-columns:repeat(3,max-content);gap:44px;align-items:start">
+
+  <div id="6a" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#6a">6a</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Naht 52 / 18</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 18%,0 52%)"></div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 18%,0 52%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+        </div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 52%,100% 18%,100% 100%,0 100%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+        </div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 18%,0 52%)"></div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 18%,0 52%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+          </div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 52%,100% 18%,100% 100%,0 100%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+          </div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 18%,0 52%)"></div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 18%,0 52%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+          </div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 52%,100% 18%,100% 100%,0 100%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Die flachste der drei. Die Naht kreuzt den oberen Arm nahe seiner Unterkante und den Stamm knapp darunter — das Gold liegt fast nur als Band über dem Zeichen.</p>
+  </div>
+
+  <div id="6b" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#6b">6b</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Naht 57 / 23</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 23%,0 57%)"></div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 23%,0 57%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+        </div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 57%,100% 23%,100% 100%,0 100%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+        </div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 23%,0 57%)"></div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 23%,0 57%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+          </div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 57%,100% 23%,100% 100%,0 100%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+          </div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 23%,0 57%)"></div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 23%,0 57%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+          </div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 57%,100% 23%,100% 100%,0 100%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Die Mitte des Bandes. Der obere Arm steht vollständig in Gold, der Stamm wechselt kurz darunter — ein Schnitt, zwei ganze Formen, und rechts oben bleibt eine goldene Fläche, die auch klein noch trägt.</p>
+  </div>
+
+  <div id="6c" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#6c">6c</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Naht 62 / 28</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 28%,0 62%)"></div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 28%,0 62%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+        </div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 62%,100% 28%,100% 100%,0 100%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+        </div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 28%,0 62%)"></div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 28%,0 62%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+          </div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 62%,100% 28%,100% 100%,0 100%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+          </div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 28%,0 62%)"></div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 28%,0 62%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+          </div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 62%,100% 28%,100% 100%,0 100%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Die tiefste der drei. Der obere Arm liegt frei im Gold, die Naht streift den mittleren Arm — das ist die Grenze: ab hier fängt der Buchstabe wieder an, in Stücke zu fallen.</p>
+  </div>
+
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Auf einem Homescreen, 60 px</h4>
+<div style="background:#14161a;border-radius:10px;padding:20px;display:grid;gap:18px">
+  <div style="display:flex;gap:16px;align-items:center">
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+        <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 18%,0 52%)"></div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 18%,0 52%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+        </div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 52%,100% 18%,100% 100%,0 100%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+        </div>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+        <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 23%,0 57%)"></div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 23%,0 57%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+        </div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 57%,100% 23%,100% 100%,0 100%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+        </div>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+        <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(0 0,100% 0,100% 28%,0 62%)"></div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 28%,0 62%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+        </div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 62%,100% 28%,100% 100%,0 100%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+        </div>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#454b57"></div>
+  </div>
+  <div style="display:flex;gap:16px;align-items:center">
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#454b57"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+  </div>
+</div>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Maße bei 1024 px</h4>
+<ul>
+<li><strong>Das F, in allen drei gleich</strong> Strich 123 · Stamm 123 × 573 auf x 297 / y 225 · oberer Arm 430 × 123 · mittlerer Arm 348 × 123 auf y 461. Zeichen 430 × 573, optisch mittig.</li>
+<li><strong>Die Naht</strong> eine Gerade von der linken Kante zur rechten, Gefälle in allen drei gleich (348 px auf die Breite): 6a von y 533 auf y 184 · 6b von y 584 auf y 235 · 6c von y 635 auf y 287.</li>
+<li><strong>Farben</strong> Grund #1b1a19, Band #b68235 · der Buchstabe steht im Band in #1b1a19 und darunter in #b68235 — derselbe Buchstabe zweimal, an der Naht beschnitten.</li>
+<li>Alle drei: mittig, kein Anschnitt, keine Verläufe, keine Effekte, volles Quadrat ohne Transparenz.</li>
+</ul>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Ein Hinweis zur Wahl</h4>
+<p>Bei 29 px entscheidet die Fläche, nicht die Linie: 6a hat oben rechts nur einen schmalen goldenen Keil, der im Dock verschwindet, 6c hat die größte goldene Fläche, verliert aber die geschlossene Silhouette. 6b ist die einzige der drei, bei der beide Arme ganz in einem Feld liegen und trotzdem eine tragende Goldfläche bleibt — daher meine Empfehlung.</p>
+</div>
+</div>
+
+<div class="sec" id="turn5">
+<h2 class="stitle">Runde 5 — grafisch gebaut</h2>
+<p class="note">Runde 4 war richtig in der Haltung, aber als Grafik unentschieden: ein Buchstabe, mittig, fertig. Hier kommt das dazu, was aus einem Zeichen ein gestaltetes Zeichen macht — ein grafisches Prinzip, das über die Form hinaus etwas tut. Drei klassische, keine Effekte: der Gegenwechsel, der Falz, das Register.</p>
+<p class="note">Neu genutzt, aber nicht neu erfunden: die Akzentrampe. accent-700 #7d5411, accent-500 #c28d41 und accent-300 #facb8d sind drei Stufen <em>einer</em> Farbe und im System bereits definiert — kein zweiter Akzent, kein Verlauf. Damit lässt sich eine Faltung als zwei harte Flächen zeichnen, statt Tiefe zu simulieren.</p>
+<div style="display:grid;grid-template-columns:repeat(3,max-content);gap:44px;align-items:start">
+
+  <div id="5a" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#5a">5a</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Gegenwechsel</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(100% 0,100% 100%,0 100%)"></div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,0 100%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+        </div>
+        <div style="position:absolute;inset:0;clip-path:polygon(100% 0,100% 100%,0 100%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+        </div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(100% 0,100% 100%,0 100%)"></div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,0 100%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+          </div>
+          <div style="position:absolute;inset:0;clip-path:polygon(100% 0,100% 100%,0 100%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+          </div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(100% 0,100% 100%,0 100%)"></div>
+          <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,0 100%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+          </div>
+          <div style="position:absolute;inset:0;clip-path:polygon(100% 0,100% 100%,0 100%)">
+            <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+            <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Die Kachel ist diagonal geteilt, und der Buchstabe wechselt an der Naht die Farbe: auf Dunkel steht er in Gold, auf Gold in Dunkel. Ein Zeichen, zwei Zustände, eine Kante — dasselbe Prinzip wie in der Heraldik. Die Diagonale ist außerdem die Faltkante, die 2b nur angedeutet hat.</p>
+  </div>
+
+  <div id="5b" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#5b">5b</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Der Falz</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;left:56px;top:42px;width:26px;height:116px;background:#7d5411"></div>
+        <div style="position:absolute;left:56px;top:42px;width:90px;height:26px;background:#c28d41;clip-path:polygon(0 0,100% 30%,100% 100%,0 100%)"></div>
+        <div style="position:absolute;left:56px;top:88px;width:72px;height:26px;background:#c28d41;clip-path:polygon(0 0,100% 30%,100% 100%,0 100%)"></div>
+        <div style="position:absolute;left:56px;top:42px;width:12px;height:26px;background:#facb8d"></div>
+        <div style="position:absolute;left:56px;top:88px;width:12px;height:26px;background:#facb8d"></div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;left:56px;top:42px;width:26px;height:116px;background:#7d5411"></div>
+          <div style="position:absolute;left:56px;top:42px;width:90px;height:26px;background:#c28d41;clip-path:polygon(0 0,100% 30%,100% 100%,0 100%)"></div>
+          <div style="position:absolute;left:56px;top:88px;width:72px;height:26px;background:#c28d41;clip-path:polygon(0 0,100% 30%,100% 100%,0 100%)"></div>
+          <div style="position:absolute;left:56px;top:42px;width:12px;height:26px;background:#facb8d"></div>
+          <div style="position:absolute;left:56px;top:88px;width:12px;height:26px;background:#facb8d"></div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;left:56px;top:42px;width:26px;height:116px;background:#7d5411"></div>
+          <div style="position:absolute;left:56px;top:42px;width:90px;height:26px;background:#c28d41;clip-path:polygon(0 0,100% 30%,100% 100%,0 100%)"></div>
+          <div style="position:absolute;left:56px;top:88px;width:72px;height:26px;background:#c28d41;clip-path:polygon(0 0,100% 30%,100% 100%,0 100%)"></div>
+          <div style="position:absolute;left:56px;top:42px;width:12px;height:26px;background:#facb8d"></div>
+          <div style="position:absolute;left:56px;top:88px;width:12px;height:26px;background:#facb8d"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Ein F als ein einziger gefalzter Papierstreifen. Der Stamm ist die abgewandte Fläche in accent-700, die Arme sind die zugewandte in accent-500 und verjüngen sich nach rechts — dadurch legen sie sich weg. An den Knicken steht accent-300 als Kante. Drei Stufen einer Farbe, harte Flächen, kein Verlauf.</p>
+  </div>
+
+  <div id="5c" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#5c">5c</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Das Register</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;left:56px;top:42px;width:26px;height:116px;background:#fdfcfa"></div>
+        <div style="position:absolute;left:56px;top:42px;width:90px;height:26px;background:#b68235;clip-path:polygon(0 0,74px 0,100% 100%,0 100%)"></div>
+        <div style="position:absolute;left:56px;top:88px;width:72px;height:26px;background:#fdfcfa;clip-path:polygon(0 0,56px 0,100% 100%,0 100%)"></div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;left:56px;top:42px;width:26px;height:116px;background:#fdfcfa"></div>
+          <div style="position:absolute;left:56px;top:42px;width:90px;height:26px;background:#b68235;clip-path:polygon(0 0,74px 0,100% 100%,0 100%)"></div>
+          <div style="position:absolute;left:56px;top:88px;width:72px;height:26px;background:#fdfcfa;clip-path:polygon(0 0,56px 0,100% 100%,0 100%)"></div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;left:56px;top:42px;width:26px;height:116px;background:#fdfcfa"></div>
+          <div style="position:absolute;left:56px;top:42px;width:90px;height:26px;background:#b68235;clip-path:polygon(0 0,74px 0,100% 100%,0 100%)"></div>
+          <div style="position:absolute;left:56px;top:88px;width:72px;height:26px;background:#fdfcfa;clip-path:polygon(0 0,56px 0,100% 100%,0 100%)"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Die Arme des F sind zwei Blätter, von der Kante gesehen: jedes hat rechts oben die abgeschnittene Ecke, die ein Blatt zum Blatt macht. Der obere ist der Akzent — die Seite, an der gearbeitet wird. Der Stapel aus 2a, aber als Buchstabe gebaut statt abgebildet.</p>
+  </div>
+
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Auf einem Homescreen, 60 px</h4>
+<div style="background:#14161a;border-radius:10px;padding:20px;display:grid;gap:18px">
+  <div style="display:flex;gap:16px;align-items:center">
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+        <div style="position:absolute;inset:0;background:#b68235;clip-path:polygon(100% 0,100% 100%,0 100%)"></div>
+        <div style="position:absolute;inset:0;clip-path:polygon(0 0,100% 0,0 100%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#b68235"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#b68235"></div>
+        </div>
+        <div style="position:absolute;inset:0;clip-path:polygon(100% 0,100% 100%,0 100%)">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#1b1a19"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#1b1a19"></div>
+        </div>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+        <div style="position:absolute;left:56px;top:42px;width:26px;height:116px;background:#7d5411"></div>
+        <div style="position:absolute;left:56px;top:42px;width:90px;height:26px;background:#c28d41;clip-path:polygon(0 0,100% 30%,100% 100%,0 100%)"></div>
+        <div style="position:absolute;left:56px;top:88px;width:72px;height:26px;background:#c28d41;clip-path:polygon(0 0,100% 30%,100% 100%,0 100%)"></div>
+        <div style="position:absolute;left:56px;top:42px;width:12px;height:26px;background:#facb8d"></div>
+        <div style="position:absolute;left:56px;top:88px;width:12px;height:26px;background:#facb8d"></div>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+        <div style="position:absolute;left:56px;top:42px;width:26px;height:116px;background:#fdfcfa"></div>
+        <div style="position:absolute;left:56px;top:42px;width:90px;height:26px;background:#b68235;clip-path:polygon(0 0,74px 0,100% 100%,0 100%)"></div>
+        <div style="position:absolute;left:56px;top:88px;width:72px;height:26px;background:#fdfcfa;clip-path:polygon(0 0,56px 0,100% 100%,0 100%)"></div>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#454b57"></div>
+  </div>
+  <div style="display:flex;gap:16px;align-items:center">
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#454b57"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+  </div>
+</div>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Maße bei 1024 px</h4>
+<ul>
+<li><strong>5a</strong> Grund #1b1a19 · Gold #b68235 als Dreieck über die Diagonale von oben rechts nach unten links · F: Strich 123, Stamm 123 × 573 auf x 297 / y 225, oberer Arm 430 × 123, mittlerer Arm 348 × 123 auf y 461 · derselbe Buchstabe zweimal, an der Diagonale beschnitten und in der jeweils anderen Farbe.</li>
+<li><strong>5b</strong> Grund #1b1a19 · Stamm 133 × 594 #7d5411 auf x 287 / y 215 · Arme 461 × 133 und 369 × 133 in #c28d41, oben rechts um 30 % der Armhöhe verjüngt · Knickkanten 61 × 133 in #facb8d am linken Ende jedes Arms.</li>
+<li><strong>5c</strong> Grund #1b1a19 · Stamm 133 × 594 #fdfcfa · oberer Arm 461 × 133 #b68235, Ecke oben rechts über 82 px diagonal geschnitten · mittlerer Arm 369 × 133 #fdfcfa, Ecke über 82 px geschnitten.</li>
+<li>Alle drei: mittig, ruhiger Rand, kein Anschnitt, keine Verläufe, keine Effekte, volles Quadrat ohne Transparenz.</li>
+</ul>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Was das für die Marke bedeutet, wenn eine davon gewinnt</h4>
+<p>5a und 5c bringen dem System je ein Prinzip, das es noch nicht hat: den Gegenwechsel an einer Kante, und die geschnittene Blattecke. Beide wären danach im Interface benutzbar — die Blattecke etwa als Marke für „Seite" in einer späteren Liste. 5b bleibt bewusst auf das Icon beschränkt: gefaltete Flächen mit drei Rampenstufen sind für eine Bedienfläche zu viel Bild. Wenn der Falz gewinnt, gehört in den Guide der Satz, dass er nur dort gilt.</p>
+</div>
+</div>
+
+<div class="sec" id="turn4">
+<h2 class="stitle">Runde 4 — konstruiert statt abgebildet</h2>
+<p class="note">Runde 3 war eine falsche Diagnose von mir. Nicht der Maßstab war das Problem, sondern zwei andere Dinge. Erstens: eine Form über die Kante laufen zu lassen funktioniert nur, wenn man sie am Bruchstück wiedererkennt — bei einem Buchstaben ja, bei einem anonymen Rechteck nicht. 3b und 3c sehen kaputt aus, weil ein angeschnittenes Rechteck kein Anschnitt ist, sondern ein Fehler. Zweitens: eine große goldene Fläche mit einer schweren Tintenform darauf ist die Bildsprache eines Versicherungslogos von 1975. 3a war zu Recht draußen.</p>
+<p class="note">Was die Vorbilder, die du genannt hast, gemeinsam haben: die Marke ist <em>konstruierte Geometrie</em>, nicht die Abbildung eines Gegenstands, sie sitzt mittig mit ruhigem Rand, und der Grund ist dunkel. Ein Blatt Papier zu zeichnen ist illustrativ, und illustrativ altert. Ein auf ein Raster konstruiertes F altert nicht. Alle drei hier sind deshalb dieselbe Spur in drei Bauweisen, alle auf #1b1a19.</p>
+<div style="display:grid;grid-template-columns:repeat(3,max-content);gap:44px;align-items:start">
+
+  <div id="4a" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#4a">4a</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Monolinie</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#fdfcfa"></div>
+        <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#fdfcfa"></div>
+        <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#fdfcfa"></div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#fdfcfa"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#fdfcfa"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#fdfcfa"></div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#fdfcfa"></div>
+          <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#fdfcfa"></div>
+          <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#fdfcfa"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Ein F aus drei Balken gleicher Stärke, auf ein Raster gebaut: Strichstärke 24, Lücke 22, alles linksbündig. Papier auf dunklem Grund, mittig, ruhiger Rand. Keine Serife, keine Schrift — Geometrie.</p>
+  </div>
+
+  <div id="4b" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#4b">4b</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Ausgespart</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;left:40px;top:40px;width:120px;height:120px;background:#b68235"></div>
+        <div style="position:absolute;left:69px;top:66px;width:18px;height:68px;background:#1b1a19"></div>
+        <div style="position:absolute;left:69px;top:66px;width:62px;height:18px;background:#1b1a19"></div>
+        <div style="position:absolute;left:69px;top:100px;width:48px;height:18px;background:#1b1a19"></div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;left:40px;top:40px;width:120px;height:120px;background:#b68235"></div>
+          <div style="position:absolute;left:69px;top:66px;width:18px;height:68px;background:#1b1a19"></div>
+          <div style="position:absolute;left:69px;top:66px;width:62px;height:18px;background:#1b1a19"></div>
+          <div style="position:absolute;left:69px;top:100px;width:48px;height:18px;background:#1b1a19"></div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;left:40px;top:40px;width:120px;height:120px;background:#b68235"></div>
+          <div style="position:absolute;left:69px;top:66px;width:18px;height:68px;background:#1b1a19"></div>
+          <div style="position:absolute;left:69px;top:66px;width:62px;height:18px;background:#1b1a19"></div>
+          <div style="position:absolute;left:69px;top:100px;width:48px;height:18px;background:#1b1a19"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Dasselbe F, aber als Aussparung in einer goldenen Fläche — der Grund scheint durch den Buchstaben. Das gibt dem Akzent Masse, ohne dass Gold der ganze Grund wird, und die Marke hat eine kompakte Silhouette statt drei einzelner Balken.</p>
+  </div>
+
+  <div id="4c" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#4c">4c</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Die eigene Schrift</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;display:grid;place-items:center;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <span style="font:600 176px/1 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em;color:#fdfcfa;transform:translateY(-6px)">F</span>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;display:grid;place-items:center;transform:scale(.3);transform-origin:top left">
+          <span style="font:600 176px/1 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em;color:#fdfcfa;transform:translateY(-6px)">F</span>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;display:grid;place-items:center;transform:scale(.145);transform-origin:top left">
+          <span style="font:600 176px/1 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em;color:#fdfcfa;transform:translateY(-6px)">F</span>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Das F in Cormorant Garamond 600, der Schrift des Systems, groß und ohne Kasten auf dunklem Grund. Kein neues Zeichen — die Marke ist genau das, was der Guide vorschreibt: der Name in seiner Schrift. Auf dunklem Grund liest sich die Serife redaktionell, nicht antiquarisch.</p>
+  </div>
+
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Auf einem Homescreen, 60 px</h4>
+<div style="background:#14161a;border-radius:10px;padding:20px;display:grid;gap:18px">
+  <div style="display:flex;gap:16px;align-items:center">
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;transform:scale(.3);transform-origin:top left">
+        <div style="position:absolute;left:58px;top:44px;width:24px;height:112px;background:#fdfcfa"></div>
+        <div style="position:absolute;left:58px;top:44px;width:84px;height:24px;background:#fdfcfa"></div>
+        <div style="position:absolute;left:58px;top:90px;width:68px;height:24px;background:#fdfcfa"></div>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;transform:scale(.3);transform-origin:top left">
+        <div style="position:absolute;left:40px;top:40px;width:120px;height:120px;background:#b68235"></div>
+        <div style="position:absolute;left:69px;top:66px;width:18px;height:68px;background:#1b1a19"></div>
+        <div style="position:absolute;left:69px;top:66px;width:62px;height:18px;background:#1b1a19"></div>
+        <div style="position:absolute;left:69px;top:100px;width:48px;height:18px;background:#1b1a19"></div>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#1b1a19;display:grid;place-items:center;transform:scale(.3);transform-origin:top left">
+        <span style="font:600 176px/1 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em;color:#fdfcfa;transform:translateY(-6px)">F</span>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#454b57"></div>
+  </div>
+  <div style="display:flex;gap:16px;align-items:center">
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#454b57"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+  </div>
+</div>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Maße bei 1024 px</h4>
+<ul>
+<li><strong>4a</strong> Grund #1b1a19 · Strich 123 · Stamm 123 × 573 auf x 297, y 225 · oberer Arm 430 × 123 · mittlerer Arm 348 × 123 auf y 461 · Lücke 113. Zeichen 430 × 573, optisch mittig.</li>
+<li><strong>4b</strong> Grund #1b1a19 · Fläche #b68235 614 × 614, mittig · F ausgespart in Grundfarbe, Strich 92, Stamm 92 × 348 auf x 353, y 338, oberer Arm 317 × 92, mittlerer Arm 246 × 92 auf y 512.</li>
+<li><strong>4c</strong> Grund #1b1a19 · „F" in Cormorant Garamond 600, Schriftgrad 901, Tracking −0.015em, #fdfcfa, optisch mittig (31 px nach oben gerückt, weil die Versalhöhe ohne Unterlänge hoch sitzt).</li>
+<li>Alle drei: zwei Farben, mittig, ruhiger Rand, kein Anschnitt, keine Verläufe, volles Quadrat.</li>
+</ul>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Was 4c ungelöst lässt</h4>
+<p>Cormorant Garamond ist hier von Google Fonts. Für ein ausgeliefertes Icon muss die Kontur aus der lizenzierten Schnittdatei kommen und als Pfad eingefroren werden — sonst hängt das Markenzeichen an einer Webschrift. Das ist dieselbe offene Frage wie im ganzen System, hier aber härter, weil ein Icon gerastert ausgeliefert wird. 4a und 4b haben das Problem nicht: sie sind Geometrie und brauchen keine Schrift.</p>
+</div>
+</div>
+
+<div class="sec" id="turn3">
+<h2 class="stitle">Runde 3 — eine Sache, gross</h2>
+<p class="note">Die Diagnose aus deinem Feedback: das Problem ist nicht die Idee, sondern der Maßstab. In Runde 1 und 2 steht ein kleines Objekt in einem großen leeren Feld — das liest sich als Abbildung von etwas, nicht als Marke. Icons, die auf einem Homescreen bestehen, haben eine Form, die die Kachel füllt und an mindestens einer Kante hinausläuft. Der Weißraum liegt <em>in</em> der Form, nicht um sie herum.</p>
+<p class="note">Zweiter Punkt: Gold auf Papier ist ein schwacher Kontrast, und schwacher Kontrast in warmen Tönen ist genau das, was altbacken wirkt. Deshalb tritt der Akzent hier als ganze Fläche auf oder gar nicht. Dritter Punkt, zur Flachheit: Verläufe verbietet das System, aber Tiefe entsteht auch durch zwei harte Ebenen, die sich überlappen — flach gezeichnet, räumlich gelesen. Das ist in 3c die tragende Idee.</p>
+<div style="display:grid;grid-template-columns:repeat(3,max-content);gap:44px;align-items:start">
+
+  <div id="3a" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#3a">3a</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Das F, gross</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#b68235;position:relative;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;left:48px;top:24px;width:40px;height:152px;background:#201f1d"></div>
+        <div style="position:absolute;left:48px;top:24px;width:152px;height:40px;background:#201f1d"></div>
+        <div style="position:absolute;left:48px;top:88px;width:106px;height:36px;background:#201f1d"></div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#b68235;position:relative;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;left:48px;top:24px;width:40px;height:152px;background:#201f1d"></div>
+          <div style="position:absolute;left:48px;top:24px;width:152px;height:40px;background:#201f1d"></div>
+          <div style="position:absolute;left:48px;top:88px;width:106px;height:36px;background:#201f1d"></div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#b68235;position:relative;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;left:48px;top:24px;width:40px;height:152px;background:#201f1d"></div>
+          <div style="position:absolute;left:48px;top:24px;width:152px;height:40px;background:#201f1d"></div>
+          <div style="position:absolute;left:48px;top:88px;width:106px;height:36px;background:#201f1d"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Gold als ganzer Grund, das F in Tinte, oben und rechts bis an die Kante. Der obere Arm läuft aus der Kachel heraus — dadurch sitzt das Zeichen in der Fläche statt darin zu schweben. Zwei Farben, sonst nichts.</p>
+  </div>
+
+  <div id="3b" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#3b">3b</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Das Blatt, angeschnitten</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;left:38px;top:-16px;width:124px;height:232px;background:#fdfcfa;clip-path:polygon(0 0,52px 0,100% 62px,100% 100%,0 100%)"></div>
+        <div style="position:absolute;left:90px;top:-16px;width:72px;height:78px;background:#b68235;clip-path:polygon(0 0,100% 100%,0 100%)"></div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;left:38px;top:-16px;width:124px;height:232px;background:#fdfcfa;clip-path:polygon(0 0,52px 0,100% 62px,100% 100%,0 100%)"></div>
+          <div style="position:absolute;left:90px;top:-16px;width:72px;height:78px;background:#b68235;clip-path:polygon(0 0,100% 100%,0 100%)"></div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;left:38px;top:-16px;width:124px;height:232px;background:#fdfcfa;clip-path:polygon(0 0,52px 0,100% 62px,100% 100%,0 100%)"></div>
+          <div style="position:absolute;left:90px;top:-16px;width:72px;height:78px;background:#b68235;clip-path:polygon(0 0,100% 100%,0 100%)"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">2b mit den richtigen Maßen: das Blatt läuft oben und unten aus der Kachel, und die abgeschnittene Ecke ist jetzt eine große Diagonale statt eines Details. Das Gold ist eine echte Masse, kein Eckchen mehr.</p>
+  </div>
+
+  <div id="3c" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#3c">3c</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Zwei Ebenen</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;left:70px;top:-10px;width:148px;height:180px;background:#b68235"></div>
+        <div style="position:absolute;left:-18px;top:38px;width:148px;height:180px;background:#fdfcfa"></div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;left:70px;top:-10px;width:148px;height:180px;background:#b68235"></div>
+          <div style="position:absolute;left:-18px;top:38px;width:148px;height:180px;background:#fdfcfa"></div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;left:70px;top:-10px;width:148px;height:180px;background:#b68235"></div>
+          <div style="position:absolute;left:-18px;top:38px;width:148px;height:180px;background:#fdfcfa"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Der Stapel auf zwei Blätter reduziert und so weit vergrößert, dass beide an drei Kanten hinauslaufen. Das hintere ist Gold, das vordere Papier, dazwischen der dunkle Grund als Kante. Tiefe ohne einen einzigen Verlauf.</p>
+  </div>
+
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Auf einem Homescreen, 60 px, neben neutralen Nachbarn</h4>
+<p>Der Test, den du beschrieben hast: nicht das Icon allein, sondern das Icon im Feld. Die Nachbarn sind absichtlich anonyme Flächen — es geht nur um Masse, Kontrast und Ruhe im Raster.</p>
+<div style="background:#14161a;border-radius:10px;padding:20px;display:grid;gap:18px">
+  <div style="display:flex;gap:16px;align-items:center">
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#b68235;position:relative;transform:scale(.3);transform-origin:top left">
+        <div style="position:absolute;left:48px;top:24px;width:40px;height:152px;background:#201f1d"></div>
+        <div style="position:absolute;left:48px;top:24px;width:152px;height:40px;background:#201f1d"></div>
+        <div style="position:absolute;left:48px;top:88px;width:106px;height:36px;background:#201f1d"></div>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+        <div style="position:absolute;left:38px;top:-16px;width:124px;height:232px;background:#fdfcfa;clip-path:polygon(0 0,52px 0,100% 62px,100% 100%,0 100%)"></div>
+        <div style="position:absolute;left:90px;top:-16px;width:72px;height:78px;background:#b68235;clip-path:polygon(0 0,100% 100%,0 100%)"></div>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+    <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+      <div style="width:200px;height:200px;background:#1b1a19;position:relative;overflow:hidden;transform:scale(.3);transform-origin:top left">
+        <div style="position:absolute;left:70px;top:-10px;width:148px;height:180px;background:#b68235"></div>
+        <div style="position:absolute;left:-18px;top:38px;width:148px;height:180px;background:#fdfcfa"></div>
+      </div>
+    </div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#454b57"></div>
+  </div>
+  <div style="display:flex;gap:16px;align-items:center">
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#454b57"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#2f333a"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#3b4250"></div>
+    <div style="width:60px;height:60px;border-radius:13px;background:#242830"></div>
+  </div>
+</div>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Maße bei 1024 px</h4>
+<ul>
+<li><strong>3a</strong> Grund #b68235 · Stamm 205 × 778 #201f1d, links auf 246 · oberer Arm 778 × 205, läuft rechts über die Kante hinaus · mittlerer Arm 543 × 184 auf y 451 · Oberkante y 123. Kein Rahmen, kein Kasten.</li>
+<li><strong>3b</strong> Grund #1b1a19 · Blatt #fdfcfa 635 breit, oben und unten angeschnitten (y −82 bis 1106), links auf 195 · Ecke oben rechts über 317 px diagonal abgeschnitten · Umschlagdreieck #b68235, Katheten 369 × 400.</li>
+<li><strong>3c</strong> Grund #1b1a19 · hinteres Blatt #b68235 758 × 922, links 358, oben −51 · vorderes Blatt #fdfcfa 758 × 922, links −92, oben 195 · beide 3:4 wie jedes Seitenbild im System, nur angeschnitten.</li>
+<li>Alle drei: zwei bis drei Farben, keine Verläufe, keine Effekte, volles Quadrat ohne Transparenz.</li>
+</ul>
+</div>
+</div>
+
+<div class="sec" id="turn2">
+<h2 class="stitle">Runde 2 — als Marke gezeichnet</h2>
+<p class="note">Runde 1 war Systeminventar: eine Form, die es schon gibt, ins Quadrat gesetzt. Das liest sich als Bauteil, nicht als Logo. Diese drei sind gezeichnete Marken — eine Silhouette, die man wiedererkennt, wenn man sie nur einmal gesehen hat. Runde 1 steht darunter weiter zum Vergleich. Weiterhin flach, drei Farben, keine Verläufe, keine Effekte. Neu ist, dass der Akzent auch als Fläche auftreten darf: im Interface ist er Kontur, aber ein Icon ist keine Bedienfläche, sondern ein Bild.</p>
+<div style="display:grid;grid-template-columns:repeat(3,max-content);gap:44px;align-items:start">
+
+  <div id="2a" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#2a">2a</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Der Stapel</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#b68235;position:relative;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;left:66px;top:26px;width:84px;height:112px;background:#fdfcfa;border:1px solid #201f1d"></div>
+        <div style="position:absolute;left:56px;top:44px;width:84px;height:112px;background:#fdfcfa;border:1px solid #201f1d"></div>
+        <div style="position:absolute;left:46px;top:62px;width:84px;height:112px;background:#fdfcfa;border:1px solid #201f1d"></div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#b68235;position:relative;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;left:66px;top:26px;width:84px;height:112px;background:#fdfcfa;border:2px solid #201f1d"></div>
+          <div style="position:absolute;left:56px;top:44px;width:84px;height:112px;background:#fdfcfa;border:2px solid #201f1d"></div>
+          <div style="position:absolute;left:46px;top:62px;width:84px;height:112px;background:#fdfcfa;border:2px solid #201f1d"></div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#b68235;position:relative;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;left:66px;top:26px;width:84px;height:112px;background:#fdfcfa;border:4px solid #201f1d"></div>
+          <div style="position:absolute;left:56px;top:44px;width:84px;height:112px;background:#fdfcfa;border:4px solid #201f1d"></div>
+          <div style="position:absolute;left:46px;top:62px;width:84px;height:112px;background:#fdfcfa;border:4px solid #201f1d"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Drei Blätter, diagonal versetzt, auf Gold. Der Versatz ist konstant — 10 px seitlich, 18 px nach unten bei 200 — also eine Treppe, kein Fächer. Das ist die Grundhandlung der App: aus mehreren Blättern wird ein Stück.</p>
+  </div>
+
+  <div id="2b" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#2b">2b</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Die Ecke</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#1b1a19;display:grid;place-items:center;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:relative;width:104px;height:139px">
+          <div style="position:absolute;inset:0;background:#fdfcfa;clip-path:polygon(0 0,68px 0,100% 36px,100% 100%,0 100%)"></div>
+          <div style="position:absolute;right:0;top:0;width:36px;height:36px;background:#b68235;clip-path:polygon(0 0,100% 100%,0 100%)"></div>
+        </div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#1b1a19;display:grid;place-items:center;transform:scale(.3);transform-origin:top left">
+          <div style="position:relative;width:104px;height:139px">
+            <div style="position:absolute;inset:0;background:#fdfcfa;clip-path:polygon(0 0,68px 0,100% 36px,100% 100%,0 100%)"></div>
+            <div style="position:absolute;right:0;top:0;width:36px;height:36px;background:#b68235;clip-path:polygon(0 0,100% 100%,0 100%)"></div>
+          </div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#1b1a19;display:grid;place-items:center;transform:scale(.145);transform-origin:top left">
+          <div style="position:relative;width:104px;height:139px">
+            <div style="position:absolute;inset:0;background:#fdfcfa;clip-path:polygon(0 0,68px 0,100% 36px,100% 100%,0 100%)"></div>
+            <div style="position:absolute;right:0;top:0;width:36px;height:36px;background:#b68235;clip-path:polygon(0 0,100% 100%,0 100%)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Ein Blatt mit umgeschlagener Ecke, der Umschlag in Gold. Die älteste Dokumentmarke, hier nicht als Symbol zitiert, sondern gezeichnet: die Ecke ist wirklich weggeschnitten, das Gold ist die Rückseite des Papiers.</p>
+  </div>
+
+  <div id="2c" style="display:grid;gap:14px;justify-items:start">
+    <div class="shd"><a class="sid" href="#2c">2c</a><span style="font:600 19px/1.12 'Cormorant Garamond',Garamond,serif">Das Monogramm</span></div>
+    <div style="display:flex;gap:20px;align-items:flex-end">
+      <div style="width:200px;height:200px;background:#fdfcfa;position:relative;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+        <div style="position:absolute;left:62px;top:42px;width:22px;height:116px;background:#201f1d"></div>
+        <div style="position:absolute;left:62px;top:42px;width:82px;height:22px;background:#b68235"></div>
+        <div style="position:absolute;left:62px;top:88px;width:58px;height:20px;background:#201f1d"></div>
+      </div>
+      <div style="width:60px;height:60px;overflow:hidden;border-radius:13px">
+        <div style="width:200px;height:200px;background:#fdfcfa;position:relative;transform:scale(.3);transform-origin:top left">
+          <div style="position:absolute;left:62px;top:42px;width:22px;height:116px;background:#201f1d"></div>
+          <div style="position:absolute;left:62px;top:42px;width:82px;height:22px;background:#b68235"></div>
+          <div style="position:absolute;left:62px;top:88px;width:58px;height:20px;background:#201f1d"></div>
+        </div>
+      </div>
+      <div style="width:29px;height:29px;overflow:hidden;border-radius:7px">
+        <div style="width:200px;height:200px;background:#fdfcfa;position:relative;transform:scale(.145);transform-origin:top left">
+          <div style="position:absolute;left:62px;top:42px;width:22px;height:116px;background:#201f1d"></div>
+          <div style="position:absolute;left:62px;top:42px;width:82px;height:22px;background:#b68235"></div>
+          <div style="position:absolute;left:62px;top:88px;width:58px;height:20px;background:#201f1d"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="max-width:42ch">Ein F, aber nicht gesetzt — gebaut: Stamm und zwei Arme als drei Balken, der obere in Gold. Kein Rahmen, kein Kasten. Die Marke ist der Buchstabe selbst, und der Grund ist Papier.</p>
+  </div>
+
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Maße, alle bei 1024 px umgerechnet</h4>
+<ul>
+<li><strong>2a</strong> Grund #b68235 randlos · drei Blätter 3:4, je 430 × 573, Kontur 5 px #201f1d · Versatz 51 px nach links, 92 px nach unten je Blatt · Gruppe optisch zentriert.</li>
+<li><strong>2b</strong> Grund #1b1a19 randlos · Blatt #fdfcfa 532 × 711, zentriert · Ecke oben rechts auf 184 px Kantenlänge diagonal abgeschnitten · Umschlagdreieck #b68235 in derselben Diagonale, rechtwinklig, Katheten 184 px.</li>
+<li><strong>2c</strong> Grund #fdfcfa randlos · Stamm 113 × 594 #201f1d · oberer Arm 420 × 113 #b68235 · mittlerer Arm 297 × 102 #201f1d · Oberkante bei 215 px, mittlerer Arm bei 451 px, alles linksbündig auf 317 px.</li>
+<li>Alle drei: drei Farben, keine Verläufe, keine Schatten im Icon selbst (der Schatten hier zeigt nur die Kante der Kachel auf dieser Seite), volles Quadrat ohne Transparenz.</li>
+</ul>
+</div>
+<div class="spec" style="max-width:96ch">
+<h4>Bei 29 px</h4>
+<p><strong>2a</strong> die Treppe bleibt als Silhouette lesbar, die Konturen laufen zusammen — deshalb sind sie in den kleinen Größen mitskaliert, nicht ausgedünnt. <strong>2b</strong> die schräg abgeschnittene Ecke ist noch bei 29 px die einzige Diagonale im Bild und trägt das ganze Zeichen. <strong>2c</strong> das F bleibt eindeutig, weil es aus Flächen und nicht aus Strichen besteht; auf Papiergrund ist es die hellste der sechs Varianten und fällt in einem dunklen Dock am stärksten auf.</p>
+</div>
+</div>
+
+<div class="sec" id="1a">
+<div class="shd"><a class="sid" href="#1a">1a</a><h2 class="stitle">Runde 1 · Der Name</h2><span class="note" style="max-width:44ch">Das F in Cormorant Garamond 600 auf Papier, in einem Akzent-Haarlinienrahmen. Die Lesart des Guides, wörtlich genommen.</span></div>
+<div style="display:flex;gap:36px;align-items:flex-end;flex-wrap:wrap">
+  <div style="width:180px;height:180px;background:#fdfcfa;display:grid;place-items:center;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+    <div style="width:132px;height:132px;border:1px solid #b68235;display:grid;place-items:center">
+      <span style="font:600 96px/1 'Cormorant Garamond',Garamond,serif;letter-spacing:-.015em;color:#201f1d">F</span>
+    </div>
+  </div>
+  <div style="width:60px;height:60px;background:#fdfcfa;display:grid;place-items:center;border-radius:13px">
+    <div style="width:44px;height:44px;border:1px solid #b68235;display:grid;place-items:center">
+      <span style="font:600 32px/1 'Cormorant Garamond',Garamond,serif;color:#201f1d">F</span>
+    </div>
+  </div>
+  <div style="width:29px;height:29px;background:#fdfcfa;display:grid;place-items:center;border-radius:7px">
+    <div style="width:21px;height:21px;border:1px solid #b68235;display:grid;place-items:center">
+      <span style="font:600 16px/1 'Cormorant Garamond',Garamond,serif;color:#201f1d">F</span>
+    </div>
+  </div>
+</div>
+<div class="spec">
+<h4>1a — Spezifikation</h4>
+<p><strong>Aufbau</strong> Grund #fdfcfa (<code>--paper</code>) randlos · Rahmen 1 px #b68235 auf 73 % der Kantenlänge · „F“ in Cormorant Garamond 600, optische Mitte, Höhe 53 % der Kantenlänge, #201f1d.</p>
+<p><strong>Was dafür spricht</strong> es ist die einzige Variante, die keine Formentscheidung trifft — sie setzt den Namen, wie der Guide es vorschreibt. Bei 29 px bleibt die Serife des F erkennbar, weil sonst nichts im Feld steht.</p>
+<p><strong>Was dagegen spricht</strong> ein F sagt nicht, was die App tut, und ein Buchstabe in einem Kasten ist im App Store eine sehr häufige Lösung.</p>
+</div>
+</div>
+
+<div class="sec" id="1b">
+<div class="shd"><a class="sid" href="#1b">1b</a><h2 class="stitle">Runde 1 · Der Seitenrahmen</h2><span class="note" style="max-width:44ch">Ein Blatt im Verhältnis 3:4 mit den vier Akzent-Eckmarken des Suchers. Die einzige gezeichnete Idee, die das System selbst besitzt.</span></div>
+<div style="display:flex;gap:36px;align-items:flex-end;flex-wrap:wrap">
+  <div style="width:180px;height:180px;background:#1b1a19;display:grid;place-items:center;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+    <div style="position:relative;width:96px;height:128px;background:#fdfcfa">
+      <div style="position:absolute;left:-9px;top:-9px;width:22px;height:22px;border-left:2px solid #b68235;border-top:2px solid #b68235"></div>
+      <div style="position:absolute;right:-9px;top:-9px;width:22px;height:22px;border-right:2px solid #b68235;border-top:2px solid #b68235"></div>
+      <div style="position:absolute;right:-9px;bottom:-9px;width:22px;height:22px;border-right:2px solid #b68235;border-bottom:2px solid #b68235"></div>
+      <div style="position:absolute;left:-9px;bottom:-9px;width:22px;height:22px;border-left:2px solid #b68235;border-bottom:2px solid #b68235"></div>
+    </div>
+  </div>
+  <div style="width:60px;height:60px;background:#1b1a19;display:grid;place-items:center;border-radius:13px">
+    <div style="position:relative;width:32px;height:43px;background:#fdfcfa">
+      <div style="position:absolute;left:-3px;top:-3px;width:8px;height:8px;border-left:1.5px solid #b68235;border-top:1.5px solid #b68235"></div>
+      <div style="position:absolute;right:-3px;top:-3px;width:8px;height:8px;border-right:1.5px solid #b68235;border-top:1.5px solid #b68235"></div>
+      <div style="position:absolute;right:-3px;bottom:-3px;width:8px;height:8px;border-right:1.5px solid #b68235;border-bottom:1.5px solid #b68235"></div>
+      <div style="position:absolute;left:-3px;bottom:-3px;width:8px;height:8px;border-left:1.5px solid #b68235;border-bottom:1.5px solid #b68235"></div>
+    </div>
+  </div>
+  <div style="width:29px;height:29px;background:#1b1a19;display:grid;place-items:center;border-radius:7px">
+    <div style="position:relative;width:15px;height:20px;background:#fdfcfa">
+      <div style="position:absolute;left:-2px;top:-2px;width:5px;height:5px;border-left:1px solid #b68235;border-top:1px solid #b68235"></div>
+      <div style="position:absolute;right:-2px;top:-2px;width:5px;height:5px;border-right:1px solid #b68235;border-top:1px solid #b68235"></div>
+      <div style="position:absolute;right:-2px;bottom:-2px;width:5px;height:5px;border-right:1px solid #b68235;border-bottom:1px solid #b68235"></div>
+      <div style="position:absolute;left:-2px;bottom:-2px;width:5px;height:5px;border-left:1px solid #b68235;border-bottom:1px solid #b68235"></div>
+    </div>
+  </div>
+</div>
+<div class="spec">
+<h4>1b — Spezifikation</h4>
+<p><strong>Aufbau</strong> Grund #1b1a19 (<code>--viewfinder</code>) randlos · Blatt #fdfcfa im Verhältnis 3:4, Höhe 71 % der Kantenlänge · vier Eckmarken 2 px #b68235, um 9/180 der Kantenlänge nach außen gesetzt, Armlänge 22/180. Das sind genau die Marken, die <code>Viewfinder</code> zeichnet, nur größer.</p>
+<p><strong>Was dafür spricht</strong> es zeigt in einem Bild, was die App macht: ein Blatt Papier, gefasst von der Kamera. Papier auf Dunkel ist bei 29 px die kräftigste der drei Varianten, weil die Fläche trägt und nicht die Linie.</p>
+<p><strong>Was dagegen spricht</strong> der dunkle Grund ist die eine Stelle im System, die randlos dunkel sein darf — als Icon wird sie zum Gesicht der App, und die Richtung heißt „Papier und Archiv", nicht „Kamera". Bei 29 px verschwinden die Eckmarken fast, das Icon reduziert sich auf ein helles Rechteck.</p>
+</div>
+</div>
+
+<div class="sec" id="1c">
+<div class="shd"><a class="sid" href="#1c">1c</a><h2 class="stitle">Runde 1 · Der Auslöser</h2><span class="note" style="max-width:44ch">Der 72-px-Auslöser des Systems als Icon: Papierscheibe, 2 px Akzentring, dunkler Grund.</span></div>
+<div style="display:flex;gap:36px;align-items:flex-end;flex-wrap:wrap">
+  <div style="width:180px;height:180px;background:#1b1a19;display:grid;place-items:center;box-shadow:0 1px 2px rgba(32,31,29,.14)">
+    <div style="width:112px;height:112px;border-radius:50%;border:2px solid #b68235;display:grid;place-items:center">
+      <div style="width:88px;height:88px;border-radius:50%;background:#fdfcfa;box-shadow:inset 0 1px 0 rgba(32,31,29,.14)"></div>
+    </div>
+  </div>
+  <div style="width:60px;height:60px;background:#1b1a19;display:grid;place-items:center;border-radius:13px">
+    <div style="width:38px;height:38px;border-radius:50%;border:1.5px solid #b68235;display:grid;place-items:center">
+      <div style="width:29px;height:29px;border-radius:50%;background:#fdfcfa"></div>
+    </div>
+  </div>
+  <div style="width:29px;height:29px;background:#1b1a19;display:grid;place-items:center;border-radius:7px">
+    <div style="width:19px;height:19px;border-radius:50%;border:1px solid #b68235;display:grid;place-items:center">
+      <div style="width:14px;height:14px;border-radius:50%;background:#fdfcfa"></div>
+    </div>
+  </div>
+</div>
+<div class="spec">
+<h4>1c — Spezifikation</h4>
+<p><strong>Aufbau</strong> Grund #1b1a19 randlos · Ring 2 px #b68235 auf 62 % der Kantenlänge · Scheibe #fdfcfa auf 49 %, mit dem 1-px-Innenschatten, der die Scheibe im Ring sitzen lässt. Maße und Verhältnisse sind die des <code>Shutter</code>.</p>
+<p><strong>Was dafür spricht</strong> es ist die Form, die der Nutzer am häufigsten anfasst, und sie ist bei 29 px noch eindeutig — eine helle Scheibe ist die robusteste Marke der drei.</p>
+<p><strong>Was dagegen spricht</strong> ein Auslöser ist das Icon einer Kamera-App. FreePDF endet bei einem PDF, nicht bei einem Foto, und das Icon würde die Hälfte der App verschweigen.</p>
+</div>
+</div>
+
+<div class="sec">
+<h2 class="stitle">Was noch fehlt</h2>
+<div class="spec">
+<ul>
+<li>Ich kann keine Bilder erzeugen — das sind gezeichnete Flächen und Linien, keine gerenderten Grafiken. Für die Auslieferung braucht es aus dem gewählten Entwurf ein SVG und daraus das 1024-px-PNG-Set; das kann ich als Datei aufbauen, sobald einer gewählt ist.</li>
+<li>Cormorant Garamond kommt hier von Google Fonts. Für 1a gilt dieselbe offene Frage wie für die Schrift im ganzen System: die lizenzierten Dateien fehlen, und ein Icon wird gerastert ausgeliefert, also muss die Zeichnung aus der endgültigen Schnittdatei kommen.</li>
+<li>Der Guide erlaubt kein erfundenes Zeichen. Alle achtzehn Entwürfe halten sich daran, aber die Entscheidung, dass die App überhaupt eine Marke bekommt, steht in <code>vision.md</code> nicht — sie sollte von Julian kommen, nicht von mir.</li>
+<li>Ein dunkles und ein getöntes Icon (iOS 18) sind noch nicht gezeichnet. Dunkel sind bereits 1b, 1c, 2b, 3b, 3c, 4a, 4b, 4c, 5a, 5b, 5c und alle drei aus Runde 6. Eine zweite Fassung bräuchten 1a und 2c (Papiergrund) sowie 2a und 3a (Goldgrund). Bei allen Entwürfen mit goldener Masse — 4b, 5a, 5b und die Runde-6-Fassungen — muss zusätzlich entschieden werden, ob die Fläche in der getönten Variante Fläche bleibt oder zur Kontur wird; beim Gegenwechsel ist das die härteste Frage, weil eine getönte Fassung nur eine Farbe hat und der Wechsel dann über Hell und Dunkel derselben Farbe laufen muss.</li>
+</ul>
+</div>
+</div>
+
+</div>
+</x-dc>
+</body>
+</html>
