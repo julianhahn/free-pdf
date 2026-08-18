@@ -65,7 +65,7 @@ themselves are drawn by Storybook.
 | 28 | iOS: the typed name is the scan's name — DONE | 19 | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
 | 29 | The sheet is found by its edges, not by its brightness — DONE | - | cargo test --workspace, bash ffi/bridge_check.sh, by eye on real photos |
 | 30 | iOS: Pull the sheet flat starts on — DONE | 29 | bash ios/check/scan_check.sh, by hand |
-| 31 | A sheet that leaves the frame is cut anyway, and the page says so | - | cargo test --workspace, bash ios/check/scan_check.sh, by eye on real photos |
+| 31 | A sheet that leaves the frame is cut anyway, and the page says so — DONE | - | cargo test --workspace, bash ios/check/scan_check.sh, by eye on real photos |
 | 32 | iOS: Adjust and Shoot another page are controls, not menu items | - | bash ios/check/scan_check.sh, by hand |
 | 33 | iOS: shooting another page does not stop after one | - | bash ios/check/scan_check.sh, by hand |
 | 34 | iOS: after the first page, the app shows what it is about to do | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
@@ -853,7 +853,7 @@ Whatever the method, these have to come out true:
 **Do not.** Do not add a dependency - `image` is already there and this is a few hundred lines
 of arithmetic at `WORK_WIDTH`. Do not touch `ffi/include/freepdf.h`, `ffi/bridge_check.sh` or
 any existing assertion in `core_engine/tests/engine.rs`; they staying green unchanged is the
-proof no boundary moved. Do not put a tolerance back into `runs_off_the_picture`. Do not make
+proof no boundary moved. Do not make
 this a client-side change - the phone must not learn a second way to find paper.
 
 **The photos, and the rule about them.** Seven real photos are the only honest evidence, and

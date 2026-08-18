@@ -142,10 +142,10 @@ impl Paper {
 
     /// Whether the sheet runs off the edge of the photo.
     ///
-    /// Worth asking before straightening, because [`Self::corners`] then returns
-    /// the points where the paper leaves the frame instead of the corners of the
-    /// sheet. Pulling those into a rectangle bends the picture rather than
-    /// straightening it, and drags whatever lies along the edge inwards.
+    /// A true report about the photo, not a veto: [`Self::corners`] then returns the
+    /// points where the paper leaves the frame instead of the corners of the sheet, so
+    /// the straightened page is a piece of the sheet rather than the whole of it. A
+    /// caller that shows pages tells the user that, and offers a new photo.
     pub fn runs_off_the_picture(&self) -> bool {
         let on_paper = |x: u32, y: u32| self.on_paper[(y * self.width + x) as usize];
 

@@ -48,8 +48,9 @@ picture on screen a stored crop box could be drawn on ([`../ios/AGENTS.md`](../i
 - An act function refuses input that does not fit instead of clamping it: `crop` refuses a box
   outside the image, `rotate` a free angle, `straighten` more than `MOST_TILT`. A silently
   shrunk result looks like the tool ignored the user.
-- Ask `Paper::runs_off_the_picture()` before deskewing. Those corners are only where the paper
-  leaves the frame, and pulling them into a rectangle bends the picture.
+- `Paper::runs_off_the_picture()` reports, it does not refuse. Those corners are only where the
+  paper leaves the frame, so the page is a piece of the sheet - deskew anyway and let the client
+  say the page is incomplete (Julian, 2026-08-17).
 
 ## What the public API costs
 

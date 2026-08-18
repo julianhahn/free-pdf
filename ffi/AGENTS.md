@@ -45,10 +45,11 @@ levels, cap, sharpen, write. It sits in this crate because the engine offers sin
 tools and the client owns the order ([`../AGENTS.md`](../AGENTS.md)) - and this crate
 is a client. Two rules hold it together:
 
-- **Two steps may do nothing rather than fail.** A sheet that cannot be found or runs
-  off the frame is left alone; writing that is already level is not turned. One
-  awkward photo that returned an error would make the scan unfinishable, and resume
-  would retry that same photo for ever.
+- **Two steps may do nothing rather than fail.** A sheet that cannot be found is left
+  alone; writing that is already level is not turned. One awkward photo that returned
+  an error would make the scan unfinishable, and resume would retry that same photo for
+  ever. A sheet that runs off the frame is cut on the corners that were found, like
+  Adjust does it (Julian, 2026-08-17).
 - **The 3000 px cap is a memory cap.** `sharpen` is the peak of the whole scan and
   costs 33 bytes per pixel, so the cap is what keeps a 12 MP photo from peaking near
   400 MB on a phone iOS kills at about 1.4 GB. It is applied before sharpening, not

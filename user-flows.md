@@ -249,6 +249,8 @@ only lives in memory today and a relaunch is the only retry there is.
 
 1. The pages are a carousel, one per swipe. Title `Page 3 of 12`.
 2. Swipe to look. A page the engine refused shows the failure card instead of an image.
+   A sheet that ran off the edge of the photo is cut anyway, and a calm note under the page
+   says the page is not the whole sheet, with the retake below it.
 3. **Page** menu → **Retake this page** → the camera opens on that slot, one shot, back to
    the pages.
 4. **Page** menu → **Delete page** → confirm → page file first, photo second.
@@ -282,6 +284,7 @@ only lives in memory today and a relaunch is the only retry there is.
 | Menu item | Adjust page | Seite anpassen |
 | Menu item | Delete page | Seite löschen |
 | Refused page | This page could not be scanned. | Diese Seite konnte nicht gescannt werden. |
+| Incomplete page | Not the whole sheet - it ran off the edge of the photo. | Nicht das ganze Blatt - es lief aus dem Foto heraus. |
 | Retry | Scan this page again | Diese Seite noch einmal scannen |
 | Button | Make PDF | PDF erstellen |
 | Button, running | Making the PDF… | PDF wird erstellt… |

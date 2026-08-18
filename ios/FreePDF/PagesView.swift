@@ -45,6 +45,12 @@ struct PagesView: View {
     /// print is the only reason this screen exists.
     @State private var zoom: CGFloat = 1
     @State private var zoomStart: CGFloat = 1
+    /// The page whose sheet ran off the edge of the photo, as the engine reads it off
+    /// that photo when the page is shown. One run for the page on screen, never for the
+    /// others, and nothing is stored: the fact belongs to the photo, so it disappears
+    /// with it. `nil` while the run is out, or when the photo is gone or unreadable -
+    /// there is then nothing to say and nothing to retake from.
+    @State private var ranOff: Int?
     /// The jump: one field and a Go, open only while asked for. Nothing is remembered.
     @State private var jumping = false
     @State private var jumpTo = ""
@@ -54,6 +60,17 @@ struct PagesView: View {
             VStack(alignment: .leading, spacing: Token.Size.space4) {
                 if let message { ErrorLine(sentence: message) }
                 carousel
+                // A calm note, not an `ErrorLine`: nothing failed, the page is simply a
+                // piece of the sheet. It sits under the page it is about and the retake
+                // below it is the repair.
+                if ranOff == showing {
+                    Text("Not the whole sheet - it ran off the edge of the photo.")
+                        .font(Token.Face.body(Token.Size.textSub))
+                        .lineSpacing(Token.Size.textSub * (Token.Number.leadingBody - 1))
+                        .foregroundStyle(Token.Palette.textMuted)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 // Adjust has its own control on the screen, in the same place for every
                 // page - it was the hardest thing in the app to find behind the "…"
                 // (Julian, 2026-08-16). Disabled, never hidden, where the photo is gone,
@@ -62,7 +79,7 @@ struct PagesView: View {
                     .buttonStyle(SecondaryStyle(off: !photos.contains(showing)))
                     .disabled(!photos.contains(showing))
                     .accessibilityHint("Opens the tools for page \(position).")
-                if failed.contains(showing) {
+                if failed.contains(showing) || ranOff == showing {
                     Button("Scan this page again") { onRetake(showing) }
                         .buttonStyle(SecondaryStyle())
                         .accessibilityHint("Photographs page \(position) again.")
@@ -82,6 +99,10 @@ struct PagesView: View {
         .navigationTitle("Page \(position) of \(numbers.count)")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { menu }
+        // One engine run for the page on screen, re-keyed by the swipe and cancelled by
+        // it - the same call Adjust makes when it opens, and the only place this fact
+        // comes from.
+        .task(id: showing) { await askThePhoto(showing) }
         .onChange(of: showing) {
             // A new page starts unpinched, and the jump closes on the next swipe.
             zoom = 1
@@ -98,6 +119,20 @@ struct PagesView: View {
         } message: {
             Text("The photo goes too. This cannot be undone.")
         }
+    }
+
+    /// Whether this page's sheet left the frame, asked of the photo itself. A refused
+    /// page has no page image to talk about, and a photo that is gone or unreadable
+    /// leaves the note off - it is a note, not an error.
+    private func askThePhoto(_ number: Int) async {
+        ranOff = nil
+        guard photos.contains(number), !failed.contains(number) else { return }
+        let photo = scan.photoURL(number)
+        let suggestion = try? await Task.detached(priority: .userInitiated) {
+            try Engine.suggest(photo)
+        }.value
+        guard !Task.isCancelled, suggestion?.runsOffThePicture == true else { return }
+        ranOff = number
     }
 
     /// Where in the carousel he is. Counted, not the page number: a page deleted in the

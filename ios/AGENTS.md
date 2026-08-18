@@ -233,6 +233,10 @@ than a comment: sharpening one page peaks near 220 MB on its own
 - **`failed` lives in memory only**, so it dies with the process and a relaunch retries
   each refused page once. Without it the loop would pick the same number for ever, and
   one unreadable photo would make the scan unfinishable.
+- **An incomplete page is cut and says so.** A sheet that ran off the edge of the photo is
+  straightened on the points where it left the frame, so the page is a piece of the sheet; the
+  pages screen asks `Engine.suggest` for the page on screen and puts a calm note under it, with
+  the retake that already exists (Julian, 2026-08-17).
 - **A page already in flight when the screen goes away runs to the end.**
   `Task.detached` does not inherit cancellation, and that is what is wanted: a page
   either lands on disk whole or was never there.

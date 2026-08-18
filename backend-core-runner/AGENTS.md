@@ -17,7 +17,7 @@ letters. `--scan` only fills in what was not asked for, so `--scan --sharpen 1.2
 either order.
 
 Do not tidy that order away. Milestone 2's `freepdf_scan_page` repeats the deskew, straighten,
-levels, sharpen part of it in the `ffi/` crate, deskew skipped when no sheet is found
+levels, sharpen part of it in the `ffi/` crate, deskew skipped only when no sheet is found
 ([plan section 5](../iphone-client-plan.md#5-the-c-surface)). And `USAGE` promises the order in
 words, so it and `apply_tools` change in one commit or the printed contract lies.
 

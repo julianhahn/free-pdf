@@ -180,11 +180,13 @@ fn apply_tools(img: DynamicImage, args: &Args) -> Result<DynamicImage, String> {
     }
     if args.deskew {
         match find_paper(&img) {
-            Some(sheet) if sheet.runs_off_the_picture() => println!(
-                "  deskew: the sheet runs off the edge of the photo, so its corners \
-                 cannot be seen - left as it is, try --straighten"
-            ),
             Some(sheet) => {
+                if sheet.runs_off_the_picture() {
+                    println!(
+                        "  deskew: the sheet runs off the edge of the photo, so the page \
+                         is a piece of the sheet, not the whole of it"
+                    );
+                }
                 let corners = sheet.corners();
                 println!(
                     "  deskew: corners {}",

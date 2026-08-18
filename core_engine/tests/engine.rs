@@ -841,9 +841,9 @@ fn a_sheet_running_off_the_photo_says_so() {
     let whole_sheet = find_paper(&photo).expect("no sheet was found");
     let cut_off = find_paper(&photographed_document()).expect("no sheet was found");
 
-    // The corners of a sheet that leaves the frame are not corners of the paper, so
-    // straightening by them would bend the picture. The caller has to be able to
-    // tell the two apart before it offers the tool.
+    // The corners of a sheet that leaves the frame are not corners of the paper, so a
+    // page cut on them is a piece of the sheet. The caller has to be able to tell the
+    // two apart to say that on screen.
     assert!(!whole_sheet.runs_off_the_picture());
     assert!(cut_off.runs_off_the_picture());
 }

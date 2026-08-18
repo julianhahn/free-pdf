@@ -240,17 +240,16 @@ pub unsafe extern "C" fn freepdf_pages_to_pdf(
 /// written down for the phone.
 ///
 /// Two steps are allowed to do nothing rather than fail: a sheet that cannot be
-/// found or that runs off the frame is left alone, and writing that is already level
-/// is not turned. That is not politeness. One awkward photo that returned an error
+/// found is left alone, and writing that is already level is not turned. A sheet that
+/// runs off the frame is cut on the corners that were found, exactly as Adjust does
+/// it - the page is then a piece of the sheet, and the pages screen says so. That is not politeness. One awkward photo that returned an error
 /// would make the whole scan unfinishable, and resuming would retry that same photo
 /// for ever.
 fn scan_page(photo: &Path, page: &Path) -> Result<(), String> {
     let mut img = load_image(photo)?;
 
     if let Some(sheet) = find_paper(&img) {
-        if !sheet.runs_off_the_picture() {
-            img = deskew(&img, sheet.corners())?;
-        }
+        img = deskew(&img, sheet.corners())?;
     }
 
     let degrees = suggest_straightening(&img);
@@ -589,6 +588,50 @@ mod tests {
             std::fs::read(&adjusted).expect("the adjusted page"),
             "the adjusted page is byte for byte the automatic one"
         );
+    }
+
+    /// A sheet that leaves the frame is cut anyway, on the points where it crosses the
+    /// edge. It used to be left alone, which handed the user the whole photo - desk and
+    /// all - while Adjust cut the same photo cleanly (Julian, 2026-08-17). The page is a
+    /// piece of the sheet, and smaller than the photo it came from.
+    #[test]
+    fn a_sheet_running_off_the_photo_is_cut_anyway() {
+        let folder = std::env::temp_dir().join("freepdf_ffi_runs_off");
+        std::fs::create_dir_all(&folder).expect("the temp folder");
+        let photo = folder.join("photo.jpg");
+        let page = folder.join("page.jpg");
+        let shot = a_sheet_running_off_the_bottom();
+        save_page(&shot, &photo).expect("the photo");
+
+        scan_page(&photo, &page).expect("the page was not written");
+
+        let written = load_image(&page).expect("the page");
+        assert!(
+            written.width() < shot.width(),
+            "the page is {}x{} - the whole photo, so nothing was cut",
+            written.width(),
+            written.height()
+        );
+    }
+
+    /// A bright sheet on a dark desk, hanging out of the bottom of the frame. The
+    /// writing is what `find_paper` fits its edges against.
+    fn a_sheet_running_off_the_bottom() -> core_engine::DynamicImage {
+        let (width, height) = (600u32, 400u32);
+        let mut img = core_engine::DynamicImage::new_rgb8(width, height);
+        let samples: &mut [u8] = img.as_mut_rgb8().expect("an rgb image");
+        for pixel in 0..(width * height) as usize {
+            let (x, y) = (pixel as u32 % width, pixel as u32 / width);
+            let on_paper = (60..width - 60).contains(&x) && y >= 120;
+            let writing = on_paper && y % 40 < 6 && (90..width - 90).contains(&x);
+            let colour = match (on_paper, writing) {
+                (_, true) => [30, 30, 30],
+                (true, _) => [230, 227, 218],
+                _ => [40, 38, 36],
+            };
+            samples[pixel * 3..pixel * 3 + 3].copy_from_slice(&colour);
+        }
+        img
     }
 
     /// Paper with lines of writing on it, built here rather than read from

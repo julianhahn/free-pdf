@@ -86,6 +86,7 @@ The order from here, and nothing after step 1 can start before it:
 | 2 | **done** - the C boundary is wide enough for Adjust: `freepdf_adjust_page` takes the photo path, the page path and one `FreepdfAdjustments` struct of all the values. One function, not seven. | engine + ffi |
 | 3 | Rebuild the iPhone client against the approved components and the flows - which is also when the sixteen capabilities get their controls. Built, screen by screen: [`TASKS.md`](./TASKS.md) 14 to 28 are all done, so every screen exists, every value the user sets survives a kill in `state/NNNN.txt`, and the name he types is the scan's name. Adjust brought a fourth C function with it, `freepdf_suggest_adjustments`, so every control opens on what the engine would have chosen. | client agent |
 | 4 | **done** on 2026-08-17 ([`TASKS.md`](./TASKS.md) 29) - the engine could not find the sheet on a lit desk, so every page came out uncut. `find_paper` now takes the brightness area only as a rough guess and then follows the edges of the paper: it marches outward along every row and column until it crosses a step from paper to table, fits the four sides through those places, and takes the corners from where the sides cross. Checked by eye on twelve real photos, all twelve cut to the sheet. [`TASKS.md`](./TASKS.md) 30 is the small client half of it, and is still open. | engine agent |
+| 5 | **done** on 2026-08-18 ([`TASKS.md`](./TASKS.md) 31) - the automatic run no longer refuses a sheet that leaves the frame. It cuts on the points where the paper crosses the edge, exactly as Adjust already did, and the pages screen puts a calm note under such a page saying it is not the whole sheet, with the retake that already exists. Checked against the twelve real photos: eleven byte for byte as before, `runs_off_1.jpg` cut. | engine + client |
 
 ```sh
 cd storybook && npm install && npm run storybook    # step 1 happens here
@@ -145,8 +146,8 @@ beside it - not this page.
 ## Limits worth knowing
 
 Finding the sheet needs the paper to be brighter than what it lies on, so a document on a white
-desk breaks it, and a sheet that runs off the edge of the photo cannot be straightened by its
-corners.
+desk breaks it, and a sheet that runs off the edge of the photo is straightened on the points
+where it leaves the frame, so that page is a piece of the sheet and the pages screen says so.
 `find_paper` reports both cases instead of guessing, which is why `deskew` takes the corners
 as an argument: a user can place them by hand
 ([`core_engine/AGENTS.md`](./core_engine/AGENTS.md)).

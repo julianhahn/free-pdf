@@ -8,6 +8,18 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-18 - a sheet that leaves the frame is cut anyway, and the page says so
+
+TASKS.md 31. `scan_page` in `ffi/` lost its `if !sheet.runs_off_the_picture()` guard, so the
+automatic run now straightens on the corners it found whatever they are - the same thing Adjust
+already did with the corners it sends. `runs_off_the_picture` stays a true report about the photo
+and is no longer a veto; the runner deskews too, and only prints what it means. `PagesView` asks
+`Engine.suggest` for the page on screen - one run, re-keyed by the swipe, nothing stored - and
+puts a calm note under a page whose sheet ran off, with the existing "Scan this page again"
+below it. Cost: a sheet crossing a frame corner at an angle comes out slightly sheared; the note
+plus the retake is what pays for it. The twelve phone photos were re-run: eleven byte for byte
+as before, `runs_off_1.jpg` now cut from 3024x4032 to 2558x3515.
+
 ## 2026-08-17 - the sheet is found by its edges now, so the cut works on a lit desk
 
 TASKS.md 29. `find_paper` keeps the whole brightness pipeline, but only as a rough guess: from
