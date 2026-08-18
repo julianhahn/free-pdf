@@ -399,10 +399,11 @@ const INWARD_BIAS: f32 = 0.5;
 
 /// How many places along each side are measured again in the full sized photo, spread
 /// evenly between its two ends and none of them at an end. Nine, over the whole side: a
-/// photographed sheet is never flat, so its edge bows by up to twenty pixels along its
-/// length and the places have to be spread over the whole of it for the middle of them to
-/// be the middle of the edge. The ends are left out because a corner is where two edges
-/// meet and neither is clean there.
+/// photographed sheet is never flat, so its edge bows along its length and the places have
+/// to be spread over the whole of it for the innermost of them to be the innermost of the
+/// edge - see [`where_the_side_goes`], which is what they are read for. How far a real edge
+/// bows is measured in the `ponytail:` note on [`sides_read_again_in_the_photo`]. The ends
+/// are left out because a corner is where two edges meet and neither is clean there.
 const PLACES_READ_AGAIN: usize = 9;
 
 /// How far either way the true edge is looked for, in pixels of the photograph. Sixty,
@@ -423,20 +424,49 @@ const PHOTO_EDGE_GAP: i32 = 2;
 /// by two or three readings on a shadow is worse than a page cut a few pixels wide.
 const FEWEST_PLACES_READ_AGAIN: usize = 5;
 
-/// How far inward the refined side is put, in pixels of the photograph.
+/// How far inward every side is put on top of the reading it is laid on, in pixels of the
+/// photograph.
 ///
-/// A hair, now that the side sits on the measured edge rather than on a guess. Inward
-/// rather than outward because a sliver of desk in the page bends the
-/// straightening while a hair off the white margin
-/// costs nothing. Measured with `examples/edge_error.rs`: at this value the middle of all
-/// four sides of all twelve real photos reads 0 to +3 pixels inside the paper; at 1.0 three
-/// middles read a pixel outside it, and at 2.0 one read +4.
+/// A hair, because the side sits on a measured edge rather than on a guess, and inward
+/// rather than outward because a sliver of desk in the page bends the straightening while a
+/// hair off the white margin costs nothing. Measured with `examples/edge_error.rs` before
+/// task 36, when a side was still laid on the middle of its readings: at this value the
+/// middle of all four sides of all twelve real photos read 0 to +3 pixels inside the paper,
+/// at 1.0 three middles read a pixel outside it, and at 2.0 one read +4. Those middles read
+/// +3 to +12 today - that is [`MOST_INWARD`] moving the side, not this hair, so do not
+/// re-measure the three numbers above and conclude the hair drifted.
 ///
-/// Do not raise it to cover a bowed edge. That was tried, on the reading that six pixels
-/// would put the worst place of a left or right side inside the paper too: it does, and it
-/// then cuts six pixels off a flat sheet, which two synthetic tests caught. A straight side
-/// on a bowed edge is the ceiling here, not this number - see `sides_read_again_in_the_photo`.
+/// Do not raise it to cover a bowed edge. That was tried at 6.0, on the reading that six
+/// pixels would put the worst place of a left or right side inside the paper too: it does,
+/// and it then cuts six pixels off a *flat* sheet as well, which two synthetic tests caught.
+/// A bow is not the same on two sides and it is not the same on two photos, so it is
+/// covered by [`MOST_INWARD`], which is what each side bows by, and never by a constant
+/// every side pays.
 const INWARD_HAIR: f32 = 1.5;
+
+/// How far past the middle of one side's own readings that side may be laid, in pixels of
+/// the photograph.
+///
+/// What this buys is not a constant margin: it is whatever that one side bows by, so a flat
+/// edge pays nothing at all and a bowed edge pays exactly its bow, up to here. That is why
+/// the synthetic fixtures of a drawn straight sheet come through with corners unchanged to
+/// the last decimal - every reading of such a side is the same, so its innermost is its
+/// middle.
+///
+/// Ten, because a page may lose about a millimetre of its white margin and no more
+/// (Julian, 2026-08-18). A millimetre of these photos is 11.5 pixels: the twelve pages come
+/// out 2317 to 2594 pixels across, mean 2458, for the 210 mm of an A4 sheet. Ten plus
+/// [`INWARD_HAIR`] is that millimetre, and measured with `examples/edge_error.rs` it is also
+/// the largest value at which no middle of any side of the twelve reads past +12 - ten of
+/// the forty-eight read exactly +12, so there is nothing to spare above it.
+///
+/// It is also the only guard a misread place needs, which is why there is no second one.
+/// `extra_2`'s bottom reads 57 pixels out at one of its nine places while the places either
+/// side of it read 2 and 3 - a walk of a hundred and one places across that side shows a
+/// single sample diving in and back out, so it is something on the desk touching the sheet
+/// and not the sheet. Laid on the plain innermost reading that page would be cut 55 pixels
+/// short; capped here it is cut the same 11.5 as every other bowed side.
+const MOST_INWARD: f32 = 10.0;
 
 /// Moves each fitted side onto the edge of the paper as the full sized photo shows it.
 ///
@@ -445,9 +475,10 @@ const INWARD_HAIR: f32 = 1.5;
 /// copy - and the miss is not the same on all four, which is why no single bias can take
 /// it out. So each side is read again where it matters: at [`PLACES_READ_AGAIN`] places
 /// along it the photo is walked across the side, the steepest step from paper to table
-/// is taken as the true edge, and the whole side is moved onto the middle of those
-/// readings. The slope stays as the rough fit found it, because the slope is an average
-/// over the whole length of the side and is already as good as the edge is straight.
+/// is taken as the true edge, and the whole side is moved onto those readings - onto the
+/// innermost of them, see [`where_the_side_goes`]. The slope stays as the rough fit found
+/// it, because the slope is an average over the whole length of the side and is already as
+/// good as the edge is straight.
 ///
 /// Only these few lines of the photo are ever read - a page is a few thousand pixels,
 /// not the twelve million of the picture, which the phone has no room for.
@@ -456,11 +487,17 @@ const INWARD_HAIR: f32 = 1.5;
 /// [`FEWEST_PLACES_READ_AGAIN`] places answer the side is returned untouched: an invented
 /// edge cuts writing off the page.
 ///
-/// ponytail: the side stays straight, so on a bowed edge it sits inside the paper in the
-/// middle and outside it towards the ends - a local strip of desk that the middle reading
-/// cannot see. Ceiling of moving a straight line. The way up is a corner of its own for
-/// each end, or four sides that may bend; both are more than a constant, and neither is
-/// worth building until someone has looked at a page and said the strip still shows.
+/// ponytail: the side stays straight, so an edge that bows further than [`MOST_INWARD`]
+/// still leaves a strip of desk near one end, and no placing of a straight line can take it
+/// out: a side is laid at the middle of its readings less [`MOST_INWARD`], so whatever it
+/// bows beyond that millimetre is desk left in the page. Thirteen of the forty-eight sides of
+/// the twelve real photos bow further, up to 49 pixels - four millimetres - on `sheen_7`'s
+/// top, and on all but one of them the place that is left outside is one of the three nearest
+/// an end, so what remains is a wedge at a corner rather than a band along a side. Three more
+/// readings look worse than those thirteen and are not sides at all, but this tool misreading
+/// a spot or a corner; `TASKS.md` 36 names them with the walk that proves it.
+/// Ceiling of moving a straight line, and arithmetic rather than a knob. The way up is a
+/// corner of its own for each end, or four sides that may bend.
 fn sides_read_again_in_the_photo(
     img: &DynamicImage,
     sides: [Side; 4],
@@ -530,14 +567,30 @@ fn sides_read_again_in_the_photo(
         if misses.len() < FEWEST_PLACES_READ_AGAIN {
             return unmoved;
         }
-        match middle_of(&mut misses) {
-            Some(middle) => Side {
-                offset: side.offset + outward * (middle - INWARD_HAIR) / scale,
+        match where_the_side_goes(&mut misses) {
+            Some(place) => Side {
+                offset: side.offset + outward * (place - INWARD_HAIR) / scale,
                 ..unmoved
             },
             None => unmoved,
         }
     })
+}
+
+/// Which of one side's readings that side is laid on, in pixels of the photograph. A
+/// reading further out means the side stands further inside the paper.
+///
+/// The middle of them was the wrong answer, and wrong by definition: half the places of a
+/// side end up outside the paper, and a place outside the paper is a strip of desk in the
+/// finished page. So the side goes on the INNERMOST reading, and no further in than
+/// [`MOST_INWARD`] past the middle, so that one place reading nonsense can never eat the
+/// page. A side bowing within that cap then has no measured place outside the paper at all;
+/// one bowing further is laid at the cap and keeps the rest of its bow outside, which is the
+/// `ponytail:` note on [`sides_read_again_in_the_photo`].
+fn where_the_side_goes(readings: &mut [f32]) -> Option<f32> {
+    let innermost = readings.iter().copied().reduce(f32::min)?;
+
+    Some(innermost.max(middle_of(readings)? - MOST_INWARD))
 }
 
 /// How far off the fitted side the real edge of the paper lies at one place, in pixels of

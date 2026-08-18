@@ -8,6 +8,55 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-18 - Each side is laid on its innermost reading, not on the middle of them
+
+TASKS.md 36. The page still carried a strip of Julian's table, and the reason was the number
+the last change finished on: `sides_read_again_in_the_photo` laid each side on the MIDDLE of its
+nine readings, which leaves half of them outside the paper by definition. The new
+`where_the_side_goes` (core_engine/src/paper.rs) lays the side on the INNERMOST reading instead,
+capped at `MOST_INWARD = 10` photo pixels past the middle - 10 plus the 1.5 hair is 11.5 pixels,
+which is 1.0 mm of these A4 photos, Julian's whole allowance. The margin is self-scaling: a flat
+edge has nine equal readings, so its innermost is its middle and it pays nothing, which is why
+the two corner tests pass untouched at 6.0 and 8.0 tolerance where a bigger `INWARD_HAIR` broke
+them this morning.
+
+Measured with `core_engine/examples/edge_error.rs` on the twelve real photos: sides whose worst
+place is no more than the 3 pixels task 36 allows went from 9 of 48 to 32 of 48, and 26 of the 48
+have no place outside the paper at all, where before none did. No middle reads past +12, and ten
+read exactly +12, so the cap has nothing left to spend. Pages come out 8 to 26 pixels narrower
+and 1 to 18 shorter; no single side can lose more than 11.5 pixels, which is 1.0 mm, against the
+20 mm of margin a letter has.
+
+Three things the next person needs. **The acceptance of task 36 cannot be met** and it is
+arithmetic, not tuning: a place of a side ends at `innermost - middle + 11.5`, so "worst at
+least -3" asks every side to bow within 14.5 pixels, and sixteen of the forty-eight bow further.
+Thirteen of those sixteen are real table left in the page - `sheen_7`'s top bows up to 49 pixels
+and a 101-place walk along it finds the paper really ending there. Three are the ruler misreading
+and are excluded, each with its evidence in TASKS.md 36: `extra_2`'s bottom, and the tops of
+`sheen_3` and `sheen_5`. **Do not raise the cap** to chase the rest: at 20 the reading of
+`extra_4`'s bottom got worse, -27 to -60, because moving a side slides its nine places along the
+edge, so the number is not monotone and cannot be bisected.
+
+**Two tops read worse than before and neither is a regression.** `sheen_3`'s top went -45 to -60
+and `sheen_5`'s -41 to -55, both sitting on the ruler's own limit of `LOOK_FOR_THE_EDGE = 60`.
+The placement can only ever move a side inward - the innermost reading is never outside the
+middle of the readings - so no page can carry more table than it did before, at any point. What
+changed is which feature the ruler locks onto in a corner a 101-place walk had already shown to
+swing from -56 to +57 within a few percent of the side. Anyone diffing the two tables will see
+these two get worse under a change that takes table away, and this is why.
+
+**One coupling to watch, unproven on these thirteen photos.** `Paper::runs_off_the_picture` reads
+the outermost row and column of the 400 pixel mask, and a side can now be pulled 11.5 photo
+pixels - about 1.5 working pixels - off the frame instead of 1.5. A sheet poking past the frame
+by less than that, with all four sides fitted, could stop reporting that the page is not the
+whole sheet while a sliver really is missing. None of the thirteen shows it, `runs_off_1.jpg`
+reads exactly as it did before, and the bridge check passes; if that note ever appears to go
+missing, start here.
+
+The dark-table test's expected box moved ten pixels in, and it now asserts each side is 0 to 15
+pixels INSIDE the drawn sheet rather than within 15 either way - the reason is that fixture's
+sixty-pixel cut corners, written next to it.
+
 ## 2026-08-18 - Every side is read again in the photo, not only in the shrunk copy
 
 A page still came out with a strip of desk along its edges. The four sides were fitted on the

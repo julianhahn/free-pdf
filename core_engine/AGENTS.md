@@ -97,12 +97,16 @@ Finding the sheet starts from brightness and then follows the edges of the paper
 on a white desk still breaks it: there is no step from paper to desk for a ray to stop on. That
 is recorded as a `ponytail:` note in `src/paper.rs` with the way up; do not paper over it with a
 threshold. Every fitted side is then read again in the full sized photo and laid on the edge
-it finds there (`sides_read_again_in_the_photo`), a hair inside the sheet: measured with
-`examples/edge_error.rs`, the middle of every side of twelve real photos lands 0 to 3 pixels inside the paper -
-the middle of it, not all of it: a sheet on a desk bows, and a straight side on a bowed edge is outside
-the paper wherever the bow runs the other way, which is the ceiling of this approach and not a knob,
-so a page loses the outer pixels of its white margin rather than keeping a strip of desk -
-Julian's decision on 2026-08-18, on real scans; a page whose writing runs to the very edge of
-the paper needs Adjust.
+it finds there (`sides_read_again_in_the_photo`), on the INNERMOST of nine readings rather than
+the middle of them, and no further in than `MOST_INWARD`: a sheet on a desk bows, so the middle
+of the readings left half of every side outside the paper and the page kept a strip of desk.
+A page now loses at most a millimetre of its white margin - Julian's decision on 2026-08-18, on
+real scans. Some sides bow further than that millimetre, and a straight side cannot follow them,
+so a wedge of desk stays at one end of those: the ceiling of this approach, not a knob. How many
+sides that is today, and which readings are the tool misreading rather than desk, is the header
+of `examples/edge_error.rs` - the only thing that measures any of it. The ruler reads between a
+tenth and nine tenths of a side, so a bow peaking in the last tenth is invisible to it, and that
+is where the leftover wedges live. A page whose writing runs to the very edge of the paper needs
+Adjust.
 HEIC decoding stays out of this crate, the client's own system does it. And widening
 `MOST_TILT` is not how a page held sideways gets fixed; that is `rotate`.

@@ -6,9 +6,15 @@
 //! judged with - keep it, or the next change to that code has nothing to measure against.
 //!
 //! Positive means the side sits inside the paper, negative means outside it - desk left
-//! in the page, which is the bug. Every side of the twelve photos in `test_images/phone`
-//! reads 0 to +3 today; `runs_off_1.jpg` is not one of them, its lower corners are where
-//! the paper leaves the frame and not a fitted side.
+//! in the page, which is the bug. Of the forty-eight sides of the twelve photos in
+//! `test_images/phone`, twenty-six have no place outside the paper today and thirty-two are
+//! within three pixels of it - before task 36 nine were within three pixels and none were
+//! clean - and no middle reads past +12, which is the millimetre of margin a page may lose.
+//! Sixteen sides read worse than -3. Three of those are this tool misreading, a spot on one
+//! photo and a corner it cannot see past on two others; the other thirteen are a real bow
+//! that a straight side cannot follow. Each of the three is named with its evidence in
+//! `TASKS.md` 36. `runs_off_1.jpg` is not one of the twelve, its lower corners are where the
+//! paper leaves the frame and not a fitted side.
 //!
 //!     cargo run --release --example edge_error -- test_images/phone/*.jpg
 

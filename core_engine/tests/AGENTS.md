@@ -54,7 +54,15 @@ an assertion to get green. These numbers were measured, not guessed:
 `the_corners_of_the_sheet_are_found` wants `< 6.0`, and
 `the_corners_are_found_in_the_photo_and_not_only_in_the_shrunk_copy` wants `< 6.0` and every
 side on the paper, where the sides fitted on the shrunk copy alone landed 4 to 6 pixels out in
-the shadow.
+the shadow. Both of those still hold unchanged.
+
+One expectation was corrected on 2026-08-18: `the_sheet_is_found_on_a_dark_table` wanted its
+box within 15 pixels of the drawn sheet in either direction, and now wants each side 0 to 15
+pixels INSIDE it. That is not a widening - it forbids the reach out towards the reflection
+that the old bound allowed, which is the one thing that fixture exists to catch - and why the
+drawn numbers themselves moved is written beside the assertion. A fixture's expectation may be
+corrected when a real photograph proves it wrong and Julian decides so
+([`../../TASKS.md`](../../TASKS.md) 36). A bound may still never be widened to get green.
 
 Keep the guards that prove a fixture is still hard, and keep them before the real assertion:
 `before < 0.5` in `straightening_puts_the_lines_of_writing_back_in_their_rows`,

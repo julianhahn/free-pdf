@@ -496,17 +496,34 @@ fn the_sheet_is_found_on_a_dark_table() {
         .expect("no sheet was found")
         .bounds;
 
-    // The search runs on a shrunk copy, so the box is a few pixels off at most.
-    let off_by = |found: u32, expected: u32| (found as i64 - expected as i64).abs();
-    for (name, found, expected) in [
-        ("x", sheet.x, 100),
-        ("y", sheet.y, 120),
-        ("width", sheet.width, 380),
-        ("height", sheet.height, 520),
+    // Every side of the box has to sit ON the drawn sheet or a few pixels INSIDE it, never
+    // outside it: this fixture has a bright reflection lying on its dark table, and a box
+    // reaching out towards that reflection is the bug it was written to catch. Measured
+    // today: 11, 12, 9 and 12 pixels inside.
+    //
+    // Inside rather than on the drawn edge, because of this fixture's own corners: they are
+    // cut off by sixty pixels, a sixth of the width of its sheet, so the outermost of the
+    // nine places each side is read again at falls in the cut and reports - correctly - that
+    // the paper ends early there. A side is laid on its innermost reading, so it comes in
+    // with it. On a photographed sheet those same nine places sit hundreds of pixels from any
+    // corner and nothing pulls them in, which is why the two tests that hold the corners to
+    // a drawn sheet still pass untouched.
+    //
+    // Corrected on 2026-08-18 from the drawn 100, 120, 380 by 520 (task 36): a page cut a
+    // millimetre inside the paper is what Julian asked for, a page carrying a strip of his
+    // table is the bug. The fifteen is unchanged - the search still runs on a shrunk copy, so
+    // a few pixels sit on top of what the reading pulls in.
+    let (right, bottom) = (sheet.x + sheet.width, sheet.y + sheet.height);
+    for (name, inside_by) in [
+        ("the left side", sheet.x as i64 - 100),
+        ("the top side", sheet.y as i64 - 120),
+        ("the right side", 480 - right as i64),
+        ("the bottom side", 640 - bottom as i64),
     ] {
         assert!(
-            off_by(found, expected) <= 15,
-            "{name} should be about {expected}, but the box was {sheet:?}"
+            (0..=15).contains(&inside_by),
+            "{name} is {inside_by} pixels inside the drawn sheet, which is not 0 to 15: \
+             the box was {sheet:?}"
         );
     }
 }
@@ -622,7 +639,7 @@ fn a_patch_of_sheen_beside_the_sheet_is_not_part_of_it() {
         core_engine::Point { x: 480.0, y: 700.0 },
         core_engine::Point { x: 100.0, y: 700.0 },
     ]) {
-        // The search runs on a shrunk copy and leans every side a little outwards on
+        // The search runs on a shrunk copy and leans every side a little inwards on
         // purpose, so a corner lands within a few pixels rather than exactly.
         let off_by = (found.x - expected.x).hypot(found.y - expected.y);
         assert!(
@@ -811,10 +828,14 @@ fn the_corners_are_found_in_the_photo_and_not_only_in_the_shrunk_copy() {
     let found = find_paper(&photo).expect("no sheet was found").corners();
 
     for (corner, expected) in found.iter().zip(sheet) {
-        // Six pixels: the hair each side is moved inward, and no more. A corner is where
-        // two sides cross, so a miss on either of them shows up here. Without the sides
-        // being read again in the full sized photo, the corners land 4 to 6 pixels the
-        // other way - out in the shadow, which is what the assertion below catches.
+        // Six pixels: the hair each side is moved inward, and no more. It did not have to
+        // move when sides stopped being laid on the middle of their readings (task 36),
+        // because this sheet's edges are drawn straight: all nine readings of a side are the
+        // same, so its innermost IS its middle and only the hair moves it. A photographed
+        // edge bows, and then a side comes in further, up to `MOST_INWARD` plus the hair.
+        // A corner is where two sides cross, so a miss on either of them shows up here.
+        // Without the sides being read again in the full sized photo, the corners land 4 to
+        // 6 pixels the other way - out in the shadow, which the assertion below catches.
         let off_by = (corner.x - expected.x).hypot(corner.y - expected.y);
         assert!(
             off_by < 6.0,
@@ -825,7 +846,9 @@ fn the_corners_are_found_in_the_photo_and_not_only_in_the_shrunk_copy() {
     // And every side of the found page has to lie on the paper, not beside it: a side
     // outside the sheet is the bug this watches, it leaves a strip of table in the page.
     // Measured along the middle of each side, because a corner is where two sides cross
-    // and the tilt of a side is only ever as good as the rough fit made it.
+    // and the tilt of a side is only ever as good as the rough fit made it. It can only
+    // ever fail outward, so moving every side further in (task 36) cannot break it: keep
+    // it as it stands rather than turning it into a distance.
     for index in 0..4 {
         let (from, to) = (found[index], found[(index + 1) % 4]);
         let middle = core_engine::Point {
