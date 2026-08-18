@@ -214,8 +214,11 @@ Once per scan, after the first photo lands and before the second shot, the app s
 photo beside the page the engine really makes from it - a whole scan can otherwise be shot
 on a desk the engine cannot read, and the news arrives twenty pages too late. Never again in
 that scan, and not at all on a scan that already has photos (resumed, or one more page on a
-finished scan). The right control is the normal answer. A refused page shows the engine's
-sentence and both controls still work.
+finished scan). **Photograph the rest** is the normal answer. **Scan 1 page** is the whole
+scan for a document that is one page - a receipt, one letter - and without it that document
+cannot be finished at all, because the other two ways out both lead back to the camera and
+this screen does not carry the camera's footer (Julian, on a phone, 2026-08-18). A refused
+page shows the engine's sentence and all three controls still work.
 
 ```
 | Where | English | German |
@@ -223,8 +226,9 @@ sentence and both controls still work.
 | Above the two pictures | This is how your pages will come out. | So werden deine Seiten aussehen. |
 | Under them | Your photo becomes this page. | Aus deinem Foto wird diese Seite. |
 | The line under it | Not right? More light or a plainer surface fixes most of it. | Nicht richtig? Mehr Licht oder eine ruhigere Unterlage hilft meistens. |
-| Left control | Scan this page again | Diese Seite noch einmal scannen |
-| Right control | Photograph the rest | Restliche Seiten fotografieren |
+| First control | Scan this page again | Diese Seite noch einmal scannen |
+| Second control | Scan 1 page | 1 Seite scannen |
+| Last control | Photograph the rest | Restliche Seiten fotografieren |
 ```
 
 ---

@@ -245,8 +245,9 @@ than a comment: sharpening one page peaks near 220 MB on its own
 ### The check after the first photo
 
 [`FreePDF/FirstPageCheck.swift`](./FreePDF/FirstPageCheck.swift): the photo, small, beside
-the page the engine makes of it, large, with the two ways out - **Scan this page again** and
-**Photograph the rest**. Julian, 2026-08-17.
+the page the engine makes of it, large, with three ways out - **Scan this page again**,
+**Scan 1 page** and **Photograph the rest**. Julian, 2026-08-17; the third one added on
+2026-08-18, after a one page document turned out to be unfinishable with only the other two.
 
 - **Once per scan, and the camera decides when.** `landed()` calls `onFirstPhoto` when the
   scan's photo count is one and the shot was not a retake, so a resumed scan and one more
@@ -256,8 +257,14 @@ the page the engine makes of it, large, with the two ways out - **Scan this page
   system's temporary directory - never `photo/`, `page/`, `state/` or `scan.pdf`, so
   `sweep()` never sees it - for the reason the Adjust screen runs one. The real page is
   still written by the drain and by nothing else, and nothing here writes into `page/`.
-- **A refusal is the engine's sentence unchanged, and both controls still work.** A page
-  the engine refused is a reason to retake, so the screen says so instead of trapping him.
+- **A refusal is the engine's sentence unchanged, and all three controls still work.** A
+  page the engine refused is a reason to retake, so the screen says so instead of trapping
+  him, and the promise over an empty picture is not drawn.
+- **Scan 1 page finishes the scan from here**, in the camera footer's own words for one
+  page, and it is the same end that footer reaches - `shooting = false` and the drain. It
+  exists because this screen does not carry the footer, so the other two ways out both lead
+  back to the camera, and a receipt or a single letter could not be finished at all.
+  `-autofake-one` is the check for it ([`check/scan_check.sh`](./check/scan_check.sh)).
 - **The left control is `ScanFlow.retake`**, the one that already exists, and there is no
   second retake path. Adjust is deliberately not on this screen: it answers "carry on or
   start over", and a page fixed by hand would still leave the next twenty shot on the same

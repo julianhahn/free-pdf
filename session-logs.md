@@ -90,6 +90,29 @@ guard is taken out. Judged by painting the mask over twelve real photos and look
 all twelve come out cut to the sheet. Each side leans a little off the fitted line on purpose
 (`INWARD_BIAS`, turned inward on 2026-08-18 - see that day's entry).
 
+## 2026-08-18 - a scan of one page could not be finished
+
+Task 34's check screen has two ways out on purpose: shoot this page again, or photograph the
+rest. Julian, on his phone: a document of one page cannot be finished at all. Both ways out
+lead back to the camera, and the footer that scans - the only control that ends a scan - is
+not on this screen. A receipt was a dead end.
+
+His decision: three ways out. **Scan 1 page**, in the camera footer's own words for one page,
+reaching the same end that footer reaches. No new path, no second retake, and Photograph the
+rest stays the normal answer.
+
+The check harness could not see this, because `FakeShoot.autoShoot` writes its photos
+straight to disk and never goes through `CameraView.landed()`, so the check screen never
+appeared in it at all. `-autofake-one` now shoots once through the screen's own shutter and
+then presses that screen's Scan 1 page, and `scan_check.sh` says "one page scanned from the
+check screen". Proved by mutation: pressing Photograph the rest there instead ends the run
+with "a one page scan could not be finished from the check screen".
+
+Also today, and the reason Julian saw the old edge behaviour after the bias was turned
+inward: the iOS client links the prebuilt Rust static library out of `target/`, and it was
+three hours older than the change. `ffi/build-ios.sh` after an engine change, or the phone
+runs yesterday's engine.
+
 ## 2026-08-18 - the cut leaned the wrong way, and Julian saw it
 
 Task 29 pushed every fitted side half a pixel of the shrunk copy **outward**, reasoning that

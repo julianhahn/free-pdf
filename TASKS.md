@@ -1121,6 +1121,12 @@ long a scan will be, so there is no good moment to check except the earliest one
 Julian's decision on 2026-08-17: after the first photo of a scan, and only after that one, the
 app shows what the page made from it would look like, and asks whether to carry on.
 
+**Corrected on 2026-08-18, by Julian on a phone: there are three ways out, not two.** A
+document of one page could not be finished from this screen at all - both ways out below lead
+back to the camera, and the footer that scans is not on this screen. It gained a third
+control, **Scan 1 page**, in the camera footer's own words for one page. The rest of this
+section stands.
+
 **The two ways out, which is the whole point of the screen.** Left: the surroundings are the
 problem and the shot is taken again - more light, a plainer surface, less shine. Right: this is
 right, carry on and photograph the rest in one go. The second is the normal answer and the

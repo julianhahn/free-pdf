@@ -91,6 +91,15 @@ struct ScanFlow: View {
                                    checkingFirst = false
                                    retake(first)
                                },
+                               // One page, and it is this one: the same end the camera
+                               // footer reaches, so the drain writes it and nothing else
+                               // is built here.
+                               onScanIt: {
+                                   checkingFirst = false
+                                   slot = nil
+                                   shooting = false
+                                   refresh()
+                               },
                                onCarryOn: {
                                    checkingFirst = false
                                    slot = nil

@@ -116,4 +116,28 @@ xcrun simctl terminate "$udid" "$bundle" >/dev/null 2>&1
 [ "$(pageCount)" -eq "$all" ] || fail "$(pageCount) pages, expected $all"
 
 echo "$(pageCount) pages, $count of them written before the kill and untouched by it"
+
+# 8. A scan of one page, finished on the check screen that comes after the first photo.
+#    `-autofake-one` shoots once through the camera's own shutter, so that screen really
+#    appears, and then presses its Scan 1 page. Without that control the screen's other
+#    two ways out both lead back to the camera, and a one page document cannot be
+#    finished at all - which is what Julian hit on his phone on 2026-08-18.
+before=$(find "$scans" -maxdepth 1 -type d -name '2*' | wc -l | tr -d ' ')
+xcrun simctl launch "$udid" "$bundle" -autofake 1 -autofake-one >/dev/null || fail "one page launch"
+# The folder of a finished scan that holds exactly one page - which only the new run
+# can produce, every earlier scan in this check having twelve or fifteen.
+onePage() {
+    for folder in $(find "$scans" -maxdepth 1 -type d -name '2*'); do
+        [ -f "$folder/scan.pdf" ] || continue
+        [ "$(find "$folder/page" -name '*.jpg' | grep -c .)" -eq 1 ] && echo "$folder" && return
+    done
+}
+onePageDone() { [ -n "$(onePage)" ]; }
+poll 180 onePageDone \
+    || fail "a one page scan could not be finished from the check screen"
+[ "$(find "$scans" -maxdepth 1 -type d -name '2*' | wc -l | tr -d ' ')" -gt "$before" ] \
+    || fail "no new scan was made for the one page run"
+echo "one page scanned from the check screen"
+
+xcrun simctl terminate "$udid" "$bundle" >/dev/null 2>&1
 echo "scan ok"

@@ -24,6 +24,11 @@ struct FirstPageCheck: View {
     /// The page the photo landed on, in the words the camera's counter uses.
     let number: Int
     var onRetake: () -> Void
+    /// The scan is one page and that page is this one, so it is finished from here. Julian
+    /// on 2026-08-18, on his own phone: without it a single page scan cannot be finished
+    /// at all, because both other ways out lead back to the camera and this screen hides
+    /// the footer that scans. Two ways out was the design; three is what a receipt needs.
+    var onScanIt: () -> Void
     var onCarryOn: () -> Void
 
     /// The page the engine really wrote from this photo, into a scratch file. `nil` until
@@ -67,6 +72,10 @@ struct FirstPageCheck: View {
             Button("Scan this page again") { onRetake() }
                 .buttonStyle(GhostStyle())
                 .accessibilityHint("Photographs page \(number) again.")
+            // A one page document is finished here. The words are the camera footer's own
+            // for one page, because it is the same action.
+            Button("Scan \(pageCount(1))") { onScanIt() }
+                .buttonStyle(GhostStyle())
             // The normal answer, so it is the one slab on the screen.
             Button("Photograph the rest") { onCarryOn() }
                 .buttonStyle(PrimaryStyle(wide: true))
@@ -78,6 +87,10 @@ struct FirstPageCheck: View {
         .navigationTitle("Page \(number)")
         .navigationBarTitleDisplayMode(.inline)
         .task { await showThePage() }
+        // The one tap the camera stand-in cannot make from its own file, because this
+        // screen is not the camera: **Scan 1 page**, for the one page scan
+        // ([`FakeShoot.swift`](./FakeShoot.swift)).
+        .task { if FakeShoot.onePageWanted { onScanIt() } }
         // The scratch file is this screen's, and it goes with the screen.
         .onDisappear {
             if let preview { try? FileManager.default.removeItem(at: preview) }

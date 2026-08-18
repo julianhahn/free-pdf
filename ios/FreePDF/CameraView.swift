@@ -278,7 +278,16 @@ struct CameraView: View {
             say(failure)
         }
         photos = scan.photos
+        await autoShootOne()
         await autoShootMore()
+    }
+
+    /// The one press `-autofake-one` stands in for: a scan of a single page, shot through
+    /// this screen's own shutter so the check after the first photo really appears. What
+    /// happens next is that screen's ([`FirstPageCheck.swift`](./FirstPageCheck.swift)).
+    private func autoShootOne() async {
+        guard slot == nil, FakeShoot.onePageWanted, scan.photos.isEmpty else { return }
+        shoot()
     }
 
     /// The taps `-autofake-more` stands in for: adding pages to a finished scan, one
