@@ -8,6 +8,7 @@
 --rule-strong:2px; /* the rule that marks an error line, so colour is never alone */
 --icon-row:18px;   /* the chevron on a list row */
 --icon-empty:30px; /* the icon above an empty state */
+--camera-thumb-w:56px; /* the last photo, small in a corner of the viewfinder */
 --viewfinder-corner:26px;      /* the length of one arm of a viewfinder corner mark */
 --viewfinder-corner-inset:0.06; /* how far in from the frame, as a fraction of it */
 --magnifier:88px;      /* the loupe under a dragged corner: about a fingertip across */

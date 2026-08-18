@@ -8,6 +8,19 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-18 - The viewfinder shows the last page photographed
+
+TASKS.md 35. [`ios/FreePDF/CameraView.swift`](./ios/FreePDF/CameraView.swift) keeps one
+`latest` URL, set in `landed()` after a shot that is not a retake, and draws it with the
+existing `PageImage` at `maxPixels: 200` in the top trailing corner of the preview: no second
+decoder, no page made, nothing tappable, hidden from VoiceOver because the counter already
+says the number. Nothing shows before the first shot of the session - a resumed scan starts
+blank, and a retake never shows it. New token `--camera-thumb-w:56px` in
+design/system/tokens/controls.css, Tokens.swift regenerated. `user-flows.md` DECISIONS 10 is
+now "built", not "skipped", and section 4 step 3 says it; task 6's "no corner thumbnail" is
+gone. No Xcode here, so the Swift change is unbuilt: scan_check, run.sh, bridge_check and
+cargo test are green and the phone pass is left for Julian.
+
 ## 2026-08-18 - After the first photo, the app shows what it is about to do
 
 TASKS.md 34. New screen [`ios/FreePDF/FirstPageCheck.swift`](./ios/FreePDF/FirstPageCheck.swift):

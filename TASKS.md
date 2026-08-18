@@ -69,7 +69,7 @@ themselves are drawn by Storybook.
 | 32 | iOS: Adjust and Shoot another page are controls, not menu items — DONE | - | bash ios/check/scan_check.sh, by hand |
 | 33 | iOS: shooting another page does not stop after one — DONE | - | bash ios/check/scan_check.sh, by hand |
 | 34 | iOS: after the first page, the app shows what it is about to do | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
-| 35 | iOS: the viewfinder shows the last page photographed | 34 | bash ios/check/scan_check.sh, by hand |
+| 35 | iOS: the viewfinder shows the last page photographed — DONE | 34 | bash ios/check/scan_check.sh, by hand |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -251,8 +251,8 @@ simulator stand-in note (S12).
 **Components.** `Viewfinder`, `PageCounter` with `onDark`, `Shutter`, `Button`, `ErrorLine`,
 `EmptyState`.
 
-**Do not.** Do not add a corner thumbnail, a flash control, a landscape frame or a photo-library
-import. All four are decided against in `user-flows.md` DECISIONS.
+**Do not.** Do not add a flash control, a landscape frame or a photo-library import. All three
+are decided against in `user-flows.md` DECISIONS.
 
 **Done when.** `npx storybook build` passes and all six states are there in light and dark.
 
@@ -1204,7 +1204,7 @@ kill the app on the check screen and find one photo, no page, and the viewfinder
 
 ---
 
-## 35. The viewfinder shows the last page photographed - Julian, 2026-08-17
+## 35. The viewfinder shows the last page photographed — DONE
 
 **Why.** This was decided against and is now decided for; the reason it was skipped was wrong.
 `/Users/julianhahn/free-pdf/user-flows.md` DECISIONS point 10 says a corner thumbnail is not

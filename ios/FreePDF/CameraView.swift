@@ -50,6 +50,10 @@ struct CameraView: View {
     /// would not start, a stand-in that would not draw. It takes the whole screen over
     /// and offers nothing, because there is nothing to press.
     @State private var blocked: String?
+    /// The newest photo this screen has written, or nil until the first one lands. It is
+    /// what the corner picture shows, so nothing appears before he has taken a shot
+    /// himself - a resumed scan starts blank on purpose.
+    @State private var latest: URL?
 
     /// The page the next shot lands on, read off the disk rather than counted.
     private var number: Int { slot ?? scan.nextPage }
@@ -130,6 +134,26 @@ struct CameraView: View {
             // picture a thin continuous line reads as part of the scene.
             Corners()
                 .stroke(Token.Palette.accent, lineWidth: Token.Size.ruleStrong)
+            // The last photo, small, in the corner furthest from the shutter, the
+            // counter, the footer and the error line: the counter says which page is
+            // next, this says which sheet was just taken - the question a number cannot
+            // answer. A photo, not a page: no engine run stands between him and the
+            // shutter. It is confirmation the counter already speaks, so a screen reader
+            // skips it, and it never takes a touch - pages are browsed on the pages
+            // screen. `PageImage` decodes small and off the main thread, so a shot is
+            // never waiting on it. What a photo and a page each look like is taught once
+            // on the check screen ([`FirstPageCheck.swift`](./FirstPageCheck.swift)).
+            if let latest {
+                PageImage(url: latest, maxPixels: 200)
+                    .frame(width: Token.Size.cameraThumbW,
+                           height: Token.Size.cameraThumbW / Token.Number.pageRatio)
+                    .clipShape(RoundedRectangle(cornerRadius: Token.Size.radiusSm))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity,
+                           alignment: .topTrailing)
+                    .padding(Token.Size.space3)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
         }
         .aspectRatio(Token.Number.pageRatio, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: Token.Size.radiusMd))
@@ -306,6 +330,7 @@ struct CameraView: View {
     private func landed() {
         photos = scan.photos
         if slot != nil { return finished() }
+        latest = photos.last.map(scan.photoURL)
         // The first photo of the scan leaves this screen for the check. Counted off the
         // disk, so a scan that already had photos - resumed, or one more page on a
         // finished scan - never sees it.

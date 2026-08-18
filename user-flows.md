@@ -141,7 +141,8 @@ The redesign makes the docs true.
 1. The scan opens on the viewfinder. The title is the number the next shot lands on.
 2. Tap the shutter. The shutter is dead until the photo is on disk, so one press is one
    page and two fast presses cannot collide.
-3. The counter goes up. Keep going.
+3. The counter goes up, and a small picture of that photo appears in a corner of the
+   viewfinder - the sheet just taken, replaced by each shot after it. Keep going.
 4. Tap **Scan 8 pages** when done → the drain starts.
 5. Leave any time. Coming back lands on the viewfinder again, at the next free number.
 
@@ -605,8 +606,8 @@ All settled, Julian, 2026-08-12. Each one is written into the section named besi
 9. **"Shoot another page" on a finished scan is built.** The PDF is built again
    afterwards. (Section 6.)
 
-10. **No corner thumbnail on the camera.** Skipped — retaking from the pages already
-    works, and the camera screen stays one shutter and one button. (Section 4.)
+10. **A corner thumbnail on the camera is built**: the last photo taken, small, so he sees
+    which sheet he just photographed and not only a number. (Section 4.)
 
 11. **No import from the photo library.** Skipped: iOS hands over HEIC and the engine
     cannot read it.

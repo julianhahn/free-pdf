@@ -228,6 +228,8 @@ enum Token {
         static let iconRow: CGFloat = 18
         /// --icon-empty
         static let iconEmpty: CGFloat = 30
+        /// --camera-thumb-w
+        static let cameraThumbW: CGFloat = 56
         /// --viewfinder-corner
         static let viewfinderCorner: CGFloat = 26
         /// --magnifier
