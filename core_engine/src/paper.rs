@@ -375,14 +375,21 @@ const ROUGH_AREA_INSIDE_THE_QUAD: f32 = 0.9;
 const JUST_PAST_A_SIDE: i32 = 4;
 const WELL_PAST_A_SIDE: i32 = 10;
 
-/// How far outward each fitted side is moved, in pixels of the shrunk copy - about
-/// four pixels of a photograph from a phone. The two ways a straight line can miss a
-/// slightly wavy edge are not worth the same: a sliver of desk left inside the page
-/// bends the straightening a little, a hairline taken off the page loses writing. So
-/// the miss is pushed into the harmless direction on purpose. Measured on real
-/// photos, one page had its bottom edge fitted a pixel inside the sheet and lost a
-/// hair of its white margin without this.
-const OUTWARD_BIAS: f32 = 0.5;
+/// How far inward each fitted side is moved, in pixels of the shrunk copy - about
+/// four pixels of a photograph from a phone.
+///
+/// A straight line through slightly wavy edge points misses by a pixel or two either
+/// way, and the miss is pushed into the harmless direction on purpose. Which
+/// direction that is was decided by Julian on 2026-08-18, on scans off a real phone,
+/// against the earlier reading: outward left every page with a hair of desk along all
+/// four sides - visible, and it is what a straightening then has to work around.
+/// Inward costs the outer pixels of the sheet, and a sheet of paper carries a white
+/// margin there, so on a page of writing there is nothing in them to lose.
+///
+/// Do not turn it back outward to protect a page whose writing runs to the very edge
+/// of the paper. That page needs Adjust, which sends its own corners, and no bias in
+/// either direction saves it.
+const INWARD_BIAS: f32 = 0.5;
 
 /// One side of the sheet, as a straight line across the shrunk copy: `across` is
 /// where the side is at the position `along` down it.
@@ -521,9 +528,11 @@ fn sides_of_the_sheet(
         }
     }
 
-    let outward = [-OUTWARD_BIAS, OUTWARD_BIAS, -OUTWARD_BIAS, OUTWARD_BIAS];
+    // Left and top move down the axis, right and bottom up it, so every side moves
+    // towards the middle of the sheet.
+    let inward = [INWARD_BIAS, -INWARD_BIAS, INWARD_BIAS, -INWARD_BIAS];
     let mut sides = Vec::with_capacity(4);
-    for (points, bias) in [left, right, top, bottom].iter().zip(outward) {
+    for (points, bias) in [left, right, top, bottom].iter().zip(inward) {
         let side = fit_a_side(points)?;
         sides.push(Side {
             offset: side.offset + bias,

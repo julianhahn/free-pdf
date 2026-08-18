@@ -87,8 +87,29 @@ corner at the frame's edge, which is the bug),
 `bridge_check.sh` covered), `a_dark_thing_lying_on_the_page_does_not_shorten_it` and
 `a_dark_bar_right_across_the_page_does_not_halve_it` - each of the last two fails if its own
 guard is taken out. Judged by painting the mask over twelve real photos and looking:
-all twelve come out cut to the sheet. Curled sheets lean their side a percent or two outwards on
-purpose (`OUTWARD_BIAS`) - swallowed desk bends a straightening, lost paper loses writing.
+all twelve come out cut to the sheet. Each side leans a little off the fitted line on purpose
+(`INWARD_BIAS`, turned inward on 2026-08-18 - see that day's entry).
+
+## 2026-08-18 - the cut leaned the wrong way, and Julian saw it
+
+Task 29 pushed every fitted side half a pixel of the shrunk copy **outward**, reasoning that
+swallowed desk only bends a straightening while lost paper loses writing. On a real phone that
+came out as a hair of desk along all four sides of every page - Julian's words: "each corner
+overshot by a few pixels, so I always have a slight border of the table". A 400 pixel wide
+working copy against a 3024 pixel photo makes one working pixel 7.6 real ones, so the bias plus
+the rounding is 4 to 11 pixels of desk per side.
+
+Julian's decision: turn it inward, and rename it, because the name carried the old reasoning
+(`OUTWARD_BIAS` -> `INWARD_BIAS`, `core_engine/src/paper.rs`). The sign is the whole change. What
+pays for it is the white margin a sheet of writing carries at its edge - inward costs those
+pixels and nothing that is in them.
+
+Measured on the thirteen photos in `test_images/phone/`: every page lost 14 to 22 pixels of
+width, and the outer band of each page got brighter with fewer dark pixels in it - desk leaving,
+not content. Worst case before, `sheen_1`, went from a quarter of its outer band dark to under a
+tenth. Two photos (`extra_4`, `sheen_7`) still carry about a tenth, so a stronger bias is the way
+up if Julian still sees desk on a phone. `runs_off_1` is unchanged, as its lower corners come
+from where the paper leaves the frame rather than from a fitted side.
 
 ## 2026-08-17 - the automatic cut has never worked on a lit desk, and why
 
