@@ -1,24 +1,31 @@
 //! Measures how far the found corners miss the real edge of the sheet, in pixels of
 //! the photograph - the number the phone shows as a strip of desk.
 //!
-//! Not a test and not shipped: a ruler. It reads the edge in the FULL sized picture the
-//! same way the search now does, and it is what `sides_read_again_in_the_photo` was
-//! judged with - keep it, or the next change to that code has nothing to measure against.
+//! Not a test and not shipped: a ruler. It loads the photo with `load_image`, the way the app
+//! does, so the turn the phone wrote into the file is applied and the side names it prints are
+//! the sides a page has on screen. It reads the edge in the FULL sized picture the same way the
+//! search now does, and it is what `sides_read_again_in_the_photo` was judged with - keep it, or
+//! the next change to that code has nothing to measure against.
 //!
 //! Positive means the side sits inside the paper, negative means outside it - desk left
 //! in the page, which is the bug. Of the forty-eight sides of the twelve photos in
-//! `test_images/phone`, twenty-six have no place outside the paper today and thirty-two are
-//! within three pixels of it - before task 36 nine were within three pixels and none were
-//! clean - and no middle reads past +12, which is the millimetre of margin a page may lose.
-//! Sixteen sides read worse than -3. Three of those are this tool misreading, a spot on one
-//! photo and a corner it cannot see past on two others; the other thirteen are a real bow
-//! that a straight side cannot follow. Each of the three is named with its evidence in
-//! `TASKS.md` 36. `runs_off_1.jpg` is not one of the twelve, its lower corners are where the
-//! paper leaves the frame and not a fitted side.
+//! `test_images/phone`, thirty-three have no place outside the paper and thirty-seven are within
+//! three pixels of it, and no middle reads past +12, which is the millimetre of margin a page
+//! may lose. Eleven read worse than -3, every one of them a left or a right side; which of those
+//! are this tool misreading rather than table is named in `TASKS.md` 36, with the walk along the
+//! side that proves it.
+//!
+//! `runs_off_1.jpg` is not one of the twelve, its lower corners are where the paper leaves the
+//! frame and not a fitted side.
+//!
+//! This ruler cannot check a side's LEAN, only its placing: `how_the_side_leans` fits the lean on
+//! these same nine places, so the two agree by construction. What checks a lean from outside is
+//! the four corners `backend-core-runner --deskew` prints.
 //!
 //!     cargo run --release --example edge_error -- test_images/phone/*.jpg
 
-use core_engine::{find_paper, Point};
+use core_engine::{find_paper, load_image, Point};
+use std::path::Path;
 
 /// How far either way the true edge is looked for, in pixels of the photograph.
 const LOOK: i32 = 60;
@@ -29,7 +36,7 @@ fn main() {
         "photo", "left", "right", "top", "bottom"
     );
     for path in std::env::args().skip(1) {
-        let Ok(image) = image::open(&path) else {
+        let Ok(image) = load_image(Path::new(&path)) else {
             continue;
         };
         let Some(paper) = find_paper(&image) else {

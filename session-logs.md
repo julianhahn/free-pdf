@@ -8,6 +8,73 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-18 - The ruler now loads the photo the way the app does, and the documents say what it measures
+
+TASKS.md 36, third round, and no engine code changed - `core_engine/examples/edge_error.rs` loads
+the photo with `load_image` instead of `image::open`, one line. That is the whole lesson of this
+round: an instrument that does not load its input the way the product does will send work at the
+wrong thing. All thirteen photos are stored 4032 by 3024 on their side with EXIF orientation 6, so
+the ruler was fitting a landscape raster the app never processes, one working pixel being 10.1 photo
+pixels there against 7.6 in the upright one - and its four side names came out turned a quarter. Two
+rounds chased a page's LEFT side under the name `bottom`, and Julian's own report agreed with the
+wrong column by coincidence.
+
+**What Julian reported is fixed.** Read the app's way, on his own build (dbb895a) every one of the
+twenty-four tops and bottoms of the twelve photos sat outside the paper, -1 to -13; now twenty-three
+of the twenty-four have no place outside the paper at all and the twenty-fourth reads -1. What is
+left is on the left and right edges, which he never mentioned: nine sides keep a wedge of desk, -5
+to -57 pixels. Task 36 stays open, and its row says so - a page in his hand is what decides the
+rest.
+
+The four readings worse than -40 were settled with a walk of 101 places along the side, copying the
+ruler's own `miss_at` so it reproduces the nine readings exactly (a throwaway example, deleted
+after use). Two are the ruler and not the desk: `extra_2`'s left dives at three single places whose
+neighbours read +11 to +14, and `extra_3`'s right loses the edge out of its 60 pixel window
+completely. Two are real: `sheen_3`'s right falls over 27 places in a row without a reversal, and
+`sheen_5`'s right bows nearly 90 pixels end to end. One new thing came out of it and is in README's
+**Parked**: `extra_3`'s right side stands up to 59 pixels INSIDE the paper near a corner, about 5 mm
+of that page, which the ruler's middle and worst columns cannot show. Every side name and count in
+README, TASKS.md 36, core_engine/AGENTS.md and the doc comments in paper.rs was corrected against
+the fixed ruler; the counts in the two entries below this one are in the turned frame.
+
+## 2026-08-18 - A side may lean, and the ruler turned out to be lying on its side
+
+TASKS.md 36, second round. The last change laid each side on its innermost reading but kept the
+slope the 400 pixel copy gave it, so one number had to satisfy nine readings: `sheen_7`'s right side
+read -10, -5, -1, 0, +1, +3, +4, +6, +10 from end to end, which is that slope being off by a pixel
+of the copy and not a bow at all. The new `how_the_side_leans` (core_engine/src/paper.rs) tries
+whole-pixel leans up to `MOST_LEAN = 12` photo pixels across a side and keeps the one leaving the
+least bow for `where_the_side_goes` to pay for out of `MOST_INWARD`. That helper is unchanged, no
+test changed, and a drawn flat sheet gets no lean, which is why the corner fixtures pass untouched.
+
+Measured with core_engine/examples/edge_error.rs on the twelve real photos: sides whose worst place
+is within the 3 pixels task 36 allows went from 32 of 48 to 40 of 48, and sides with no place
+outside the paper at all from 26 to 35. It is nearly free, because a lean re-aims a side instead of
+pushing it in - the mean middle reading FELL from +9.3 to +7.6 pixels, the sides pinned at the +12
+ceiling from ten to five, and a page came out 13 pixels wider to 11 narrower and 17 taller to 5
+shorter. One side got worse, `sheen_5`'s bottom, -7 to -10. What a lean spends lands at a CORNER,
+which no reading covers: worst on the twelve, a corner moved 11.7 pixels and cut 11.0 further into
+the paper, measured on the corners `backend-core-runner --deskew` prints.
+
+**Then the review found the instrument is turned, and that is the thing to carry forward.**
+edge_error.rs loads with `image::open`, which ignores the turn the phone wrote into the file, so it
+fits a 4032 pixel wide landscape raster while the app fits a 3024 pixel wide upright one: its
+`bottom` is a page's LEFT, its `top` a page's RIGHT, checked on `jpegtran -rotate 90` copies of all
+twelve. Counted in the frame the app really runs, the state is 33 sides clean and 37 within -3, not
+35 and 40 - and `extra_3`'s right side reads -57 there while this ruler prints that same side clean.
+Nobody has looked at it. Every tuned number in task 36 came through the coarser frame, so fixing the
+one line and measuring the whole table again is the third round: TASKS.md 36 and README's **Parked**
+say so.
+
+**Task 36 stays open and its row now says so.** Two lanes were built and measured against what
+shipped and both lost: the lean from the middle of the pairwise slopes of the readings makes two
+pages worse, because a side humped in its middle has no honest lean, and a corner of its own for
+each end needs three constants, one of them a fudge pixel. Three sides are provably out of reach of
+any straight line under Julian's millimetre - the arithmetic is the `ponytail:` note on
+`sides_read_again_in_the_photo`. And one thing the ruler cannot check at all: the lean is measured
+to the innermost reading, so on `extra_2`'s bottom the dark spot already proved to be a mark on the
+desk swings the lean from +7 to the -12 cap, nineteen pixels at that corner.
+
 ## 2026-08-18 - Each side is laid on its innermost reading, not on the middle of them
 
 TASKS.md 36. The page still carried a strip of Julian's table, and the reason was the number

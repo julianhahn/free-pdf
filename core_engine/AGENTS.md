@@ -96,17 +96,38 @@ Why the page path exists at all, so nobody simplifies it away later:
 Finding the sheet starts from brightness and then follows the edges of the paper, so a document
 on a white desk still breaks it: there is no step from paper to desk for a ray to stop on. That
 is recorded as a `ponytail:` note in `src/paper.rs` with the way up; do not paper over it with a
-threshold. Every fitted side is then read again in the full sized photo and laid on the edge
-it finds there (`sides_read_again_in_the_photo`), on the INNERMOST of nine readings rather than
-the middle of them, and no further in than `MOST_INWARD`: a sheet on a desk bows, so the middle
-of the readings left half of every side outside the paper and the page kept a strip of desk.
-A page now loses at most a millimetre of its white margin - Julian's decision on 2026-08-18, on
-real scans. Some sides bow further than that millimetre, and a straight side cannot follow them,
-so a wedge of desk stays at one end of those: the ceiling of this approach, not a knob. How many
-sides that is today, and which readings are the tool misreading rather than desk, is the header
-of `examples/edge_error.rs` - the only thing that measures any of it. The ruler reads between a
-tenth and nine tenths of a side, so a bow peaking in the last tenth is invisible to it, and that
-is where the leftover wedges live. A page whose writing runs to the very edge of the paper needs
-Adjust.
+threshold.
+
+Every fitted side is then read again in the full sized photo and laid on the edge it finds there
+(`sides_read_again_in_the_photo`), on the INNERMOST of nine readings rather than the middle of
+them, and no further in than `MOST_INWARD`: a sheet on a desk bows, so the middle of the readings
+left half of every side outside the paper and the page kept a strip of desk. A side may also LEAN,
+one end of it moving up to `MOST_LEAN` pixels further than the other (`how_the_side_leans`),
+because a slope measured on a 400 pixel wide copy is off by about that much and one number cannot
+sit on an edge whose readings run steadily from one end to the other. A lean re-aims a side rather
+than pushing it in, so it costs the middle of a page nothing: on average a page now keeps more of
+its white margin than it did without it. Along a side a page still loses at most a millimetre -
+Julian's decision on 2026-08-18, on real scans.
+
+Three things there are limits, not bugs.
+
+- **One bad reading can pick a lean.** The lean chosen is the one leaving the least bow, measured
+  to the INNERMOST reading, so a place that misreads far outside the paper pulls the line onto
+  itself. `MOST_LEAN` and the cap in `where_the_side_goes` are the only guards, and
+  `how_the_side_leans` carries the measurement of one real case.
+- **What a lean spends lands at a CORNER, and no reading covers a corner** - the ruler reads
+  between a tenth and nine tenths of a side. So a change to `MOST_LEAN` is checked on the four
+  corners `backend-core-runner --deskew` prints, never on the ruler alone. Nothing in `tests/`
+  reaches it either: a drawn sheet is straight, so its lean is nought and the fixtures cannot see
+  a wrong one.
+- **Some sides bow further than that millimetre even after the best lean**, and a straight side
+  cannot follow them, so a wedge of desk stays near one end of those. Every side that still does
+  it is a LEFT or a RIGHT side - a page's top and bottom read no worse than -1 now. A page whose
+  writing runs to the very edge of the paper needs Adjust.
+
+How many sides that is today is the header of `examples/edge_error.rs` - the only thing that
+measures any of it, and it loads the photo the way the app does, so its side names are the sides a
+page has on screen. Which readings are the tool misreading rather than desk, and the walk along
+the side that decides that, is `TASKS.md` 36.
 HEIC decoding stays out of this crate, the client's own system does it. And widening
 `MOST_TILT` is not how a page held sideways gets fixed; that is `rotate`.
