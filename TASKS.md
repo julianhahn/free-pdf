@@ -1111,7 +1111,7 @@ on the carousel.
 
 ---
 
-## 34. After the first page, the app shows what it is about to do - Julian, 2026-08-17
+## 34. After the first page, the app shows what it is about to do — DONE
 
 **Why.** A scan is photographed blind. Every page is shot, and only when the user says he is
 done does the engine turn any of them into pages - so a whole scan can be photographed on a desk

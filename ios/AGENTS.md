@@ -116,6 +116,7 @@ ScanList ──"New scan"──▶ Scan.create() ──▶ ScanFlow
    ▼
 ScanFlow - one screen, and it switches on what the files say
    ├─ shooting ─▶ the camera        "Scan 7 pages" ─┐
+   ├─ first page after the first photo of the scan: retake, or photograph the rest
    ├─ takeover   one answer being applied to every page
    ├─ adjusting  one page, in AdjustView
    ├─ scanning ◀───────────────────────────────────-┘   the drain, below
@@ -240,6 +241,30 @@ than a comment: sharpening one page peaks near 220 MB on its own
 - **A page already in flight when the screen goes away runs to the end.**
   `Task.detached` does not inherit cancellation, and that is what is wanted: a page
   either lands on disk whole or was never there.
+
+### The check after the first photo
+
+[`FreePDF/FirstPageCheck.swift`](./FreePDF/FirstPageCheck.swift): the photo, small, beside
+the page the engine makes of it, large, with the two ways out - **Scan this page again** and
+**Photograph the rest**. Julian, 2026-08-17.
+
+- **Once per scan, and the camera decides when.** `landed()` calls `onFirstPhoto` when the
+  scan's photo count is one and the shot was not a retake, so a resumed scan and one more
+  page on a finished scan never see it. The flag lives in `ScanFlow`'s memory only: a
+  relaunch shows the viewfinder, not the check.
+- **The picture is a real engine run**, `freepdf_scan_page` into a scratch file under the
+  system's temporary directory - never `photo/`, `page/`, `state/` or `scan.pdf`, so
+  `sweep()` never sees it - for the reason the Adjust screen runs one. The real page is
+  still written by the drain and by nothing else, and nothing here writes into `page/`.
+- **A refusal is the engine's sentence unchanged, and both controls still work.** A page
+  the engine refused is a reason to retake, so the screen says so instead of trapping him.
+- **The left control is `ScanFlow.retake`**, the one that already exists, and there is no
+  second retake path. Adjust is deliberately not on this screen: it answers "carry on or
+  start over", and a page fixed by hand would still leave the next twenty shot on the same
+  bad desk.
+- **The photo beside the page is taught here so the camera's thumbnail needs no caption.**
+  Two pictures of one sheet look nothing alike, and this is the one screen with room to say
+  why.
 
 ### The pages
 

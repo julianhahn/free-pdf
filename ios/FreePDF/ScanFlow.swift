@@ -41,6 +41,10 @@ struct ScanFlow: View {
     /// builds it again, so nothing over there can remember across the round trip
     /// ([`DoneView.swift`](./DoneView.swift)).
     @State private var focusTaken = false
+    /// True while the check after the first photo is up. In memory only, and set by the
+    /// camera the moment that photo lands: once per scan, and a relaunch shows the
+    /// viewfinder again rather than the check, because by then the photo is old news.
+    @State private var checkingFirst = false
     /// The page the Adjust screen is open on. `nil` means the screen is not up.
     @State private var adjusting: Int?
     /// Grey as the files say it: the lowest-numbered page that has a state file answers
@@ -66,11 +70,29 @@ struct ScanFlow: View {
     var body: some View {
         Group {
             if shooting {
-                CameraView(scan: scan, slot: slot) {
+                CameraView(scan: scan, slot: slot, onFirstPhoto: {
+                    shooting = false
+                    checkingFirst = true
+                    refresh()
+                }) {
                     slot = nil
                     shooting = false
                     refresh()
                 }
+            } else if checkingFirst, let first = photos.first {
+                FirstPageCheck(photo: scan.photoURL(first),
+                               number: first,
+                               // The retake that already exists: it puts the camera back
+                               // on that page number, and no second path is built here.
+                               onRetake: {
+                                   checkingFirst = false
+                                   retake(first)
+                               },
+                               onCarryOn: {
+                                   checkingFirst = false
+                                   slot = nil
+                                   shooting = true
+                               })
             } else if applyingAll != nil {
                 takeover
             } else if let adjusting {

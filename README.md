@@ -88,7 +88,9 @@ The order from here, and nothing after step 1 can start before it:
 | 4 | **done** on 2026-08-17 ([`TASKS.md`](./TASKS.md) 29) - the engine could not find the sheet on a lit desk, so every page came out uncut. `find_paper` now takes the brightness area only as a rough guess and then follows the edges of the paper: it marches outward along every row and column until it crosses a step from paper to table, fits the four sides through those places, and takes the corners from where the sides cross. Checked by eye on twelve real photos, all twelve cut to the sheet. [`TASKS.md`](./TASKS.md) 30 is the small client half of it, and is still open. | engine agent |
 | 6 | **done** on 2026-08-18 ([`TASKS.md`](./TASKS.md) 32) - the pages screen carries both actions as controls under the carousel: Adjust page, and Shoot another page dead until the scan is finished. The "…" menu is retake and delete only. [`TASKS.md`](./TASKS.md) 33 is done with it - `scan_check.sh` now adds three pages to a
 finished scan and the camera stays up for all three, so nothing had to change in the
-camera; 34 and 35 are the rest of the camera work and are still open. | client agent |
+camera; [`TASKS.md`](./TASKS.md) 34 is done too - after the first photo of a scan the app
+shows the page that photo becomes, once, with retake or "Photograph the rest". 35 is the last
+of the camera work and is still open. | client agent |
 | 5 | **done** on 2026-08-18 ([`TASKS.md`](./TASKS.md) 31) - the automatic run no longer refuses a sheet that leaves the frame. It cuts on the points where the paper crosses the edge, exactly as Adjust already did, and the pages screen puts a calm note under such a page saying it is not the whole sheet, with the retake that already exists. Checked against the twelve real photos: eleven byte for byte as before, `runs_off_1.jpg` cut. | engine + client |
 
 ```sh

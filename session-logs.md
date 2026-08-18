@@ -8,6 +8,18 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-18 - After the first photo, the app shows what it is about to do
+
+TASKS.md 34. New screen [`ios/FreePDF/FirstPageCheck.swift`](./ios/FreePDF/FirstPageCheck.swift):
+the photo small beside the page the engine really makes of it, large, and two ways out -
+**Scan this page again** (the existing `ScanFlow.retake`) or **Photograph the rest**. The
+camera calls the new `onFirstPhoto` when the scan's photo count is one and the shot was not a
+retake, so it happens once per scan and never on a resumed one; the flag is in memory only, so
+a kill on this screen leaves one photo and no page and the relaunch shows the viewfinder. The
+preview is a real `freepdf_scan_page` run into a file in the temporary directory, so `sweep()`
+is untouched and the drain still writes every page. `-autofake` writes its photos without
+going through `landed()`, so `scan_check.sh` never sees the screen and needed no change.
+
 ## 2026-08-18 - Shooting another page never stopped after one, and the check now says so
 
 TASKS.md 33. The reported bug could not be reproduced, and the reading in the task turned out

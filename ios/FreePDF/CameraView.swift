@@ -21,6 +21,11 @@ struct CameraView: View {
     /// The page number a shot lands on. `nil` means the next one, which is what
     /// shooting normally does; a number is a retake of that page.
     let slot: Int?
+    /// Called when the first photo of the whole scan is on disk, so the flow can show what
+    /// that photo becomes before the rest of the scan is shot blind
+    /// ([`FirstPageCheck.swift`](./FirstPageCheck.swift)). Once per scan and never on a
+    /// retake.
+    let onFirstPhoto: () -> Void
     /// Called when the user is finished shooting and wants the pages scanned.
     let finished: () -> Void
 
@@ -300,7 +305,11 @@ struct CameraView: View {
     /// retake - which is one shot and nothing else - is over.
     private func landed() {
         photos = scan.photos
-        if slot != nil { finished() }
+        if slot != nil { return finished() }
+        // The first photo of the scan leaves this screen for the check. Counted off the
+        // disk, so a scan that already had photos - resumed, or one more page on a
+        // finished scan - never sees it.
+        if photos.count == 1 { onFirstPhoto() }
     }
 }
 
