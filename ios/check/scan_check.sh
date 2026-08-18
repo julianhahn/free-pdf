@@ -19,6 +19,7 @@ device="${DEVICE:-iPhone 17 Pro}"
 bundle=com.julianhahn.freepdf
 wanted="${PAGES:-12}"           # pages to shoot
 kill_after="${KILL_AFTER:-3}"   # pages on disk before the app is killed
+more="${MORE:-3}"               # pages added to the finished scan afterwards
 derived="${TMPDIR:-/tmp}/freepdf-check"
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
@@ -81,9 +82,18 @@ folder=$(find "$scans" -maxdepth 1 -type d -name '2*' | head -1)
 echo "half a page" > "$folder/page/0099.part"
 echo "a cut-off PDF" > "$folder/scan.part"
 
-# 3. Open it again. It has to find the half-scanned scan by itself and carry on.
-xcrun simctl launch "$udid" "$bundle" -autofake "$wanted" >/dev/null || fail "relaunch"
+# 3. Open it again. It has to find the half-scanned scan by itself and carry on. This
+#    launch also adds pages to the finished scan: `-autofake-more` presses Shoot another
+#    page once and then the shutter, one page at a time. Every shot has to land, which is
+#    only true while the camera stays up - a camera that ends itself after the first one
+#    leaves the count one short here.
+xcrun simctl launch "$udid" "$bundle" -autofake "$wanted" -autofake-more "$more" >/dev/null \
+    || fail "relaunch"
 poll 300 atLeast "$wanted" || fail "only $(pageCount) of $wanted pages after the relaunch"
+
+all=$(( wanted + more ))
+poll 300 atLeast "$all" \
+    || fail "only $(pageCount) of $all pages: Shoot another page did not keep the camera up"
 
 # 4. What was finished before the kill has to be untouched - the same bytes, and the
 #    same moment written, because a page that was scanned twice cost the user his time
@@ -102,5 +112,8 @@ debris=$(find "$scans" -name '*.part' -o -name '*.nosync*')
 [ -z "$debris" ] || fail "debris left behind: $debris"
 
 xcrun simctl terminate "$udid" "$bundle" >/dev/null 2>&1
+# 7. The PDF is the one built after the extra pages, not the one from before them.
+[ "$(pageCount)" -eq "$all" ] || fail "$(pageCount) pages, expected $all"
+
 echo "$(pageCount) pages, $count of them written before the kill and untouched by it"
 echo "scan ok"

@@ -19,13 +19,24 @@ enum FakeShoot {
     /// and AppleScript is not allowed near it without a human granting assistive
     /// access. So the two taps that drive a scan - shoot, then "Scan 12 pages" - are
     /// made here instead, and `../check/scan_check.sh` is one command because of it.
-    static var pagesWanted: Int? {
+    static var pagesWanted: Int? { number(after: "-autofake") }
+
+    /// The number written after a launch flag, or nil when the flag is not there - which
+    /// is every real launch.
+    private static func number(after flag: String) -> Int? {
         let arguments = ProcessInfo.processInfo.arguments
-        guard let flag = arguments.firstIndex(of: "-autofake"),
-              arguments.indices.contains(flag + 1)
+        guard let at = arguments.firstIndex(of: flag), arguments.indices.contains(at + 1)
         else { return nil }
-        return Int(arguments[flag + 1])
+        return Int(arguments[at + 1])
     }
+
+    /// How many extra pages `-autofake-more` should add to the finished scan, or nil.
+    ///
+    /// The taps for **Shoot another page** on a finished scan. The camera has to stay up
+    /// for all of them, so these presses go one at a time through the shutter the thumb
+    /// uses ([`CameraView.swift`](./CameraView.swift)) - a screen that ends itself after
+    /// the first shot is then something the check sees rather than something it misses.
+    static var morePagesWanted: Int? { number(after: "-autofake-more") }
 
     /// The scan `-autofake` lands on: the newest unfinished one, or a new one.
     ///

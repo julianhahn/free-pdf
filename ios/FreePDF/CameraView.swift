@@ -245,6 +245,25 @@ struct CameraView: View {
             say(failure)
         }
         photos = scan.photos
+        await autoShootMore()
+    }
+
+    /// The taps `-autofake-more` stands in for: adding pages to a finished scan, one
+    /// press of this screen's own shutter at a time with a redraw in between, and the
+    /// footer at the end. A screen that ends itself after the first shot loses the rest
+    /// of them, which is what makes that bug visible to
+    /// [`../check/scan_check.sh`](../check/scan_check.sh).
+    private func autoShootMore() async {
+        guard slot == nil, let more = FakeShoot.morePagesWanted, !scan.pages.isEmpty
+        else { return }
+        let target = scan.photos.count + more
+        while scan.photos.count < target {
+            shoot()
+            // The task is cancelled when this screen goes away, and then the pressing
+            // stops with it - a torn-down screen may not carry on shooting.
+            do { try await Task.sleep(for: .seconds(1)) } catch { return }
+        }
+        finished()
     }
 
     /// One press: a real capture where there is a camera, a drawn page where there is

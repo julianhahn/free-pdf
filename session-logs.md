@@ -8,6 +8,18 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-18 - Shooting another page never stopped after one, and the check now says so
+
+TASKS.md 33. The reported bug could not be reproduced, and the reading in the task turned out
+right on every point: `shootAnother()` sets `slot = nil`, the one-shot `finished()` in
+`landed()` belongs to a retake only, and nothing in `ScanFlow` tears the camera down by
+itself. So `scan_check.sh` grew the missing coverage instead of the camera growing a fix:
+`-autofake-more 3` presses Shoot another page on the finished scan and then the shutter three
+times, one press at a time, and the run ends with fifteen pages and a rebuilt PDF. The new line was proved by mutation: ending the screen after every shot aborts it at thirteen pages. Julian's
+report is from the era when that control still sat in the "…" menu (before task 32); the only
+candidate left that a simulator cannot see is the app being killed for memory on the second
+shot, which would also land him back on the pages screen.
+
 ## 2026-08-18 - Adjust and Shoot another page are controls, not menu items
 
 TASKS.md 32. `PagesView` now draws both under the carousel, in the same place for every page:

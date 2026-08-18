@@ -109,6 +109,14 @@ struct ScanFlow: View {
                              scan.deletePhotos()
                              refresh()
                          })
+                // The third line the camera stand-in reaches out of its own file with:
+                // it presses Shoot another page, once, because nothing can tap a
+                // simulator ([`FakeShoot.swift`](./FakeShoot.swift)). Once, because the
+                // extra pages make a new PDF and this screen comes back.
+                .task {
+                    if FakeShoot.morePagesWanted != nil,
+                       photos.count == FakeShoot.pagesWanted { shootAnother() }
+                }
             } else if unscanned.allSatisfy(failed.contains) {
                 // Nothing left the drain can do: either every photo has a page, or the
                 // ones without have already been refused. Both belong on the pages, not

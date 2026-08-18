@@ -597,7 +597,8 @@ what a new Xcode project defaults to.
 
 ### scan_check.sh - the app, killed in the middle of a scan
 
-Twelve pages shot, killed after three, opened again. It has to carry on at page four by
+Twelve pages shot, killed after three, opened again, then three more pages added to the
+finished scan. It has to carry on at page four by
 itself, leave the three finished pages byte-identical **and written at the same moment**,
 sweep away the debris planted while it was dead, and end in a PDF that ends in `%%EOF`.
 That one kill exercises the whole design at once: the step derived from the files, temp
@@ -610,11 +611,17 @@ file plus rename, the sweep, the C boundary and the streamed PDF.
   and AppleScript is refused without a human granting assistive access. So the app is
   driven by `-autofake 12`, which stands in for the thirteen taps and lives in
   [`FreePDF/FakeShoot.swift`](./FreePDF/FakeShoot.swift) with the rest of the camera
-  stand-in.
+  stand-in. `-autofake-more 3` is the same trick for adding pages to a finished scan: it
+  presses Shoot another page once and then the shutter three times, one press at a time
+  with a redraw in between, so a camera screen that ended itself after the first shot
+  would leave the count two short.
 - **It cannot see which screen the app is on**, only the files. The one screen rule that
   matters after a kill - a scan that has pages belongs on the progress line, not in the
   viewfinder - is watched by a guard inside `autoShoot`, which refuses to press on and
   lets the check run out of pages instead.
+- **A fourth mutation covers the extra pages**: `landed()` ending the screen after every
+  shot, not only after a retake, aborts on "only 13 of 15 pages: Shoot another page did not
+  keep the camera up" - which is the bug task 33 went looking for and did not find.
 - **Three mutations were run against it**, each aborting on the line meant to catch it: a
   sweep that eats the finished pages ("a finished page was written again"), reopening
   that lands on the viewfinder ("only 3 of 5 pages after the relaunch"), and nothing

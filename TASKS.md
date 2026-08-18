@@ -67,7 +67,7 @@ themselves are drawn by Storybook.
 | 30 | iOS: Pull the sheet flat starts on — DONE | 29 | bash ios/check/scan_check.sh, by hand |
 | 31 | A sheet that leaves the frame is cut anyway, and the page says so — DONE | - | cargo test --workspace, bash ios/check/scan_check.sh, by eye on real photos |
 | 32 | iOS: Adjust and Shoot another page are controls, not menu items — DONE | - | bash ios/check/scan_check.sh, by hand |
-| 33 | iOS: shooting another page does not stop after one | - | bash ios/check/scan_check.sh, by hand |
+| 33 | iOS: shooting another page does not stop after one — DONE | - | bash ios/check/scan_check.sh, by hand |
 | 34 | iOS: after the first page, the app shows what it is about to do | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
 | 35 | iOS: the viewfinder shows the last page photographed | 34 | bash ios/check/scan_check.sh, by hand |
 ```
@@ -1070,7 +1070,7 @@ three and four items - correct the count in one line, do not extend it.
 hand: a three page scan, both controls reachable in one tap from the page on screen, neither of
 them in the "…" menu, and on a page whose photo was deleted Adjust is there and refuses.
 
-## 33. Shooting another page does not stop after one
+## 33. Shooting another page does not stop after one — DONE
 
 **Why.** Julian's words: "add a page" stops immediately after one photo. Adding three pages to a
 finished scan should be three presses of the shutter and then one "Scan 3 pages", the same as
