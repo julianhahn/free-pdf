@@ -1,5 +1,5 @@
 import React from "react";
-import { AppBar, Screen, StatusLine } from "@ds/ui_kits/iphone/Chrome.jsx";
+import { AppBar, Screen } from "@ds/ui_kits/iphone/Chrome.jsx";
 import {
   Button,
   ErrorLine,
@@ -14,10 +14,10 @@ import {
   Switch,
   ToolStrip,
 } from "../ds.js";
+import { Phone } from "./Phone.jsx";
 
 /* Flow 6, adjusting a page: S24 to S32 of "FreePDF Flow 6 Adjust.dc.html",
    plus what the phone showed Julian on 2026-08-16 (TASKS.md 21, 22, 25, 26).
-   Same phone frame as Flow5Pages.stories.jsx.
 
    Three things the delivered document does not have, and the app now does:
 
@@ -36,22 +36,6 @@ import {
      Apply composes the new drag onto the stored one and a crop can only ever
      be cut tighter. "Back to the suggestion" is the one way back to the
      engine's own answer (TASKS.md 21 and 22). */
-const Phone = ({ children }) => (
-  <div
-    style={{
-      position: "relative",
-      width: 390,
-      height: 844,
-      background: "var(--bg)",
-      display: "grid",
-      gridTemplateRows: "auto 1fr",
-      overflow: "hidden",
-    }}
-  >
-    <StatusLine />
-    <div style={{ position: "relative", minHeight: 0 }}>{children}</div>
-  </div>
-);
 
 const TOOLS = [
   { label: "Edges", icon: "scan" },

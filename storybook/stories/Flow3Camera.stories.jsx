@@ -1,28 +1,11 @@
 import React from "react";
-import { AppBar, Screen, StatusLine } from "@ds/ui_kits/iphone/Chrome.jsx";
+import { AppBar, Screen } from "@ds/ui_kits/iphone/Chrome.jsx";
 import { Button, EmptyState, ErrorLine, PageCounter, Shutter, Viewfinder } from "../ds.js";
+import { Phone } from "./Phone.jsx";
 
 /* Flow 3, shooting the pages: S7 to S12 of "FreePDF Flow 3 Camera.dc.html".
-   Same phone frame as Flow1Scans.stories.jsx. Every sentence is copied from the
-   camera table in ios/AGENTS.md, which the task names as the authority. */
-const Phone = ({ children }) => (
-  <div
-    style={{
-      position: "relative",
-      width: 390,
-      height: 844,
-      background: "var(--bg)",
-      display: "grid",
-      gridTemplateRows: "auto 1fr",
-      overflow: "hidden",
-    }}
-  >
-    <StatusLine />
-    <div style={{ position: "relative", minHeight: 0, display: "grid", gridTemplateRows: "auto 1fr" }}>
-      {children}
-    </div>
-  </div>
-);
+   Every sentence is copied from the camera table in ios/AGENTS.md, which the task
+   names as the authority. */
 
 /* The picture inside the frame stands in for the live preview. */
 const Preview = () => (
@@ -35,7 +18,7 @@ const footerLabel = (pages) =>
 
 /* S7's frame, and every other camera screen is this frame with one thing changed. */
 const CameraFrame = ({ page, pages, writing = false, error = null, note = null }) => (
-  <Phone>
+  <Phone grid>
     <AppBar title={`Page ${page}`} back />
     <Screen
       footer={
@@ -64,7 +47,7 @@ const CameraFrame = ({ page, pages, writing = false, error = null, note = null }
 /* The whole screen becomes one sentence, and a button only where there is
    something to do (S10 has one, S11 has none). */
 const BlockedScreen = ({ page, sentence, action }) => (
-  <Phone>
+  <Phone grid>
     <AppBar title={`Page ${page}`} back />
     <Screen>
       <div style={{ display: "grid", alignContent: "center", minHeight: "100%" }}>

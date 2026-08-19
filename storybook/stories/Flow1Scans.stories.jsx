@@ -1,27 +1,10 @@
 import React from "react";
-import { AppBar, StatusLine } from "@ds/ui_kits/iphone/Chrome.jsx";
+import { AppBar } from "@ds/ui_kits/iphone/Chrome.jsx";
 import { Button, ConfirmDialog, EmptyState, ErrorLine, ScanRow } from "../ds.js";
+import { Phone } from "./Phone.jsx";
 
 /* Flows 1 and 2, the scans list: S1, S2, S4, S5 of
-   "FreePDF Flows 1-2 Scans.dc.html". This is the phone frame the other flow stories copy. */
-const Phone = ({ children }) => (
-  <div
-    style={{
-      position: "relative",
-      width: 390,
-      height: 844,
-      background: "var(--bg)",
-      display: "grid",
-      gridTemplateRows: "auto 1fr",
-      overflow: "hidden",
-    }}
-  >
-    <StatusLine />
-    <div style={{ position: "relative", minHeight: 0, display: "grid", gridTemplateRows: "auto 1fr" }}>
-      {children}
-    </div>
-  </div>
-);
+   "FreePDF Flows 1-2 Scans.dc.html". */
 
 /* The bar action is in the same place across the app; the empty state repeats the
    words the sentence just gave. Both go to the camera (S1 spec). */
@@ -61,7 +44,7 @@ export default { title: "Flows/1-2 Scans" };
 export const S1Empty = {
   name: "S1 — empty list",
   render: () => (
-    <Phone>
+    <Phone grid>
       {bar}
       <EmptyBody />
     </Phone>
@@ -74,7 +57,7 @@ export const S2EmptyWithError = {
      copy table holds it (user-flows §1). The sentence shown is the one the
      delivered document draws in S2 — a stand-in for the OS text, not app copy. */
   render: () => (
-    <Phone>
+    <Phone grid>
       {bar}
       <EmptyBody error="The scan could not be created: the iPhone is out of storage." />
     </Phone>
@@ -84,7 +67,7 @@ export const S2EmptyWithError = {
 export const S4RowSwiped = {
   name: "S4 — a row swiped left",
   render: () => (
-    <Phone>
+    <Phone grid>
       {bar}
       <ListBody swipedId="a" />
     </Phone>
@@ -95,7 +78,7 @@ export const S5DeleteConfirm = {
   name: "S5 — delete confirmation",
   /* Counts come from the swiped row: 40 pages, so the plural body of §3. */
   render: () => (
-    <Phone>
+    <Phone grid>
       {bar}
       <div style={{ position: "relative", minHeight: 0 }}>
         <ListBody swipedId="a" />

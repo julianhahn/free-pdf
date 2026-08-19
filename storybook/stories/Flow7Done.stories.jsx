@@ -1,10 +1,11 @@
 import React from "react";
-import { AppBar, StatusLine } from "@ds/ui_kits/iphone/Chrome.jsx";
+import { AppBar } from "@ds/ui_kits/iphone/Chrome.jsx";
 import { Button, ConfirmDialog, PageImage, SectionLabel, Sheet, TextField } from "../ds.js";
+import { Phone } from "./Phone.jsx";
 
 /* Flow 7, the done screen: S34 to S38 of "FreePDF Flow 7 Done.dc.html", corrected
    against what the app actually ships (ios/FreePDF/ScanFlow.swift, `done`, commit
-   b8d9b03). Words come from user-flows.md §9, §10, §11. Same phone frame as Flow1Scans.
+   b8d9b03). Words come from user-flows.md §9, §10, §11.
 
    Two things the delivered document draws are not here, because user-flows.md and the
    app both leave them out:
@@ -12,24 +13,6 @@ import { Button, ConfirmDialog, PageImage, SectionLabel, Sheet, TextField } from
      renders a PDF page back to an image), so the screen starts on the name field;
    - the line under Share PDF, which is the designer's placeholder and has no entry in
      any copy table. */
-const Phone = ({ children }) => (
-  <div
-    style={{
-      position: "relative",
-      width: 390,
-      height: 844,
-      background: "var(--bg)",
-      display: "grid",
-      gridTemplateRows: "auto 1fr",
-      overflow: "hidden",
-    }}
-  >
-    <StatusLine />
-    <div style={{ position: "relative", minHeight: 0, display: "grid", gridTemplateRows: "auto 1fr" }}>
-      {children}
-    </div>
-  </div>
-);
 
 const bar = <AppBar title="PDF ready" back />;
 
@@ -114,7 +97,7 @@ export const S34AtOpen = {
      field is empty, showing the placeholder, because nothing is stored. Both primaries
      stay above the keyboard - the field is only useful because of the button under it. */
   render: () => (
-    <Phone>
+    <Phone grid>
       {bar}
       <div style={{ display: "grid", gridTemplateRows: "1fr auto", minHeight: 0 }}>
         <Body>
@@ -138,7 +121,7 @@ export const S34PhotosWithKeyboardUp = {
      scrolls and the block is one drag away. The delivered document says the destructive
      block only exists "when the keyboard is down"; that is not how it is built. */
   render: () => (
-    <Phone>
+    <Phone grid>
       {bar}
       <div style={{ display: "grid", gridTemplateRows: "1fr auto", minHeight: 0 }}>
         <Body>
@@ -158,7 +141,7 @@ export const S35PhotosDeleted = {
      screen ends on Change pages, which still works. No keyboard: this is the screen come
      back to after Change pages, and coming back never raises it again. */
   render: () => (
-    <Phone>
+    <Phone grid>
       {bar}
       <Body>
         <NameField />
@@ -174,7 +157,7 @@ export const S36Reader = {
      no share, no print, no page count. The keyboard is down while the sheet is up, and
      closing the sheet leaves it down - the focus happened once, when the screen opened. */
   render: () => (
-    <Phone>
+    <Phone grid>
       {bar}
       <div style={{ position: "relative", minHeight: 0 }}>
         <Body>
@@ -199,7 +182,7 @@ export const S38DeletePhotos = {
   render: () => {
     const [confirm, setConfirm] = React.useState(true);
     return (
-      <Phone>
+      <Phone grid>
         {bar}
         <div style={{ position: "relative", minHeight: 0 }}>
           <Body>

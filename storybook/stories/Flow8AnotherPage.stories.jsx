@@ -1,28 +1,11 @@
 import React from "react";
-import { AppBar, Screen, StatusLine } from "@ds/ui_kits/iphone/Chrome.jsx";
+import { AppBar, Screen } from "@ds/ui_kits/iphone/Chrome.jsx";
 import { Button, Shutter, Viewfinder } from "../ds.js";
+import { Phone } from "./Phone.jsx";
 
 /* Flow 8, one more page on a finished scan: S39 of "FreePDF Flow 8-9.dc.html".
-   Same phone frame and same camera screen as Flow3Camera.stories.jsx; only the
-   calm note inside the Viewfinder is new. Flow 9 adds no screens. */
-const Phone = ({ children }) => (
-  <div
-    style={{
-      position: "relative",
-      width: 390,
-      height: 844,
-      background: "var(--bg)",
-      display: "grid",
-      gridTemplateRows: "auto 1fr",
-      overflow: "hidden",
-    }}
-  >
-    <StatusLine />
-    <div style={{ position: "relative", minHeight: 0, display: "grid", gridTemplateRows: "auto 1fr" }}>
-      {children}
-    </div>
-  </div>
-);
+   The same camera screen as Flow3Camera.stories.jsx; only the calm note inside the
+   Viewfinder is new. Flow 9 adds no screens. */
 
 /* The picture inside the frame stands in for the live preview. */
 const Preview = () => (
@@ -36,7 +19,7 @@ export const S39ShootAnotherPage = {
   /* Page 41 because numbers keep their gaps and are never reused. One photo is
      waiting, so the footer counts 1, singular. */
   render: () => (
-    <Phone>
+    <Phone grid>
       <AppBar title="Page 41" back />
       <Screen
         footer={
