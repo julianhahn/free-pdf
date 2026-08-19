@@ -449,7 +449,7 @@ unchanged. All text is English in the code with German checked by hand against t
 cd /Users/julianhahn/free-pdf && swiftc -typecheck -parse-as-library -swift-version 6 \
   -warnings-as-errors -sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
   -target arm64-apple-ios18.0-simulator \
-  -import-objc-header ffi/include/freepdf.h ios/FreePDF/*.swift
+  -import-objc-header ffi/include/freepdf.h $(find ios/FreePDF -name '*.swift')
 ```
 
 **Blocked by.** 12, all of them.
