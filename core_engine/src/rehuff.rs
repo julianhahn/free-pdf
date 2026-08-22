@@ -6,9 +6,9 @@
 //! code words and the DHT segments that describe them are new. The saving is real
 //! all the same, because `image`'s encoder writes the fixed example tables out of
 //! the JPEG standard's Annex K - a guess at what an average photo needs, not what
-//! this page needs. Measured on page files of real photographed paper: 27.97%
-//! smaller over a 40 page scan, 30.49% over twelve 2480x3508 pages, and 6.47% on
-//! the hardest single page there is, a detailed grey one. What comes out is byte
+//! this page needs. How much that saves depends on what is on the page and the
+//! spread is wide, so no one figure is honest - [`rehuff`] carries the measured
+//! range, and a page of small text sits at the thin end of it. What comes out is byte
 //! for byte the same file as `jpegtran -optimize -copy all` writes, checked on
 //! eleven fixtures from 400x500 to 2480x3508: colour and grey, one block to an
 //! MCU and four.
@@ -743,7 +743,7 @@ fn write_tables(frame: &Frame, tables: &[Option<Table>; TABLE_SLOTS], out: &mut 
 /// the fixed Annex K tables `image`'s encoder writes.
 ///
 /// How much shorter is the page's business, not this module's, and the spread is
-/// wide: measured about 6% on a photographed page of small text, 2.5 to 5.0% on
+/// wide: measured 5 to 9% on a photographed page of small text, 2.5 to 5.0% on
 /// grey text, about 16% on grainy paper or a page carrying a photograph, and up
 /// to 28% over a mixed 40 page scan - more the noisier the page and the lower the
 /// quality (42 to 44% at quality 30). A scanner's usual page is text, so the

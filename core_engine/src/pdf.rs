@@ -39,8 +39,9 @@ const JPEG_QUALITY: f32 = 0.85;
 /// different from the same document built by [`images_to_pdf`]. A client that
 /// asks for a smaller page hands [`save_page`] a lower number, and then the two
 /// are meant to differ - so do not re-align them, and do not read a lower page
-/// quality as a bug. [`images_to_pdf`] has no such setting: it is the runner's
-/// path, and the runner has no page size to steer.
+/// quality as a bug. [`images_to_pdf`] has no such setting at all: a caller that
+/// wants to steer the page size takes the [`save_page`] road instead, which is
+/// what the command line runner does as soon as it is given a quality.
 ///
 /// On top of the quality, a page written here also loses the bytes its own
 /// Huffman tables save ([`crate::rehuff`]) - which changes the code words, not
@@ -134,7 +135,7 @@ pub fn images_to_pdf(images: &[DynamicImage], out_path: &Path) -> Result<(), Str
 /// JPEG standard's Annex K instead of tables that fit this page.
 ///
 /// How much smaller depends on what is on the page, and the spread is wide, so
-/// no single figure is honest: measured about 6% on a dense page of small text
+/// no single figure is honest: measured 5 to 9% on a dense page of small text
 /// (four probes on photographed text pages: 5.1%, 7.7 to 8.9%, 8.1%, 8.9%), 2.5
 /// to 5.0% on grey text, about 16% on grainy paper or a page with a photograph
 /// on it, and up to 28% over a mixed scan of forty pages. The share grows the
@@ -203,7 +204,7 @@ pub fn save_page(img: &DynamicImage, path: &Path, quality: PageQuality) -> Resul
     ))
     .map_err(|e| format!("Failed to encode the page for {}: {}", path.display(), e))?;
 
-    // Smaller by about 6% on a text page and up to 28% over a mixed scan, same
+    // Smaller by 5 to 9% on a text page and up to 28% over a mixed scan, same
     // pixels either way. `unwrap_or` and never `unwrap`: a JPEG
     // the recoder refuses - a restart marker, a progressive scan, anything it did
     // not expect - keeps its original bytes. So this call cannot fail, a page is

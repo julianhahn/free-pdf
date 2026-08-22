@@ -306,8 +306,11 @@ pub unsafe extern "C" fn freepdf_pages_to_pdf(
 /// would make the whole scan unfinishable, and resuming would retry that same photo
 /// for ever.
 fn scan_page(photo: &Path, page: &Path, rung: Option<FreepdfPageQuality>) -> Result<(), String> {
-    // Before the photo is even read: a rung nobody can write is answered at once,
-    // not after a minute of work on a page that will never be written.
+    // Before the photo is even read: a quality no encoder counts in, and an edge
+    // this boundary cannot allow, are answered at once rather than after a minute
+    // of work on a page that will never be written. The floor - how small a page
+    // may still be - is the engine's, and it answers when the page reaches
+    // `fit_within`.
     let (quality, page_edge) = rung_numbers(rung)?;
 
     let mut img = load_image(photo)?;
@@ -967,6 +970,52 @@ mod tests {
         assert_eq!(
             sentence(&error),
             "The page quality must be between 1 and 100, but was 0."
+        );
+        assert!(!page.exists(), "a refused page was written anyway");
+    }
+
+    /// The two sentences only this boundary can say. The engine never sees these
+    /// numbers: a negative edge cannot be a `u32` and one above the cap would break
+    /// the memory guarantee, so both are refused here, before the photo is read.
+    #[test]
+    fn an_edge_this_boundary_cannot_allow_is_refused_and_no_page_is_written() {
+        let folder = own_folder("edge_refused");
+        let photo = a_photo_of_a_sheet(&folder, 600, 400);
+        let page = folder.join("page.jpg");
+        let _ = std::fs::remove_file(&page);
+
+        let refusals = [-1, LONGEST_EDGE as i32 + 1].map(|longest_edge| {
+            let mut error = [0 as c_char; 192];
+            let rung = FreepdfPageQuality {
+                jpeg_quality: 45,
+                longest_edge,
+            };
+            let status = unsafe {
+                freepdf_scan_page(
+                    c_path(&photo).as_ptr(),
+                    c_path(&page).as_ptr(),
+                    &rung,
+                    error.as_mut_ptr(),
+                    error.len(),
+                )
+            };
+            (status, sentence(&error))
+        });
+
+        assert_eq!(refusals[0].0, 1);
+        assert_eq!(
+            refusals[0].1,
+            "A page cannot keep a longest edge of -1 pixels."
+        );
+        assert_eq!(refusals[1].0, 1);
+        assert_eq!(
+            refusals[1].1,
+            format!(
+                "A page cannot keep a longest edge of {} pixels. {} is the most, so that the \
+                 page still fits in the phone's memory while it is sharpened.",
+                LONGEST_EDGE + 1,
+                LONGEST_EDGE
+            )
         );
         assert!(!page.exists(), "a refused page was written anyway");
     }
