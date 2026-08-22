@@ -74,7 +74,27 @@ centre maths exists once.
 assert the size of what they write. `JPEG_QUALITY = 0.85` and the forced
 `ImageCompression::Jpeg` belong together: left alone, printpdf picks lossless LZW for grey,
 and a greyed scan grew from 107 KB to 347 KB. `PAGE_JPEG_QUALITY = 85` is the same quality in
-the scale the page encoder counts in, and the two have to keep agreeing.
+the scale the page encoder counts in, and the two agree **at that one setting only**:
+`save_page` now takes a `PageQuality`, and a client asking for a smaller page passes a lower
+number on purpose. So do not re-align the two, and do not read a lower page quality as a bug.
+
+`PageQuality { jpeg_quality, longest_edge }` is a struct and not a bare number, because a bare
+`45` at a call site cannot be found again; and not an enum of rung names, because the names the
+user reads and the numbers behind them are the client's decision. `PageQuality::UNCHANGED` is
+quality 85 with every pixel kept, and a page written with it is byte for byte the page this
+engine has always written - `the_default_quality_writes_the_very_same_page_as_before` pins that
+with a length and a fingerprint taken off commit 966a52f.
+
+`longest_edge` is **refused** unless it is zero, rather than ignored, because an ignored field is
+a lie about what the call did. The resampling belongs where the client's size cap already is,
+before sharpening: `sharpen` is the memory peak (234 MB at 3000 px against 116 MB at 1754 px),
+shrinking after sharpening throws the sharpening away, and a crop is fractions of the image
+*after* the cap, so moving the cap changes what every stored crop box means. `fit_within` is the
+tool, Lanczos3 and shrink only - the box filter a client reaches for instead measured moire 26.6
+against 5.5 at a 1240 px edge and 62% more ink damage for *more* bytes at 2000 px, and
+`FilterType` cannot even be named outside this crate. One thing not to promise: 80% off a
+photographed page and "not even visible" are not both reachable - 80% needs a 1200 to 1400 px
+edge, which three probes called plainly blurred.
 
 Why the page path exists at all, so nobody simplifies it away later:
 

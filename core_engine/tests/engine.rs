@@ -5,9 +5,9 @@
 //! broken, and this is the part a client cannot work around.
 
 use core_engine::{
-    apply_levels, crop, deskew, find_paper, images_to_pdf, load_image, pages_to_pdf, rotate,
-    save_page, sharpen, straighten, suggest_levels, suggest_straightening, to_grayscale,
-    DynamicImage, Levels,
+    apply_levels, crop, deskew, find_paper, fit_within, images_to_pdf, load_image, pages_to_pdf,
+    rotate, save_page, sharpen, straighten, suggest_levels, suggest_straightening, to_grayscale,
+    DynamicImage, Levels, PageQuality,
 };
 use image::codecs::jpeg::JpegEncoder;
 use image::{ColorType, Rgb, RgbImage};
@@ -157,7 +157,7 @@ fn page_files_go_into_the_pdf_without_being_decoded() {
             _ => test_image(1200, 1600),
         };
         let page = dir.join(format!("{n:04}.jpg"));
-        save_page(&img, &page).expect("writing the page failed");
+        save_page(&img, &page, PageQuality::UNCHANGED).expect("writing the page failed");
         jpeg_bytes += std::fs::metadata(&page).expect("no page written").len();
         pages.push(page);
     }
@@ -203,11 +203,17 @@ fn page_files_go_into_the_pdf_without_being_decoded() {
 ///
 /// `save_page` rebuilds the page's Huffman tables from the page's own symbol
 /// counts, which changes the code words and not one pixel. Measured on
-/// `test_image(1200, 1600)`: 174,229 bytes become 136,069, so 21.90% goes. Real
-/// photographed pages measure 27.98% over a 40 page scan and 6.47% on the hardest
-/// one, a detailed grey page. The bound sits below the 21.90% rather than on it,
-/// because the exact figure moves with the `image` crate's encoder; under this,
-/// the rebuild has stopped happening.
+/// `test_image(1200, 1600)`: 174,229 bytes become 136,069, so 21.90% goes.
+///
+/// That 21.90% is this fixture's number and no other page's. A real photographed
+/// page of text saves about 6% (four probes: 5.1%, 7.7 to 8.9%, 8.1%, 8.9%), grey
+/// text 2.5 to 5.0%, grainy paper or a page with a photograph on it about 16%, and
+/// a mixed 40 page scan 28% over the whole scan. So the bound belongs to the
+/// gradient, and the gradient stays: this test is the first rung's byte pin - what
+/// it watches is that the rebuild still happens at all, and pointing it at a text
+/// fixture would put the bound under the noise of the encoder. The bound sits
+/// below the 21.90% rather than on it, because the exact figure moves with the
+/// `image` crate's encoder; under this, the rebuild has stopped happening.
 const LEAST_PAGE_SAVING: f64 = 0.15;
 
 #[test]
@@ -219,7 +225,7 @@ fn a_written_page_holds_the_same_pixels_in_fewer_bytes() {
         .write_with_encoder(JpegEncoder::new_with_quality(&mut by_hand, 85))
         .expect("encoding the page by hand failed");
 
-    save_page(&image, &path).expect("writing the page failed");
+    save_page(&image, &path, PageQuality::UNCHANGED).expect("writing the page failed");
 
     let written = std::fs::read(&path).expect("no page written");
     let from_page = image::load_from_memory(&written).expect("the written page does not decode");
@@ -245,6 +251,234 @@ fn a_written_page_holds_the_same_pixels_in_fewer_bytes() {
     );
 }
 
+/// The page `save_page` wrote before it had a quality setting, for
+/// `test_image(1200, 1600)`: how long it was, and a fingerprint of every byte.
+///
+/// Read off commit 966a52f and written down here, because a test may only read a
+/// file it wrote itself. The first rung has to keep writing this exact page: a
+/// client that already ships pages must not find yesterday's page and today's
+/// different, and `pages_to_pdf` embeds these bytes untouched, so the same picture
+/// is not enough - it has to be the same file.
+const ORIGINAL_PAGE_LENGTH: usize = 136_069;
+const ORIGINAL_PAGE_FINGERPRINT: u64 = 0x7f93_d93a_2240_9819;
+
+/// FNV-1a over the whole page. Not a checksum for security, only a short way to
+/// say "not one of these 136,069 bytes moved".
+fn fingerprint(bytes: &[u8]) -> u64 {
+    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+    for byte in bytes {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    hash
+}
+
+#[test]
+fn the_default_quality_writes_the_very_same_page_as_before() {
+    let path = temp_path("first_rung_page.jpg");
+    let image = test_image(1200, 1600);
+
+    save_page(&image, &path, PageQuality::UNCHANGED).expect("writing the page failed");
+
+    let written = std::fs::read(&path).expect("no page written");
+    assert_eq!(
+        written.len(),
+        ORIGINAL_PAGE_LENGTH,
+        "the default page is {} bytes, where it was {}",
+        written.len(),
+        ORIGINAL_PAGE_LENGTH
+    );
+    assert_eq!(
+        fingerprint(&written),
+        ORIGINAL_PAGE_FINGERPRINT,
+        "the default page is the same length but not the same bytes"
+    );
+}
+
+/// How much a page at quality 45 has to lose against the same page at 85.
+///
+/// Measured on `test_image(1200, 1600)`: 136,069 bytes become 55,156, so 59.47%
+/// goes. A photographed page loses less, because it holds less that the encoder
+/// can throw away: 40.7% on a dense page of 10 pt text, 49.1% over six fixtures.
+/// The bound sits well under all of those - what it watches is that the number
+/// reaches the encoder at all, not how well this one fixture compresses.
+const LEAST_SMALL_RUNG_SAVING: f64 = 0.30;
+
+#[test]
+fn a_lower_quality_writes_a_smaller_page() {
+    let path = temp_path("small_rung_page.jpg");
+    let image = test_image(1200, 1600);
+    let smaller = PageQuality {
+        jpeg_quality: 45,
+        ..PageQuality::UNCHANGED
+    };
+
+    save_page(&image, &path, smaller).expect("writing the page failed");
+
+    let written = std::fs::read(&path).expect("no page written");
+    let saved = 1.0 - written.len() as f64 / ORIGINAL_PAGE_LENGTH as f64;
+    assert!(
+        saved >= LEAST_SMALL_RUNG_SAVING,
+        "the page at quality 45 is {} bytes against the {} of quality 85, only {:.2}% smaller",
+        written.len(),
+        ORIGINAL_PAGE_LENGTH,
+        saved * 100.0
+    );
+    // The quality is the only thing that changed, so the page keeps every pixel.
+    let decoded = image::load_from_memory(&written).expect("the smaller page does not decode");
+    assert_eq!(
+        (decoded.width(), decoded.height()),
+        (1200, 1600),
+        "the smaller page came back a different size"
+    );
+}
+
+#[test]
+fn a_page_quality_of_zero_or_past_a_hundred_is_refused() {
+    // Clamping either of these would write a page the client did not ask for, and
+    // the client has no way of seeing that it got a different one.
+    let path = temp_path("refused_quality_page.jpg");
+    let _ = std::fs::remove_file(&path);
+    let image = test_image(200, 300);
+
+    let zero = save_page(
+        &image,
+        &path,
+        PageQuality {
+            jpeg_quality: 0,
+            ..PageQuality::UNCHANGED
+        },
+    )
+    .expect_err("a quality of 0 was accepted");
+    let past_the_end = save_page(
+        &image,
+        &path,
+        PageQuality {
+            jpeg_quality: 101,
+            ..PageQuality::UNCHANGED
+        },
+    )
+    .expect_err("a quality of 101 was accepted");
+
+    assert!(
+        zero.contains(" 0."),
+        "the sentence has to name the value, but was: {zero}"
+    );
+    assert!(
+        past_the_end.contains(" 101."),
+        "the sentence has to name the value, but was: {past_the_end}"
+    );
+    assert!(!path.exists(), "a page was written anyway");
+}
+
+#[test]
+fn a_page_asked_to_shrink_while_it_is_written_is_refused() {
+    // Not ignored: the page is already sharpened by then, so shrinking it here
+    // would blur that away and pay the sharpening's full peak first. `fit_within`
+    // does it earlier, where the client's own size cap already is.
+    let path = temp_path("refused_resample_page.jpg");
+    let _ = std::fs::remove_file(&path);
+    let image = test_image(1200, 1600);
+
+    let refused = save_page(
+        &image,
+        &path,
+        PageQuality {
+            jpeg_quality: 45,
+            longest_edge: 1700,
+        },
+    )
+    .expect_err("a longest edge was accepted while the page was written");
+
+    assert!(
+        refused.contains("1700"),
+        "the sentence has to name the value, but was: {refused}"
+    );
+    assert!(!path.exists(), "a page was written anyway");
+}
+
+#[test]
+fn a_page_shrunk_to_a_bound_keeps_its_shape() {
+    // A4 at 300 dpi, upright, down to the 1700 px long edge - about 145 dpi.
+    let page = test_image(2480, 3508);
+
+    let smaller = fit_within(&page, 1700).expect("shrinking the page failed");
+
+    assert_eq!(
+        smaller.height(),
+        1700,
+        "the long edge has to meet the bound"
+    );
+    // 2480 / 3508 * 1700 is 1201.6, so 1202 pixels wide keeps the shape.
+    assert_eq!(
+        (smaller.width(), smaller.height()),
+        (1202, 1700),
+        "the page came back {}x{}, which is another shape",
+        smaller.width(),
+        smaller.height()
+    );
+}
+
+#[test]
+fn a_page_already_inside_the_bound_is_left_alone() {
+    // Enlarging adds no detail, only bytes, so a small page comes back untouched.
+    let page = test_image(1000, 1400);
+
+    let same = fit_within(&page, 1700).expect("shrinking the page failed");
+
+    assert_eq!(
+        (same.width(), same.height()),
+        (1000, 1400),
+        "the page was made bigger"
+    );
+    assert_eq!(
+        same.as_bytes(),
+        page.as_bytes(),
+        "the page was resampled although it already fitted"
+    );
+}
+
+#[test]
+fn a_bound_too_small_for_a_readable_page_is_refused() {
+    // 400 px on A4 is about 34 dpi: the letters are gone. A caller asking for this
+    // has taken pixels for something else, so it is refused instead of carried out.
+    let page = test_image(2480, 3508);
+
+    let refused = fit_within(&page, 400).expect_err("a 400 pixel page was accepted");
+
+    assert!(
+        refused.contains("400"),
+        "the sentence has to name the value, but was: {refused}"
+    );
+}
+
+#[test]
+fn a_page_written_small_still_goes_into_the_pdf_untouched() {
+    // Noise, for the same reason as `page_files_go_into_the_pdf_without_being_decoded`:
+    // a smooth page survives being decoded and encoded again byte for byte, so on a
+    // friendlier picture this would pass on exactly the mistake it is here to catch.
+    let page = temp_path("small_page.jpg");
+    let out = temp_path("small_page.pdf");
+    let smaller = PageQuality {
+        jpeg_quality: 45,
+        ..PageQuality::UNCHANGED
+    };
+    save_page(&noise_page(400, 500), &page, smaller).expect("writing the page failed");
+
+    pages_to_pdf(std::slice::from_ref(&page), &out).expect("writing the PDF failed");
+
+    let pdf = std::fs::read(&out).expect("the PDF was not written");
+    let written = std::fs::read(&page).expect("no page written");
+    assert!(
+        pdf.windows(written.len())
+            .any(|window| window == &written[..]),
+        "the {} byte page at quality 45 was re-encoded on the way into the PDF",
+        written.len()
+    );
+    assert!(pdf.ends_with(b"%%EOF"), "the PDF was cut off");
+    assert_eq!(parse_pdf(&pdf).pages.len(), 1);
+}
+
 #[test]
 fn a_greyed_page_stays_grey_all_the_way_into_the_pdf() {
     // If a written page came back as three channels, the PDF would say DeviceRGB
@@ -253,7 +487,7 @@ fn a_greyed_page_stays_grey_all_the_way_into_the_pdf() {
     let out = temp_path("grey_page.pdf");
     let grey = to_grayscale(&photographed_document());
 
-    save_page(&grey, &page).expect("writing the page failed");
+    save_page(&grey, &page, PageQuality::UNCHANGED).expect("writing the page failed");
     pages_to_pdf(std::slice::from_ref(&page), &out).expect("writing the PDF failed");
 
     let written = std::fs::read(&page).expect("no page written");

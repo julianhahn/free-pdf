@@ -16,8 +16,18 @@ mod rehuff;
 
 pub use deskew::{deskew, straighten, suggest_straightening};
 pub use paper::{find_paper, Paper, Point, Rect};
-pub use pdf::{images_to_pdf, pages_to_pdf, save_page};
-pub use tools::{apply_levels, crop, rotate, sharpen, suggest_levels, to_grayscale, Levels};
+pub use pdf::{images_to_pdf, pages_to_pdf, save_page, PageQuality};
+pub use tools::{
+    apply_levels, crop, fit_within, rotate, sharpen, suggest_levels, to_grayscale, Levels,
+};
+
+// `PageQuality` and `fit_within` are two names, and a public name is a promise
+// kept for good. They earn it because a steerable page size cannot be built
+// anywhere else: the quality is the number `save_page`'s encoder is handed, and
+// the resampling filter that goes with it cannot even be named outside this
+// crate, which is the one crate that depends on `image`. A client left to shrink
+// the page itself reaches for the cheapest call it has and gets the box filter,
+// which measured worse pictures for more bytes (`tools::fit_within`).
 
 /// Re-exported so clients do not have to depend on the `image` crate themselves,
 /// and can never end up with a different version of it than the engine.

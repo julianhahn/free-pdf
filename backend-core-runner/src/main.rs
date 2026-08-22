@@ -5,8 +5,9 @@
 //! arguments and prints what happened.
 
 use core_engine::{
-    apply_levels, crop, deskew, find_paper, images_to_pdf, load_image, rotate, sharpen, straighten,
-    suggest_levels, suggest_straightening, to_grayscale, DynamicImage,
+    apply_levels, crop, deskew, find_paper, fit_within, images_to_pdf, load_image, pages_to_pdf,
+    rotate, save_page, sharpen, straighten, suggest_levels, suggest_straightening, to_grayscale,
+    DynamicImage, PageQuality,
 };
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -23,6 +24,12 @@ usage: backend-core-runner <image>... -o <out.pdf|out.jpeg> [tools]
 
   --scan              the usual way: --deskew --straighten --levels --sharpen 0.6
 
+  --quality <1..100>  how hard every page of a .pdf is compressed. Left out, the
+                      PDF is written exactly as it was written before this flag
+                      existed. With --long-edge these are the two numbers behind
+                      a page size setting; the names a user reads for them belong
+                      to the client that offers them, not here.
+
 tools, applied to every image in this order:
   --rotate <n>        turn clockwise by 90, 180 or 270 degrees
   --crop <x,y,w,h>    cut to a box, in pixels, measured after rotating
@@ -31,6 +38,8 @@ tools, applied to every image in this order:
   --straighten        turn crooked writing back level, measured off the writing
                       itself, so it works where the sheet cannot be found
   --levels            paper to white, writing to black, colour cast removed
+  --long-edge <px>    shrink until neither edge is longer than that. Before
+                      sharpening, or the sharpening is thrown away again
   --sharpen <r>       make edges crisper, radius in pixels (around 1 for text)
   --gray              drop the colour
 ";
@@ -69,7 +78,7 @@ fn run(args: &[String]) -> Result<PathBuf, String> {
         pages.push(page);
     }
 
-    write_output(&pages, &args.output)?;
+    write_output(&pages, &args.output, args.quality)?;
     Ok(args.output)
 }
 
@@ -225,6 +234,16 @@ fn apply_tools(img: DynamicImage, args: &Args) -> Result<DynamicImage, String> {
         }
         img = apply_levels(&img, suggestion);
     }
+    if let Some(edge) = args.long_edge {
+        // Before sharpening, exactly where the phone's own size cap sits: a page
+        // shrunk afterwards throws the sharpening away. The runner has no memory
+        // cap of its own (AGENTS.md), so this number is a page size and nothing
+        // else.
+        if img.width().max(img.height()) <= edge {
+            println!("  page size: already inside {edge} px, left as it is");
+        }
+        img = fit_within(&img, edge)?;
+    }
     if let Some(radius) = args.sharpen {
         img = sharpen(&img, radius)?;
     }
@@ -237,13 +256,18 @@ fn apply_tools(img: DynamicImage, args: &Args) -> Result<DynamicImage, String> {
 
 /// A `.pdf` output collects every page; any other extension writes the single
 /// processed image, which is how a step can be inspected before the next one.
-fn write_output(pages: &[DynamicImage], output: &Path) -> Result<(), String> {
-    let wants_pdf = output
-        .extension()
-        .is_some_and(|ext| ext.eq_ignore_ascii_case("pdf"));
-
-    if wants_pdf {
-        return images_to_pdf(pages, output);
+///
+/// A PDF asked for at a quality takes the road the phone takes: one `save_page`
+/// per page, then `pages_to_pdf` over the paths. `images_to_pdf` has no quality to
+/// set and is frozen, together with the two tests that count the bytes it writes
+/// ([../core_engine/AGENTS.md](../../core_engine/AGENTS.md)). Without `--quality`
+/// nothing about that older road moves.
+fn write_output(pages: &[DynamicImage], output: &Path, quality: Option<u8>) -> Result<(), String> {
+    if is_pdf(output) {
+        return match quality {
+            Some(jpeg_quality) => write_pdf_page_by_page(pages, output, jpeg_quality),
+            None => images_to_pdf(pages, output),
+        };
     }
 
     match pages {
@@ -258,6 +282,64 @@ fn write_output(pages: &[DynamicImage], output: &Path) -> Result<(), String> {
     }
 }
 
+/// Whether that name asks for a PDF. The extension decides, as it does for every
+/// other output.
+fn is_pdf(output: &Path) -> bool {
+    output
+        .extension()
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("pdf"))
+}
+
+/// Writes every page as its own JPEG at that quality, then stitches the paths into
+/// the PDF, which is how a phone builds one.
+///
+/// The pages wait in a folder of this run's own, named after the process, so two
+/// runs at the same time cannot read each other's pages. They are removed again
+/// whether the PDF came out or not: they are working files, not output.
+fn write_pdf_page_by_page(
+    pages: &[DynamicImage],
+    output: &Path,
+    jpeg_quality: u8,
+) -> Result<(), String> {
+    let folder = std::env::temp_dir().join(format!("freepdf-pages-{}", std::process::id()));
+    std::fs::create_dir_all(&folder).map_err(|e| {
+        format!(
+            "Failed to make the folder for the pages at {}: {}",
+            folder.display(),
+            e
+        )
+    })?;
+
+    let quality = PageQuality {
+        jpeg_quality,
+        // Every pixel: the shrinking already happened in `apply_tools`, before the
+        // sharpening, and `save_page` refuses to do it here for that same reason.
+        longest_edge: PageQuality::UNCHANGED.longest_edge,
+    };
+    let written = write_pages(pages, &folder, quality).and_then(|paths| {
+        println!("  pages: {} written at quality {jpeg_quality}", paths.len());
+        pages_to_pdf(&paths, output)
+    });
+
+    let _ = std::fs::remove_dir_all(&folder);
+    written
+}
+
+/// One JPEG per page, numbered so the list keeps the order the pages came in.
+fn write_pages(
+    pages: &[DynamicImage],
+    folder: &Path,
+    quality: PageQuality,
+) -> Result<Vec<PathBuf>, String> {
+    let mut paths = Vec::with_capacity(pages.len());
+    for (number, page) in pages.iter().enumerate() {
+        let path = folder.join(format!("{:04}.jpg", number + 1));
+        save_page(page, &path, quality)?;
+        paths.push(path);
+    }
+    Ok(paths)
+}
+
 struct Args {
     inputs: Vec<PathBuf>,
     output: PathBuf,
@@ -267,8 +349,10 @@ struct Args {
     deskew: bool,
     straighten: bool,
     levels: bool,
+    long_edge: Option<u32>,
     sharpen: Option<f32>,
     gray: bool,
+    quality: Option<u8>,
 }
 
 fn parse_args(args: &[String]) -> Result<Args, String> {
@@ -280,8 +364,10 @@ fn parse_args(args: &[String]) -> Result<Args, String> {
     let mut deskew_it = false;
     let mut straighten_it = false;
     let mut levels = false;
+    let mut long_edge = None;
     let mut sharpen_radius = None;
     let mut gray = false;
+    let mut quality = None;
     let mut scan = false;
 
     let mut args = args.iter();
@@ -294,6 +380,10 @@ fn parse_args(args: &[String]) -> Result<Args, String> {
             "--deskew" => deskew_it = true,
             "--straighten" => straighten_it = true,
             "--levels" => levels = true,
+            "--long-edge" => {
+                long_edge = Some(parse_number(value_for(arg, &mut args)?, "--long-edge")?)
+            }
+            "--quality" => quality = Some(parse_quality(value_for(arg, &mut args)?)?),
             "--sharpen" => {
                 let value = value_for(arg, &mut args)?;
                 sharpen_radius = Some(
@@ -324,18 +414,53 @@ fn parse_args(args: &[String]) -> Result<Args, String> {
         sharpen_radius = sharpen_radius.or(Some(SCAN_SHARPEN));
     }
 
+    let output = output.ok_or_else(|| format!("No output file given.\n\n{USAGE}"))?;
+    // A number that quietly does nothing reads as a broken flag, so asking for a
+    // page quality next to an image output is answered instead of ignored. Only a
+    // PDF has pages, and only `save_page` takes a quality.
+    if quality.is_some() && !is_pdf(&output) {
+        return Err(format!(
+            "--quality only changes the pages of a PDF, but the output is {}. \
+             Ask for a .pdf, or leave --quality out.\n\n{USAGE}",
+            output.display()
+        ));
+    }
+
     Ok(Args {
         inputs,
-        output: output.ok_or_else(|| format!("No output file given.\n\n{USAGE}"))?,
+        output,
         rotate,
         crop,
         auto_crop,
         deskew: deskew_it,
         straighten: straighten_it,
         levels,
+        long_edge,
         sharpen: sharpen_radius,
         gray,
+        quality,
     })
+}
+
+/// The page qualities `save_page` counts in.
+///
+/// Checked while the arguments are read, so a typo is answered before the first
+/// photo is opened instead of after the last one is processed. `save_page` checks
+/// the same range again for its own callers, and USAGE prints it for the user.
+const QUALITY_RANGE: std::ops::RangeInclusive<u8> = 1..=100;
+
+/// Reads the JPEG quality of a page, refusing anything outside the range in one
+/// sentence - a number too big for the range and one too big for a byte are the
+/// same mistake to the person who typed it.
+fn parse_quality(value: &str) -> Result<u8, String> {
+    match value.parse::<u8>() {
+        Ok(quality) if QUALITY_RANGE.contains(&quality) => Ok(quality),
+        _ => Err(format!(
+            "--quality takes a number from {} to {}, but got {value:?}.",
+            QUALITY_RANGE.start(),
+            QUALITY_RANGE.end()
+        )),
+    }
 }
 
 /// Reads the four numbers of a crop box, given as "x,y,width,height".
@@ -445,6 +570,51 @@ mod scan_tests {
 
         assert!(args.deskew && args.straighten && args.levels);
         assert_eq!(args.sharpen, Some(SCAN_SHARPEN));
+    }
+
+    /// The two numbers of a page size are read as numbers, and nothing else: the
+    /// rung names the user reads belong to the client that offers them.
+    #[test]
+    fn a_page_size_is_read_as_two_plain_numbers() {
+        let args = parse("photo.jpg -o out.pdf --scan --quality 45 --long-edge 1700");
+
+        assert_eq!(args.quality, Some(45));
+        assert_eq!(args.long_edge, Some(1700));
+    }
+
+    /// Only a PDF has pages, so a quality asked for next to an image output has to
+    /// be answered. Carried out silently on nothing, it would look like the flag is
+    /// broken.
+    #[test]
+    fn a_quality_asked_for_next_to_an_image_output_is_refused() {
+        let words: Vec<String> = "photo.jpg -o page.jpeg --quality 45"
+            .split_whitespace()
+            .map(String::from)
+            .collect();
+
+        let refused = parse_args(&words).err().unwrap_or_default();
+
+        assert!(
+            refused.contains("--quality only changes the pages of a PDF"),
+            "{refused}"
+        );
+    }
+
+    /// A quality no encoder counts in is answered while the arguments are read, so
+    /// the user hears about his typo before forty photos are processed.
+    #[test]
+    fn a_quality_outside_the_range_is_refused_before_a_photo_is_opened() {
+        let words: Vec<String> = "photo.jpg -o out.pdf --quality 300"
+            .split_whitespace()
+            .map(String::from)
+            .collect();
+
+        let refused = parse_args(&words).err().unwrap_or_default();
+
+        assert_eq!(
+            refused,
+            "--quality takes a number from 1 to 100, but got \"300\"."
+        );
     }
 
     #[test]

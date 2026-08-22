@@ -27,7 +27,7 @@ Every command in this file runs from the repository root, `/Users/julianhahn/fre
 cargo test --workspace
 ```
 
-53 green on a Mac, 50 elsewhere - three tests need `sips` for HEIC. Then read
+67 green on a Mac, 64 elsewhere - three tests need `sips` for HEIC. Then read
 [Next steps](#next-steps): it is the one place that says what is being built right now, and
 every session leaves it correct.
 
@@ -46,8 +46,9 @@ every session leaves it correct.
 | `rotate(img, degrees)` | Quarter turns. |
 | `crop(img, x, y, w, h)` | Cuts to the box the user drew. Refuses a box that does not fit. |
 | `to_grayscale(img)` | Drops the colour. |
+| `fit_within(img, edge)` | Shrinks the page until neither edge is longer than that, keeping its shape. Never enlarges, and refuses a bound too small to read. |
 | `images_to_pdf(imgs, out)` | One page per image, A4, orientation follows the image, JPEG-compressed inside. |
-| `save_page(img, path)` | Writes one finished page as the JPEG the PDF will embed later. The file wears its real name only once it is whole. |
+| `save_page(img, path, quality)` | Writes one finished page as the JPEG the PDF will embed later. The file wears its real name only once it is whole. `PageQuality::UNCHANGED` writes the page the engine has always written; a lower `jpeg_quality` writes a smaller one. |
 | `pages_to_pdf(pages, out)` | The same PDF, built from page files instead of images: each JPEG goes in untouched and is never decoded, so a forty page scan fits in a phone's memory. |
 
 To watch it work on a real photo:
@@ -58,6 +59,11 @@ cargo run -p backend-core-runner -- <your-photo>.jpg -o out.pdf --scan
 
 `--scan` is shorthand for the four tools a photo of a document usually wants: deskew,
 straighten, levels, sharpen at radius 0.6. Every tool can also be asked for on its own.
+
+`--quality <1..100>` and `--long-edge <px>` say how small the pages should be, and are the two
+numbers a client's page size setting is built out of. Measured on one photographed page of
+dense text: the PDF is 1,327,815 bytes as it is, 730,453 at `--quality 45` (45% off) and
+368,148 at `--quality 45 --long-edge 1700` (72% off).
 
 ## Next steps
 

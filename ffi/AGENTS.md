@@ -6,11 +6,22 @@ something the engine already does.
 
 ## The boundary is the design
 
-What crosses: C strings, a size, an int32, and two structs of plain numbers holding
-no pointer - `FreepdfAdjustments` in, `FreepdfSuggestion` out, both copied at the
-boundary. `FreepdfAdjustments` is what makes the adjusted case **one** function
-instead of seven, Julian's decision of 2026-08-12
-(`user-flows.md` DECISIONS point 12). What never crosses: a pixel buffer, an image
+What crosses: C strings, a size, an int32, and three structs of plain numbers holding
+no pointer - `FreepdfAdjustments` and `FreepdfPageQuality` in, `FreepdfSuggestion` out,
+all copied at the boundary. `FreepdfAdjustments` is what makes the adjusted case **one**
+function instead of seven, Julian's decision of 2026-08-12
+(`user-flows.md` DECISIONS point 12).
+
+`FreepdfPageQuality` is how small the page should be: a quality and a longest edge, one
+rung of the setting the user is given. **NULL is Original**, the page every call wrote
+before the struct existed, so an app that knows nothing about page sizes keeps calling as
+it did. It is its own struct and not a field of `FreepdfAdjustments`, because that one is
+per page and the app serialises it as a version number and twenty-four values, while the
+page size is one choice for the whole scan - and `freepdf_scan_page` takes no
+`FreepdfAdjustments` at all and still needs the rung. The rung names ("Original",
+"Small", "Smallest") stay in the app: how many rungs there are and what they promise is a
+product decision, and freezing them here would make a wording change a change to this
+boundary. Still four functions. What never crosses: a pixel buffer, an image
 handle, an allocation the caller has to free, a callback. Adding any of those means
 the app has to manage the engine's memory, and a leak or a double free then lives on
 the phone rather than in a test.
@@ -38,7 +49,7 @@ the phone rather than in a test.
 automatic run never uses: crop, turn, grey. Two rules of its own: a step switched off
 is skipped, and a step that fails is reported rather than quietly left alone,
 because the user chose that value. The crop box is fractions 0…1 of the image this
-function holds at that moment, so it is cut after the 3000 px cap and after the turn.
+function holds at that moment, so it is cut after the page size step and after the turn.
 
 `scan_page` is the whole chain a photo of a document wants: deskew, straighten,
 levels, cap, sharpen, write. It sits in this crate because the engine offers single
@@ -54,6 +65,17 @@ is a client. Two rules hold it together:
   costs 33 bytes per pixel, so the cap is what keeps a 12 MP photo from peaking near
   400 MB on a phone iOS kills at about 1.4 GB. It is applied before sharpening, not
   after, and the number carries its measurement in `src/lib.rs`.
+- **The cap and the rung are two different things in the same place.** The cap is a
+  ceiling the app cannot go above; the rung's `longest_edge` is a size choice underneath
+  it, and both are carried out by `fit_to_the_page_size` before sharpening, for the same
+  reason: shrinking afterwards throws the sharpening away, and the crop is fractions of
+  the image this step made. A rung above the cap is refused, not quietly capped. The cap
+  keeps `thumbnail` and the rung gets the engine's `fit_within` (Lanczos3) - not for
+  memory but for **time**: measured once, the peak is 234 MB either way at 3000 px, while
+  the resample alone is 186 ms against 1331 ms. The Original page must pay nothing for a
+  setting it does not use. Those figures are one run with a counting allocator on x86_64
+  and they corrected a wrong claim about memory that stood in the code; measure again
+  before building on them.
 
 `suggest_adjustments` walks that same chain for the Adjust screen but writes nothing:
 the engine suggests, the user only fine-tunes (`user-flows.md` section 7). It has to
@@ -92,7 +114,10 @@ It builds the host library and compiles a Swift file against
 same mechanism as Xcode's bridging header setting - so the boundary is really
 crossed, without a simulator or Xcode. Then: a missing photo names the file, a null
 path still returns a sentence, a caller that passes no error buffer does not crash,
-a generated 3200x2400 photo comes out as a 3000 px page, the same photo through
+a generated 3200x2400 photo comes out as a 3000 px page, a rung asking for a 1700 px
+edge comes out at 1700 px through both writing functions, the same photo at quality 45
+comes out at the cap's size but fewer bytes, a quality of 0 comes back as a sentence with
+no page written, the same photo through
 `freepdf_adjust_page` comes out cropped and turned, the same crop fractions cut the same
 relative piece out of two differently sized photos, `freepdf_suggest_adjustments`
 calls that photo a sheet filling the frame with all four corners inside it and its

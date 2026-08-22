@@ -79,7 +79,8 @@ func writePhoto(_ file: URL, width: Int, height: Int) {
 // 1 - a photo that is not there: a failure, and a sentence naming the file, because
 // that name is the only clue the user gets.
 let absent = call { error, size in
-    freepdf_scan_page("/no/such/photo.jpg", work.appendingPathComponent("x.jpg").path, error, size)
+    freepdf_scan_page("/no/such/photo.jpg", work.appendingPathComponent("x.jpg").path,
+                      nil, error, size)
 }
 precondition(absent.status != 0, "a missing photo reported success")
 precondition(absent.message.contains("/no/such/photo.jpg"),
@@ -87,7 +88,7 @@ precondition(absent.message.contains("/no/such/photo.jpg"),
 
 // 2 - no path at all. A bug in the app, but it has to come back as a sentence.
 let nothing = call { error, size in
-    freepdf_scan_page(nil, work.appendingPathComponent("x.jpg").path, error, size)
+    freepdf_scan_page(nil, work.appendingPathComponent("x.jpg").path, nil, error, size)
 }
 precondition(nothing.status != 0 && !nothing.message.isEmpty,
              "a null path gave no sentence: \(nothing.status) \(nothing.message)")
@@ -95,19 +96,68 @@ precondition(nothing.status != 0 && !nothing.message.isEmpty,
 // 3 - a caller that wants the status only. Both shapes of it, because passing NULL
 // with a size is the mistake that actually happens.
 let page = work.appendingPathComponent("0001.jpg")
-precondition(freepdf_scan_page("/no/such/photo.jpg", page.path, nil, 0) != 0,
+precondition(freepdf_scan_page("/no/such/photo.jpg", page.path, nil, nil, 0) != 0,
              "a call with no error buffer did not report the failure")
-precondition(freepdf_scan_page("/no/such/photo.jpg", page.path, nil, errorSize) != 0,
+precondition(freepdf_scan_page("/no/such/photo.jpg", page.path, nil, nil, errorSize) != 0,
              "a call with a null buffer and a size did not report the failure")
 
-// 4 - the real thing. 3200 px in, and the page comes back at the 3000 px cap.
+// 4 - the real thing. 3200 px in, and the page comes back at the 3000 px cap. The
+// rung is nil here, which means Original: the page every one of these calls wrote
+// before FreepdfPageQuality existed. That it is that page byte for byte is pinned in
+// Rust, where the numbers can be read off the commit that wrote it - the engine test
+// `the_default_quality_writes_the_very_same_page_as_before`, and
+// `no_rung_at_all_writes_the_same_page_as_the_original_rung` in src/lib.rs. What can
+// be seen from here is its size, and its size is the cap.
 let photo = work.appendingPathComponent("photo.jpg")
 writePhoto(photo, width: 3200, height: 2400)
-let scanned = call { error, size in freepdf_scan_page(photo.path, page.path, error, size) }
+let scanned = call { error, size in freepdf_scan_page(photo.path, page.path, nil, error, size) }
 precondition(scanned.status == 0, "scanning the photo failed: \(scanned.message)")
 let size = pixelSize(of: page)
 precondition(max(size.width, size.height) == 3000,
              "the page is \(size.width)x\(size.height), so the 3000 px cap did not hold")
+
+// 4a - a rung really crosses: a smaller longest edge gives a page of that size. Both
+// numbers at once, which is the rung a user picking "Smallest" gets.
+let smallest = work.appendingPathComponent("0009.jpg")
+var smallestRung = FreepdfPageQuality(jpeg_quality: 45, longest_edge: 1700)
+let atARung = call { error, size in
+    freepdf_scan_page(photo.path, smallest.path, &smallestRung, error, size)
+}
+precondition(atARung.status == 0, "the rung was refused: \(atARung.message)")
+let rungSize = pixelSize(of: smallest)
+precondition(max(rungSize.width, rungSize.height) == 1700,
+             "the page is \(rungSize.width)x\(rungSize.height), so the rung's 1700 px edge did not arrive")
+
+// 4b - the quality on its own, at Original's size. A page shrunk to 1700 px would be
+// smaller whatever quality it was written at, so this is the only check that sees the
+// quality arrive: same pixels, fewer bytes.
+let originalBytes = (try! Data(contentsOf: page)).count
+let lessQuality = work.appendingPathComponent("0010.jpg")
+var lessQualityRung = FreepdfPageQuality(jpeg_quality: 45, longest_edge: 0)
+let atLowQuality = call { error, size in
+    freepdf_scan_page(photo.path, lessQuality.path, &lessQualityRung, error, size)
+}
+precondition(atLowQuality.status == 0, "the low quality was refused: \(atLowQuality.message)")
+let lessQualitySize = pixelSize(of: lessQuality)
+precondition(max(lessQualitySize.width, lessQualitySize.height) == 3000,
+             "a rung that asked for every pixel came out at \(lessQualitySize.width)x\(lessQualitySize.height)")
+let lessQualityBytes = (try! Data(contentsOf: lessQuality)).count
+precondition(lessQualityBytes < originalBytes,
+             "quality 45 wrote \(lessQualityBytes) bytes against Original's \(originalBytes), so the quality did not arrive")
+
+// 4c - a quality no encoder counts in is refused in a sentence, and no page is left
+// behind. It is not pulled back into range: a page quietly written at another quality
+// than the user picked makes the whole setting look like it does nothing.
+let refusedPage = work.appendingPathComponent("0011.jpg")
+var noQuality = FreepdfPageQuality(jpeg_quality: 0, longest_edge: 0)
+let refused = call { error, size in
+    freepdf_scan_page(photo.path, refusedPage.path, &noQuality, error, size)
+}
+precondition(refused.status != 0, "a page quality of 0 was accepted")
+precondition(refused.message.contains("quality") && refused.message.contains("100"),
+             "the sentence does not say what a quality may be: \(refused.message)")
+precondition(!FileManager.default.fileExists(atPath: refusedPage.path),
+             "a refused page was written anyway: \(refusedPage.path)")
 
 // 5 - the adjusted case, which is the only place a struct crosses. A quarter turn
 // and a crop, so the page cannot come back the shape the automatic run gives it.
@@ -122,7 +172,7 @@ values.crop_height = 0.6
 values.quarter_turns = 1
 values.grey = 1
 let turned = call { error, size in
-    freepdf_adjust_page(photo.path, adjusted.path, &values, error, size)
+    freepdf_adjust_page(photo.path, adjusted.path, &values, nil, error, size)
 }
 precondition(turned.status == 0, "adjusting the photo failed: \(turned.message)")
 let turnedSize = pixelSize(of: adjusted)
@@ -144,7 +194,7 @@ sameCut.crop_height = 0.25
 func cutSize(_ from: URL, _ into: String) -> (width: Int, height: Int) {
     let out = work.appendingPathComponent(into)
     let done = call { error, size in
-        freepdf_adjust_page(from.path, out.path, &sameCut, error, size)
+        freepdf_adjust_page(from.path, out.path, &sameCut, nil, error, size)
     }
     precondition(done.status == 0, "the fraction crop was refused: \(done.message)")
     return pixelSize(of: out)
@@ -166,7 +216,7 @@ toTheEdge.crop_y = 1.0 / 3.0
 toTheEdge.crop_height = 2.0 / 3.0
 let atTheEdge = call { error, size in
     freepdf_adjust_page(photo.path, work.appendingPathComponent("0008.jpg").path,
-                        &toTheEdge, error, size)
+                        &toTheEdge, nil, error, size)
 }
 precondition(atTheEdge.status == 0, "a crop reaching the far edge was refused: \(atTheEdge.message)")
 
@@ -181,11 +231,11 @@ levels.adjust_the_tones = 1
 levels.black = (20, 20, 20)
 levels.white = (200, 200, 200)
 precondition(call { error, size in
-    freepdf_adjust_page(photo.path, evenly.path, &levels, error, size)
+    freepdf_adjust_page(photo.path, evenly.path, &levels, nil, error, size)
 }.status == 0, "the even levels were refused")
 levels.black = (20, 90, 20)
 precondition(call { error, size in
-    freepdf_adjust_page(photo.path, perChannel.path, &levels, error, size)
+    freepdf_adjust_page(photo.path, perChannel.path, &levels, nil, error, size)
 }.status == 0, "the per channel levels were refused")
 precondition(try! Data(contentsOf: evenly) != Data(contentsOf: perChannel),
              "one channel's black point changed nothing, so the three colours are not kept apart")
@@ -209,7 +259,7 @@ for pair in 0..<4 {
 // And what it suggests is something freepdf_adjust_page accepts unchanged.
 let asSuggested = work.appendingPathComponent("0003.jpg")
 let reused = call { error, size in
-    freepdf_adjust_page(photo.path, asSuggested.path, &suggestion.values, error, size)
+    freepdf_adjust_page(photo.path, asSuggested.path, &suggestion.values, nil, error, size)
 }
 precondition(reused.status == 0, "the suggested values were refused: \(reused.message)")
 
@@ -258,6 +308,18 @@ precondition(forTheirSheet.values.black != suggestion.values.black
 let theirCorners = withUnsafeBytes(of: forTheirSheet.values.corners) { Array($0.bindMemory(to: Float.self)) }
 precondition(theirCorners == corners,
              "the corners handed back changed with the sheet that was asked about")
+
+// 5f - the adjusted case takes a rung as well, on its own pointer. Values that change
+// nothing, so the only thing that can shape this page is the rung: 3200 px in, 1700 out.
+let adjustedSmall = work.appendingPathComponent("0012.jpg")
+var nothingToAdjust = FreepdfAdjustments()
+let atARungAdjusted = call { error, size in
+    freepdf_adjust_page(photo.path, adjustedSmall.path, &nothingToAdjust, &smallestRung, error, size)
+}
+precondition(atARungAdjusted.status == 0, "the adjusted rung was refused: \(atARungAdjusted.message)")
+let adjustedSmallSize = pixelSize(of: adjustedSmall)
+precondition(max(adjustedSmallSize.width, adjustedSmallSize.height) == 1700,
+             "the adjusted page is \(adjustedSmallSize.width)x\(adjustedSmallSize.height), so the rung did not reach it")
 
 // 6 - and the pages become a PDF. Two of them, so the array really is walked.
 let pdf = work.appendingPathComponent("scan.pdf")

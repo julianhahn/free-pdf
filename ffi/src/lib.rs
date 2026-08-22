@@ -6,9 +6,9 @@
 //! ([`../AGENTS.md`](../AGENTS.md)). This crate is a client - the smallest one
 //! there is, and the only one that has to speak C.
 //!
-//! What crosses the boundary: C strings, a size, an int32, and two structs of plain
-//! numbers - `FreepdfAdjustments` in, `FreepdfSuggestion` out, both copied at the
-//! boundary. What never crosses: a pixel buffer, an image
+//! What crosses the boundary: C strings, a size, an int32, and three structs of plain
+//! numbers - `FreepdfAdjustments` and `FreepdfPageQuality` in, `FreepdfSuggestion`
+//! out, all copied at the boundary. What never crosses: a pixel buffer, an image
 //! handle, an allocation the caller has to free, a callback. The rules of this crate are in [`AGENTS.md`](./AGENTS.md).
 
 // Edition 2024's rule, asked for early: an `unsafe fn` does not quietly make its whole
@@ -16,8 +16,9 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 use core_engine::{
-    apply_levels, crop, deskew, find_paper, load_image, pages_to_pdf, rotate, save_page, sharpen,
-    straighten, suggest_levels, suggest_straightening, to_grayscale, Levels, Point,
+    apply_levels, crop, deskew, find_paper, fit_within, load_image, pages_to_pdf, rotate,
+    save_page, sharpen, straighten, suggest_levels, suggest_straightening, to_grayscale,
+    DynamicImage, Levels, PageQuality, Point,
 };
 use std::ffi::{c_char, CStr};
 use std::panic::{catch_unwind, UnwindSafe};
@@ -30,9 +31,30 @@ use std::path::{Path, PathBuf};
 /// `blur_advanced`, which allocates **two** f32 planes of `w * h * 3 * 4` bytes
 /// (sample.rs:1437 and :1464), on top of the `to_rgb8` clone and the output. A 12 MP
 /// photo would peak near 400 MB there, and iOS kills a foreground app around 1.4 GB
-/// on a 3 GB phone. At this cap the peak is about 223 MB. Raise the number if fine
-/// print comes out soft; the cost is 33 bytes of peak per pixel added.
+/// on a 3 GB phone. At this cap the peak is about 223 MB - measured again later at
+/// 234 MB, see [`fit_to_the_page_size`]. Raise the number if fine print comes out
+/// soft; the cost is 33 bytes of peak per pixel added.
+///
+/// It stays the ceiling now that a caller may also ask for a smaller page. The two
+/// numbers are different things at the same place: this one is a **memory** cap the
+/// app cannot go above, [`FreepdfPageQuality::longest_edge`] is a **size** choice
+/// underneath it.
 const LONGEST_EDGE: u32 = 3000;
+
+/// The [`FreepdfPageQuality::longest_edge`] that means "keep every pixel", and the
+/// only one that writes today's page.
+///
+/// Zero rather than the cap itself, so a caller that wants no change writes one
+/// value it can find in the header instead of repeating a number that may move.
+const KEEP_EVERY_PIXEL: i32 = 0;
+
+/// The page qualities this boundary passes on, of the numbers an `int32_t` can hold.
+///
+/// The same range [`save_page`] enforces, written twice on purpose: an `int32_t`
+/// carries -5 and 300, a `u8` cannot, so the engine would never see those at all.
+/// The sentence below is worded as the engine words it, so the user reads one
+/// sentence whichever side of the boundary caught his number.
+const QUALITY_RANGE: std::ops::RangeInclusive<i32> = 1..=100;
 
 /// How much a scanned page is sharpened by, in pixels of radius. The same value the
 /// command line runner's `--scan` uses, measured there against a hand edit of the
@@ -41,23 +63,53 @@ const LONGEST_EDGE: u32 = 3000;
 /// worth making in both.
 const SCAN_SHARPEN: f32 = 0.6;
 
+/// How small a written page should be: the JPEG quality, and the longest edge the
+/// page may keep.
+///
+/// One rung of the page size setting the user is given. The numbers live here and
+/// the names he reads for them ("Original", "Small") live in the app, because how
+/// many rungs there are and what they promise is a product decision, and freezing
+/// them into a C struct would make every wording change a change to this boundary.
+///
+/// A struct rather than a field of [`FreepdfAdjustments`] for two reasons:
+/// `FreepdfAdjustments` is per page and the app serialises it as a version number
+/// and twenty-four values, while the page size is one choice for the whole scan;
+/// and [`freepdf_scan_page`] takes no `FreepdfAdjustments` at all and still needs
+/// the rung. It is read only, copied out at the boundary, and holds no pointer.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct FreepdfPageQuality {
+    /// JPEG quality from 1 to 100. Higher is a bigger, better looking page.
+    pub jpeg_quality: i32,
+    /// The longest edge the page may keep, in pixels, or `KEEP_EVERY_PIXEL` to
+    /// keep every pixel. It is a size choice under the memory cap
+    /// `LONGEST_EDGE`, never above it - both are private to this crate, because
+    /// the app reads them from the header.
+    pub longest_edge: i32,
+}
+
 /// Turns one photo into one finished page file.
 ///
 /// The page is written by [`save_page`], so it wears its real name only once it is
 /// whole, and its bytes are exactly what [`freepdf_pages_to_pdf`] later embeds.
 ///
+/// `quality` is the rung the user picked, or null for Original - the page every
+/// call of this function wrote before the rungs existed, down to the byte.
+///
 /// Returns 0 on success. Anything else means nothing was written and `error` holds a
 /// sentence for the user.
 ///
 /// # Safety
-/// Each path is either null or a NUL-terminated C string, and `error` is either null
-/// or `error_size` bytes the caller owns. C cannot express that, which is why the
+/// Each path is either null or a NUL-terminated C string, `quality` is either null
+/// or one readable [`FreepdfPageQuality`], and `error` is either null or
+/// `error_size` bytes the caller owns. C cannot express that, which is why the
 /// header says nothing about it: the app's Swift wrapper is the only caller, and it
 /// passes `URL.path` and its own buffer.
 #[no_mangle]
 pub unsafe extern "C" fn freepdf_scan_page(
     photo_path: *const c_char,
     out_page_path: *const c_char,
+    quality: *const FreepdfPageQuality,
     error: *mut c_char,
     error_size: usize,
 ) -> i32 {
@@ -65,8 +117,9 @@ pub unsafe extern "C" fn freepdf_scan_page(
     // pointers, and it cannot panic, so nothing unsafe happens under catch_unwind.
     let photo = unsafe { path_from(photo_path, "The photo") };
     let page = unsafe { path_from(out_page_path, "The page to write") };
+    let rung = unsafe { rung_from(quality) };
 
-    guard(error, error_size, move || scan_page(&photo?, &page?))
+    guard(error, error_size, move || scan_page(&photo?, &page?, rung))
 }
 
 /// Every value the Adjust screen can move, in the order the recipe uses them.
@@ -90,7 +143,7 @@ pub struct FreepdfAdjustments {
     /// 0 sharpens nothing: the engine refuses radius 0, so the call is skipped.
     pub sharpen_radius: f32,
     /// The cut, as fractions 0…1 of the image this recipe holds right before cropping
-    /// - after the corners, the straightening, the 3000 px cap and the turn. Fractions
+    /// - after the corners, the straightening, the page size step and the turn. Fractions
     /// and not pixels because that image is made here and the app never sees its size;
     /// the same fraction then means the same piece on every page. A width or height of
     /// 0, or one too thin to reach one pixel, cuts nothing.
@@ -181,18 +234,24 @@ pub unsafe extern "C" fn freepdf_suggest_adjustments(
 /// that call once the user has adjusted something. The page is written by
 /// [`save_page`], so it wears its real name only once it is whole.
 ///
+/// `quality` is the rung the user picked, or null for Original, exactly as in
+/// [`freepdf_scan_page`]: the page size is one choice for the whole scan, so it is
+/// not one of the per page values in `values`.
+///
 /// Returns 0 on success. Anything else means nothing was written and `error` holds a
 /// sentence for the user.
 ///
 /// # Safety
 /// Each path is either null or a NUL-terminated C string, `values` is either null or
-/// one readable [`FreepdfAdjustments`], and `error` is either null or `error_size`
-/// bytes the caller owns.
+/// one readable [`FreepdfAdjustments`], `quality` is either null or one readable
+/// [`FreepdfPageQuality`], and `error` is either null or `error_size` bytes the
+/// caller owns.
 #[no_mangle]
 pub unsafe extern "C" fn freepdf_adjust_page(
     photo_path: *const c_char,
     out_page_path: *const c_char,
     values: *const FreepdfAdjustments,
+    quality: *const FreepdfPageQuality,
     error: *mut c_char,
     error_size: usize,
 ) -> i32 {
@@ -205,9 +264,10 @@ pub unsafe extern "C" fn freepdf_adjust_page(
     } else {
         Ok(unsafe { *values })
     };
+    let rung = unsafe { rung_from(quality) };
 
     guard(error, error_size, move || {
-        adjust_page(&photo?, &page?, &values?)
+        adjust_page(&photo?, &page?, &values?, rung)
     })
 }
 
@@ -245,7 +305,11 @@ pub unsafe extern "C" fn freepdf_pages_to_pdf(
 /// it - the page is then a piece of the sheet, and the pages screen says so. That is not politeness. One awkward photo that returned an error
 /// would make the whole scan unfinishable, and resuming would retry that same photo
 /// for ever.
-fn scan_page(photo: &Path, page: &Path) -> Result<(), String> {
+fn scan_page(photo: &Path, page: &Path, rung: Option<FreepdfPageQuality>) -> Result<(), String> {
+    // Before the photo is even read: a rung nobody can write is answered at once,
+    // not after a minute of work on a page that will never be written.
+    let (quality, page_edge) = rung_numbers(rung)?;
+
     let mut img = load_image(photo)?;
 
     if let Some(sheet) = find_paper(&img) {
@@ -259,15 +323,137 @@ fn scan_page(photo: &Path, page: &Path) -> Result<(), String> {
 
     img = apply_levels(&img, suggest_levels(&img));
 
-    // Shrunk before sharpening, because sharpening is where the memory goes.
-    // `thumbnail` is the integer box filter and needs no f32 scratch of its own,
-    // unlike `resize`, which would allocate exactly what this cap exists to avoid.
-    if img.width().max(img.height()) > LONGEST_EDGE {
-        img = img.thumbnail(LONGEST_EDGE, LONGEST_EDGE);
-    }
+    img = fit_to_the_page_size(img, page_edge)?;
 
     img = sharpen(&img, SCAN_SHARPEN)?;
-    save_page(&img, page)
+    save_page(&img, page, quality)
+}
+
+/// The two numbers of the rung the caller asked for: the quality [`save_page`] is
+/// handed, and the longest edge the page may keep on the way there.
+///
+/// No rung at all - a null pointer - is Original: [`PageQuality::UNCHANGED`] with
+/// every pixel kept, which is byte for byte the page this crate wrote before there
+/// were rungs. Neither number is bent to fit. A page quietly written at another
+/// size than the user picked looks like the setting does nothing, so a number that
+/// cannot be used is a sentence and no file.
+///
+/// The quality travels on to [`save_page`] with the engine's own longest edge left
+/// alone, because the shrinking happens at the size cap and not while the page is
+/// written: a page shrunk after sharpening throws the sharpening away, and the
+/// engine refuses to do it there for that reason.
+///
+/// - Parameters:
+///   rung: The rung the caller asked for, or `None` for Original.
+/// - Returns:
+///   The quality for [`save_page`], and the longest edge in pixels or `None` to
+///   keep every pixel - or a sentence naming the number that cannot be used.
+fn rung_numbers(rung: Option<FreepdfPageQuality>) -> Result<(PageQuality, Option<u32>), String> {
+    let Some(rung) = rung else {
+        return Ok((PageQuality::UNCHANGED, None));
+    };
+
+    // One sentence for every number that is not a page quality, whether it missed
+    // the range or does not fit the byte the encoder counts in. The second check
+    // cannot fire after the first; it is there so no number is cast blindly.
+    let not_a_quality = || {
+        format!(
+            "The page quality must be between {} and {}, but was {}.",
+            QUALITY_RANGE.start(),
+            QUALITY_RANGE.end(),
+            rung.jpeg_quality
+        )
+    };
+    if !QUALITY_RANGE.contains(&rung.jpeg_quality) {
+        return Err(not_a_quality());
+    }
+    let jpeg_quality = u8::try_from(rung.jpeg_quality).map_err(|_| not_a_quality())?;
+
+    let quality = PageQuality {
+        jpeg_quality,
+        // The engine's own "keep every pixel", read off `UNCHANGED` so this crate
+        // does not write that number down a second time.
+        longest_edge: PageQuality::UNCHANGED.longest_edge,
+    };
+
+    if rung.longest_edge == KEEP_EVERY_PIXEL {
+        return Ok((quality, None));
+    }
+    let edge = u32::try_from(rung.longest_edge).map_err(|_| {
+        format!(
+            "A page cannot keep a longest edge of {} pixels.",
+            rung.longest_edge
+        )
+    })?;
+    if edge > LONGEST_EDGE {
+        return Err(format!(
+            "A page cannot keep a longest edge of {edge} pixels. {LONGEST_EDGE} is the most, \
+             so that the page still fits in the phone's memory while it is sharpened."
+        ));
+    }
+
+    // The floor - how small a page may be asked to become before it stops being a
+    // document - is the engine's, and `fit_within` says that sentence itself.
+    Ok((quality, Some(edge)))
+}
+
+/// Shrinks the page: to the size the rung asked for, or to the memory cap when the
+/// rung asked for every pixel.
+///
+/// The cap and the rung are two different things in the same place.
+/// [`LONGEST_EDGE`] is a **memory** cap and stays the ceiling - it is what keeps
+/// `sharpen` from peaking where iOS kills the app. The rung's edge is a **size**
+/// choice underneath it, the smaller page the user asked for. Both happen here,
+/// before sharpening: shrinking afterwards throws the sharpening away, and the crop
+/// in [`adjust_page`] is fractions of the image this step made.
+///
+/// The cap keeps `thumbnail`, the box filter; the rung gets [`fit_within`], which is
+/// Lanczos3. Not because of memory: the peak of a whole page is 234 MB either way at
+/// 3000 px, because `sharpen`'s 33 bytes per pixel comes later and dominates. What
+/// separates them is **time**. The resample alone is 186 ms with the box filter
+/// against 1331 ms with Lanczos3 at 3000 px, and the cap sits on the path every
+/// Original page takes, which must pay nothing for a setting it does not use. A rung
+/// costs nothing either, because it shrinks further: at a 1754 px edge the whole page
+/// took 743 ms against today's 763 ms, and peaked at 116 MB against 234 MB.
+///
+/// Those figures were measured once, with a counting allocator on x86_64, and they
+/// disagree with what stood here before - that `resize` "would allocate exactly what
+/// this cap exists to avoid", which is wrong about memory. Measure again on a phone
+/// before building anything on them.
+///
+/// - Parameters:
+///   img: The page, levelled and not yet sharpened.
+///   longest_edge: The rung's edge in pixels, or `None` to keep every pixel the
+///   memory cap allows.
+/// - Returns:
+///   The page at that size, or the sentence [`fit_within`] gives for a bound too
+///   small for a readable page.
+fn fit_to_the_page_size(
+    img: DynamicImage,
+    longest_edge: Option<u32>,
+) -> Result<DynamicImage, String> {
+    match longest_edge {
+        Some(edge) => fit_within(&img, edge),
+        None if img.width().max(img.height()) > LONGEST_EDGE => {
+            Ok(img.thumbnail(LONGEST_EDGE, LONGEST_EDGE))
+        }
+        None => Ok(img),
+    }
+}
+
+/// Reads the rung the caller asked for, or `None` when it passed no pointer.
+///
+/// Null is Original and not a mistake, which is what lets an app that knows nothing
+/// about page sizes keep calling as it always did.
+///
+/// # Safety
+/// `quality` is either null or one readable [`FreepdfPageQuality`].
+unsafe fn rung_from(quality: *const FreepdfPageQuality) -> Option<FreepdfPageQuality> {
+    if quality.is_null() {
+        None
+    } else {
+        Some(unsafe { *quality })
+    }
 }
 
 /// The values [`scan_page`] would have picked for itself, without writing a page.
@@ -349,8 +535,15 @@ fn suggest_adjustments(
 /// step that was switched off is skipped rather than suggested, and a step that fails
 /// - an angle that is not a quarter turn - is reported instead of quietly left alone.
 /// The crop is fractions of the image this function holds at that moment, so it is
-/// cut after the 3000 px cap and after the turn, not before.
-fn adjust_page(photo: &Path, page: &Path, values: &FreepdfAdjustments) -> Result<(), String> {
+/// cut after the page size step and after the turn, not before.
+fn adjust_page(
+    photo: &Path,
+    page: &Path,
+    values: &FreepdfAdjustments,
+    rung: Option<FreepdfPageQuality>,
+) -> Result<(), String> {
+    let (quality, page_edge) = rung_numbers(rung)?;
+
     let mut img = load_image(photo)?;
 
     if values.pull_the_sheet_flat != 0 {
@@ -371,9 +564,7 @@ fn adjust_page(photo: &Path, page: &Path, values: &FreepdfAdjustments) -> Result
         );
     }
 
-    if img.width().max(img.height()) > LONGEST_EDGE {
-        img = img.thumbnail(LONGEST_EDGE, LONGEST_EDGE);
-    }
+    img = fit_to_the_page_size(img, page_edge)?;
 
     if values.sharpen_radius > 0.0 {
         img = sharpen(&img, values.sharpen_radius)?;
@@ -393,7 +584,7 @@ fn adjust_page(photo: &Path, page: &Path, values: &FreepdfAdjustments) -> Result
         img = to_grayscale(&img);
     }
 
-    save_page(&img, page)
+    save_page(&img, page, quality)
 }
 
 /// The crop fractions as pixels of the image they are cut from, or `None` when there is
@@ -546,12 +737,10 @@ mod tests {
     /// back byte for byte the same would mean the struct never arrived.
     #[test]
     fn adjusting_a_page_writes_something_else_than_the_automatic_run() {
-        let folder = std::env::temp_dir().join("freepdf_ffi_adjust");
-        std::fs::create_dir_all(&folder).expect("the temp folder");
-        let photo = folder.join("photo.jpg");
+        let folder = own_folder("adjust");
+        let photo = a_photo_of_a_sheet(&folder, 600, 400);
         let automatic = folder.join("automatic.jpg");
         let adjusted = folder.join("adjusted.jpg");
-        save_page(&a_photographed_sheet(), &photo).expect("the photo");
         let values = FreepdfAdjustments {
             corners: [0.0; 8],
             pull_the_sheet_flat: 0,
@@ -569,13 +758,20 @@ mod tests {
         };
 
         let scanned = unsafe {
-            freepdf_scan_page(c_path(&photo).as_ptr(), c_path(&automatic).as_ptr(), std::ptr::null_mut(), 0)
+            freepdf_scan_page(
+                c_path(&photo).as_ptr(),
+                c_path(&automatic).as_ptr(),
+                std::ptr::null(),
+                std::ptr::null_mut(),
+                0,
+            )
         };
         let status = unsafe {
             freepdf_adjust_page(
                 c_path(&photo).as_ptr(),
                 c_path(&adjusted).as_ptr(),
                 &values,
+                std::ptr::null(),
                 std::ptr::null_mut(),
                 0,
             )
@@ -596,14 +792,13 @@ mod tests {
     /// piece of the sheet, and smaller than the photo it came from.
     #[test]
     fn a_sheet_running_off_the_photo_is_cut_anyway() {
-        let folder = std::env::temp_dir().join("freepdf_ffi_runs_off");
-        std::fs::create_dir_all(&folder).expect("the temp folder");
+        let folder = own_folder("runs_off");
         let photo = folder.join("photo.jpg");
         let page = folder.join("page.jpg");
         let shot = a_sheet_running_off_the_bottom();
-        save_page(&shot, &photo).expect("the photo");
+        save_page(&shot, &photo, PageQuality::UNCHANGED).expect("the photo");
 
-        scan_page(&photo, &page).expect("the page was not written");
+        scan_page(&photo, &page, None).expect("the page was not written");
 
         let written = load_image(&page).expect("the page");
         assert!(
@@ -635,9 +830,9 @@ mod tests {
     }
 
     /// Paper with lines of writing on it, built here rather than read from
-    /// `test_images/`: no test reads a file it did not write itself.
-    fn a_photographed_sheet() -> core_engine::DynamicImage {
-        let (width, height) = (600u32, 400u32);
+    /// `test_images/`: no test reads a file it did not write itself. The size is
+    /// asked for, because a page size can only be seen on a photo bigger than it.
+    fn a_photographed_sheet(width: u32, height: u32) -> core_engine::DynamicImage {
         let mut img = core_engine::DynamicImage::new_rgb8(width, height);
         // Written through the raw samples, because this crate keeps no `image`
         // dependency of its own - the engine owns that version.
@@ -649,6 +844,131 @@ mod tests {
             samples[pixel * 3..pixel * 3 + 3].copy_from_slice(&colour);
         }
         img
+    }
+
+    /// Writes a photo of a sheet into that folder and gives its path back: every
+    /// test in here starts from a photo on disk, the way the app calls it.
+    fn a_photo_of_a_sheet(folder: &Path, width: u32, height: u32) -> PathBuf {
+        let photo = folder.join("photo.jpg");
+        let sheet = a_photographed_sheet(width, height);
+        save_page(&sheet, &photo, PageQuality::UNCHANGED).expect("the photo");
+        photo
+    }
+
+    /// The folder one test writes its own files into. Its own name, so two tests
+    /// running side by side never overwrite each other's page.
+    fn own_folder(name: &str) -> PathBuf {
+        let folder = std::env::temp_dir().join(format!("freepdf_ffi_{name}"));
+        std::fs::create_dir_all(&folder).expect("the temp folder");
+        folder
+    }
+
+    /// Null is Original: an app that asks for no page size at all gets the page
+    /// this crate has always written. The same photo asked twice - once with no
+    /// rung, once with the rung Original stands for - has to give the same bytes,
+    /// or the default moved while nobody was looking.
+    #[test]
+    fn no_rung_at_all_writes_the_same_page_as_the_original_rung() {
+        let folder = own_folder("no_rung");
+        let photo = a_photo_of_a_sheet(&folder, 900, 700);
+        let (silent, asked) = (folder.join("silent.jpg"), folder.join("asked.jpg"));
+        let original = FreepdfPageQuality {
+            jpeg_quality: i32::from(PageQuality::UNCHANGED.jpeg_quality),
+            longest_edge: KEEP_EVERY_PIXEL,
+        };
+
+        let without = unsafe {
+            freepdf_scan_page(
+                c_path(&photo).as_ptr(),
+                c_path(&silent).as_ptr(),
+                std::ptr::null(),
+                std::ptr::null_mut(),
+                0,
+            )
+        };
+        let with = unsafe {
+            freepdf_scan_page(
+                c_path(&photo).as_ptr(),
+                c_path(&asked).as_ptr(),
+                &original,
+                std::ptr::null_mut(),
+                0,
+            )
+        };
+
+        assert_eq!((without, with), (0, 0), "one of the two runs failed");
+        assert_eq!(
+            std::fs::read(&silent).expect("the page written with no rung"),
+            std::fs::read(&asked).expect("the page written at Original"),
+            "no rung and the Original rung wrote two different pages"
+        );
+    }
+
+    /// A rung with a smaller longest edge has to reach the page. Only the pixel
+    /// size can see this: a page that dropped the rung on the floor still opens
+    /// and still looks right.
+    #[test]
+    fn a_page_asked_for_at_a_smaller_edge_comes_out_at_that_edge() {
+        let folder = own_folder("small_edge");
+        let photo = a_photo_of_a_sheet(&folder, 1600, 1200);
+        let page = folder.join("page.jpg");
+        let rung = FreepdfPageQuality {
+            jpeg_quality: 45,
+            longest_edge: 800,
+        };
+
+        let status = unsafe {
+            freepdf_scan_page(
+                c_path(&photo).as_ptr(),
+                c_path(&page).as_ptr(),
+                &rung,
+                std::ptr::null_mut(),
+                0,
+            )
+        };
+
+        assert_eq!(status, 0, "the rung was refused");
+        let written = load_image(&page).expect("the page");
+        assert_eq!(
+            written.width().max(written.height()),
+            800,
+            "the page is {}x{}",
+            written.width(),
+            written.height()
+        );
+    }
+
+    /// A quality no encoder counts in is refused, and nothing is left on disk. It
+    /// is not pulled back into range: a page quietly written at another quality
+    /// than the user picked makes the setting look like it does nothing.
+    #[test]
+    fn a_page_quality_of_zero_is_refused_and_no_page_is_written() {
+        let folder = own_folder("quality_zero");
+        let photo = a_photo_of_a_sheet(&folder, 600, 400);
+        let page = folder.join("page.jpg");
+        let _ = std::fs::remove_file(&page);
+        let mut error = [0 as c_char; 128];
+        let rung = FreepdfPageQuality {
+            jpeg_quality: 0,
+            longest_edge: KEEP_EVERY_PIXEL,
+        };
+
+        let status = unsafe {
+            freepdf_scan_page(
+                c_path(&photo).as_ptr(),
+                c_path(&page).as_ptr(),
+                &rung,
+                error.as_mut_ptr(),
+                error.len(),
+            )
+        };
+
+        assert_eq!(status, 1);
+        assert_eq!(
+            sentence(&error),
+            "The page quality must be between 1 and 100, but was 0."
+        );
+        assert!(!page.exists(), "a refused page was written anyway");
     }
 
     fn c_path(path: &Path) -> std::ffi::CString {
