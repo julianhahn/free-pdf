@@ -20,9 +20,20 @@ byte; the runner grew `--quality` and `--long-edge`. Still four C functions - a 
 a fifth. Then the app made quality 45 its default: one word in `quality.txt` per scan, in
 `sweep()`'s keep list, and one switch **Smaller pages** on the check after the first photo,
 whose preview runs at that same rung so what Julian judges is what gets written (his reversal
-of the picker half of `user-flows.md` DECISIONS 7). Measured page against page on dense text:
-48.6% off at quality 45, 74.0% with a 1700 px edge - and that second rung stays out of the UI,
-because 150 dpi costs the OCR the project wants later.
+of the picker half of `user-flows.md` DECISIONS 7). Measured on dense text: **about 40% off at
+quality 45 and about 71% with a 1700 px edge**, against the page the app writes today. The
+runner prints 48.6% and 74.0% for the same rungs, and both are right - its Original goes
+through `images_to_pdf`, which never sees the recode, so name the baseline whenever a
+percentage is quoted. That second rung stays out of the UI, because 150 dpi costs the OCR the
+project wants later.
+
+A review of the iOS work then found three real bugs, fixed in `0548c05`: the switch could jump
+while the picture above it was still the other rung's page (it says "Making this page again…"
+and goes dead while the run is out), a fast flip started one engine run per tap instead of
+waiting out the 300 ms settle the Adjust preview already waits, and `setQuality` discarded what
+`writeQuality` returned, so a failed write would have left pages at a rung the disk does not
+name. One thing is written down rather than fixed: a kill mid-rewrite leaves the word new and
+some pages old, invisibly, and flipping twice repairs it ([`../ios/AGENTS.md`](./ios/AGENTS.md)).
 
 `cargo test --workspace` is 65 green here and 68 on a Mac.
 
