@@ -42,6 +42,11 @@ struct FirstPageCheck: View {
     /// The engine's own sentence if it refused the photo. Both controls still work then -
     /// a page the engine refused is a reason to retake, not a trap.
     @State private var failure: String?
+    /// A run is out. The picture on screen is then the page the *other* rung made, so the
+    /// screen has to say so - previewing one thing while writing another is the whole
+    /// failure this screen exists to prevent, and a switch that jumps while the picture
+    /// stays put is exactly that failure with no sentence under it.
+    @State private var making = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Token.Size.space4) {
@@ -121,13 +126,27 @@ struct FirstPageCheck: View {
             .toggleStyle(.switch)
             .tint(Token.Palette.accent)
             .frame(minHeight: Token.Size.touchMin)
+            // Dead while a run is out, so a second flip cannot stack a second run on the
+            // first. The sentence under it says why, rather than a control going quiet
+            // with no reason given.
+            .disabled(making)
             .accessibilityHint("Writes every page of this scan at about half the file size.")
-            Text("About half the file size. Switch it off if this page looks too soft.")
+            // While the run is out, the picture above is still the page the other rung
+            // made, and this line is the only thing that can say so. No spinner: this app
+            // says things in sentences.
+            Text(making
+                 ? "Making this page again…"
+                 : "About half the file size. Switch it off if this page looks too soft.")
                 .font(Token.Face.body(Token.Size.textMeta))
                 .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
                 .foregroundStyle(Token.Palette.textMuted)
         }
     }
+
+    /// How long a flip waits before the engine is asked, in milliseconds. The Adjust
+    /// screen's own preview carries the same number for the same reason; 300 ms is a tap
+    /// changed its mind about, not a tap meant.
+    private static let settle = 300
 
     /// One engine run, exactly the one the drain would make on this photo at this rung,
     /// into a file outside the scan folder. A refusal is the engine's sentence unchanged.
@@ -137,6 +156,16 @@ struct FirstPageCheck: View {
     /// screen's preview does it: a superseded run can never take the picture that is up,
     /// and there is never a moment with nothing to judge.
     private func showThePage() async {
+        // The same settle the Adjust screen's preview waits out, for the same reason: a
+        // flip flipped back costs one engine run, not one per flip. Without it every tap
+        // starts a run that nothing stops, and the one-run-at-a-time rule the memory
+        // budget rests on is gone ([`../AGENTS.md`](../AGENTS.md)).
+        try? await Task.sleep(for: .milliseconds(Self.settle))
+        guard !Task.isCancelled else { return }
+
+        making = true
+        defer { making = false }
+
         let scratch = FileManager.default.temporaryDirectory
             .appendingPathComponent("first-page-\(UUID().uuidString).jpg")
         let source = photo

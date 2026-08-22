@@ -112,6 +112,13 @@ the two are worth changing together.
 bash ffi/bridge_check.sh      # -> "bridge ok", about 1 second
 ```
 
+**It needs a Mac.** The Swift half is compiled with `swiftc` and imports Apple's own
+frameworks, so on Linux the script stops at that line and nothing after it runs. Worth
+saying out loud because of what it cost once: the five assertions the page size rung added
+have **never executed**, and the widened boundary has never been crossed from Swift at all.
+A review, not this check, is what caught `EngineCalls.swift` still passing four arguments to
+a function that had grown a fifth. Run it on a Mac before believing any of it.
+
 It builds the host library and compiles a Swift file against
 [`include/freepdf.h`](./include/freepdf.h) with `-import-objc-header`, which is the
 same mechanism as Xcode's bridging header setting - so the boundary is really

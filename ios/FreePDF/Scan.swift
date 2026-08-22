@@ -135,9 +135,19 @@ struct Scan: Hashable {
     ///
     /// The word is always written, never deleted for the default: what the app decided is
     /// then on disk and readable, and the answer is the same either way.
-    func writeQuality(_ wanted: Engine.PageQuality) {
+    /// Answers whether the word reached the disk, because the caller rewrites pages
+    /// after it. A page written at a rung the disk does not name is the one state the
+    /// order of `setQuality` exists to prevent, so a failure here has to stop it rather
+    /// than be discarded ([`ScanFlow.swift`](./ScanFlow.swift)).
+    @discardableResult
+    func writeQuality(_ wanted: Engine.PageQuality) -> Bool {
         let word = wanted == .original ? Self.originalWord : Self.smallWord
-        try? Data(word.utf8).write(to: qualityURL, options: .atomic)
+        do {
+            try Data(word.utf8).write(to: qualityURL, options: .atomic)
+            return true
+        } catch {
+            return false
+        }
     }
 
     /// The two words `quality.txt` can hold. Anything else is the default, so a file

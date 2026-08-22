@@ -96,6 +96,15 @@ there was anything to choose. `Scan.quality` reads it, `Scan.writeQuality` write
   opens the app, which is the worst kind of bug: it works while he is watching. The list is
   one named constant in `Scan.swift` for that reason. Anything added to a scan folder from
   now on is added to that constant in the same edit.
+- **A kill in the middle of a rewrite leaves the word new and some pages old.** `quality.txt`
+  is written first on purpose: the reverse order - pages at the new rung under a file naming
+  the old one - sends the switch back and costs the whole run again instead of one page.
+  What it costs is that a scan can hold pages of both sizes, and unlike the same kill during
+  a Grey flip **this one is invisible**: the pages all look right, they are only not all the
+  size the file promises. Flipping the switch twice repairs it. That is accepted rather than
+  fixed, because the honest fix is a marker file the sweep also has to know about and a
+  resume that finishes the run at the next launch - worth building the day a rung changes
+  something a person can see.
 - **Absent, empty, unreadable, or a word this version does not know reads as `small`.** No
   sentence, exactly like `name`. That is not a shrug: `small` is what the app promises a
   scan will cost, so a scan whose one small file was lost still comes out the size it
@@ -105,8 +114,13 @@ there was anything to choose. `Scan.quality` reads it, `Scan.writeQuality` write
 switched** (Julian, 2026-08-22 - [`../user-flows.md`](../user-flows.md) DECISIONS 7, the
 half of it he reversed). Two rungs reach the user and no more, so the control is a `Toggle`
 in `.switch` style: the design system has neither a picker nor a segmented control, and a
-switch is the honest control for a two-way choice. The same switch is on the pages screen,
-the same value in and the same callback out - one setting, two places to reach it.
+switch is the honest control for a two-way choice.
+
+The same switch is on the pages screen too - the same value in, the same callback out, one
+setting with two places to reach it - because the first page check happens once per scan, on
+the first photo, so a scan he comes back to would otherwise have no way back. **That second
+switch is not Julian's decision, it is the agent's extension of his,** and it waits for him
+the way its label does.
 
 - **The preview and the written page are always made at the same rung.** The check screen's
   picture is a real `freepdf_scan_page` run, so it is keyed on the rung - `.task(id: quality)`

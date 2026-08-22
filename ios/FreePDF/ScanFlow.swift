@@ -413,7 +413,13 @@ struct ScanFlow: View {
         guard !applyingOne, applyingAll == nil, wanted != quality else { return }
         message = nil
         scan.deletePDF()
-        scan.writeQuality(wanted)
+        // The word first, and nothing after it if it did not land: a page written at a
+        // rung the disk does not name would send the switch back to the old position and
+        // cost the whole run again, which is worse than the one page a kill costs.
+        guard scan.writeQuality(wanted) else {
+            message = "The page size could not be saved, so nothing was changed."
+            return
+        }
         quality = wanted
         // The pages that exist, read once off the disk. A photo with no page yet belongs to
         // the drain, which writes it at the new rung by itself - and on the first page check

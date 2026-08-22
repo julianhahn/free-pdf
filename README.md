@@ -90,10 +90,10 @@ Two documents carry it: [`user-flows.md`](./user-flows.md), which is every flow
 the app should have and what control each engine tool gets, and
 [`client-guide-design-system/`](./client-guide-design-system/AGENTS.md), which is how a
 client looks. The reason there is any of this: **the app can reach almost none of the
-engine.** Sixteen capabilities - grey, brightness, sharpening, straightening, cropping,
-rotating, paper finding, page size, resolution - had no control anywhere. The client called
-one fixed chain and that was all a user got. All of them have their control now except
-resolution, which is a deliberate non-choice: see row 7 below.
+engine.** Grey, brightness, sharpening, straightening, cropping, rotating, paper finding,
+page size, resolution - none of it had a control anywhere. The client called one fixed chain
+and that was all a user got. All of it has a control now except two deliberate non-choices:
+resolution (row 7 below) and paper size (DECISIONS 6).
 
 The order from here, and nothing after step 1 can start before it:
 
@@ -109,9 +109,9 @@ camera; [`TASKS.md`](./TASKS.md) 34 is done too - after the first photo of a sca
 shows the page that photo becomes, once, with retake or "Photograph the rest". [`TASKS.md`](./TASKS.md) 35
 closes the camera work - the last photo taken sits small in a corner of the viewfinder, so he
 sees which sheet that was and not only a number. | client agent |
-| 7 | **done** on 2026-08-22 ([`TASKS.md`](./TASKS.md) 36, 37, 38) - how small a page is written is a choice, and the app makes it. `save_page` rebuilds each page's Huffman tables from its own symbol counts, so the same pixels cost fewer bytes; then it took a `PageQuality` and `freepdf_scan_page` / `freepdf_adjust_page` took a `FreepdfPageQuality *` beside it, NULL still meaning Original; then the app made quality 45 its default in `quality.txt` and put one switch, **Smaller pages**, on the check after the first photo and on the pages screen. Two rungs reach the user and no more. The engine's 1700 px rung is deliberately not offered - about 150 dpi on A4, and reading the text back out later wants about 300 - which is the one of the sixteen capabilities, resolution, that stays without a control on purpose. **Two things are open**: the five new lines of text wait for Julian's approval, and none of it has been seen on a phone. | engine + ffi + client |
+| 7 | **done** on 2026-08-22 ([`TASKS.md`](./TASKS.md) 36 to 38; 39 and 40 are the two things the same session measured and refused, and they are answers rather than open work) - how small a page is written is a choice, and the app makes it. `save_page` rebuilds each page's Huffman tables from its own symbol counts, so the same pixels cost fewer bytes; then it took a `PageQuality` and `freepdf_scan_page` / `freepdf_adjust_page` took a `FreepdfPageQuality *` beside it, NULL still meaning Original; then the app made quality 45 its default in `quality.txt` and put one switch, **Smaller pages**, on the check after the first photo and on the pages screen. Two rungs reach the user and no more. The engine's 1700 px rung is deliberately not offered - about 150 dpi on A4, and reading the text back out later wants about 300 - which is the one of the sixteen capabilities, resolution, that stays without a control on purpose. **Two things are open**: the five new lines of text wait for Julian's approval, and none of it has been seen on a phone. | engine + ffi + client |
 | 5 | **done** on 2026-08-18 ([`TASKS.md`](./TASKS.md) 31) - the automatic run no longer refuses a sheet that leaves the frame. It cuts on the points where the paper crosses the edge, exactly as Adjust already did, and the pages screen puts a calm note under such a page saying it is not the whole sheet, with the retake that already exists. Checked against the twelve real photos: eleven byte for byte as before, `runs_off_1.jpg` cut. | engine + client |
-| 8 | **open** - the five lines of text the page size setting adds are new words and none is approved: the switch **Smaller pages** / **Kleinere Seiten**, its line "About half the file size. Switch it off if this page looks too soft.", the two spoken hints, and the done screen's "This PDF is 1.3 MB." They are in the code so no screen is mute, written in the voice of the tables around them, and they are marked in [`user-flows.md`](./user-flows.md) sections 4c, 6 and 9 as waiting. Nothing already approved was reworded, and nothing was added to the design system's own tables: a client agent may not invent copy ([`client-guide-design-system/AGENTS.md`](./client-guide-design-system/AGENTS.md)), so the words wait in the app's own copy tables until he says yes. | Julian, by reading |
+| 8 | **open** - the five lines of text the page size setting adds are new words and none is approved: the switch **Smaller pages** / **Kleinere Seiten**, its line "About half the file size. Switch it off if this page looks too soft.", the two spoken hints, and the done screen's "This PDF is 1.3 MB." They are in the code so no screen is mute, written in the voice of the tables around them, and they are marked as waiting in [`user-flows.md`](./user-flows.md) sections 4c, 7 and 9. Nothing already approved was reworded, and nothing was added to the design system's own tables: a client agent may not invent copy ([`client-guide-design-system/AGENTS.md`](./client-guide-design-system/AGENTS.md)), so the words wait in the app's own copy tables until he says yes. | Julian, by reading |
 | 9 | **open** - none of the page size work has been seen on a phone. What only a phone answers: whether two switches stacked in the pages footer and one above the two buttons on the check screen read as one setting or as clutter; whether "About half the file size" is an honest promise on a photographed page that is not dense text; and how long the re-run feels when the switch is flipped on the check screen, where the old picture stays up until the new one lands. The Swift is unbuilt here as well - there is no Swift toolchain on this Linux box, so every Swift line is right by inspection only. | Julian, on a phone |
 
 ```sh
@@ -132,7 +132,7 @@ own iCloud container is gone, and a `ShareLink` is the whole export
 | 1 | **done** | `save_page`, `pages_to_pdf`, `place(...)` in the engine. | `cargo test --workspace`, and `--scan` on any photo still produces a PDF |
 | 2 | **done** | `ffi/`: one `staticlib` the app links into itself, the hand-written `ffi/include/freepdf.h`, and four C functions: `freepdf_scan_page`, `freepdf_suggest_adjustments`, `freepdf_adjust_page` and `freepdf_pages_to_pdf` - the page size rung came as a parameter on the two that write a page, not as a fifth function. ([rules](./ffi/AGENTS.md)) | `bash ffi/bridge_check.sh` -> "bridge ok" (~1 s, host architecture) |
 | 3 | **done** | `ios/FreePDF/Scan.swift` plus `ios/check/`: the folder layout, the derived step, the sweep. Foundation only. ([rules](./ios/AGENTS.md)) | `bash ios/check/run.sh` -> "resume ok" (~2 s, no Xcode) |
-| 4 | **done** | The Xcode project and the app: list, flow, the scan loop, the two FFI calls, and the camera stand-in with its `-autofake` launch argument. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` -> "scan ok" (~3 min, "iPhone 17 Pro" simulator) |
+| 4 | **done** | The Xcode project and the app: list, flow, the scan loop, the FFI calls (two then, four now), and the camera stand-in with its `-autofake` launch argument. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` -> "scan ok" (~3 min, "iPhone 17 Pro" simulator) |
 | 5 | **done** | `ios/FreePDF/CameraView.swift`: the session, the preview, the shutter and `PageWriter`. The stand-in lost its button and kept its drawing. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` still says "scan ok"; the camera itself is by hand: shoot 5 pages, force-quit while aiming at 6, relaunch - the row reads "5 pages - keep shooting" and the counter says "Page 6" |
 | 6 | **done** | A `ShareLink` on the done screen, and `Scan.deletePhotos()` behind "Delete the 12 photos (78 MB)". The automatic iCloud upload was [dropped on purpose](./iphone-client-plan.md#3-screens). | By hand: share the PDF into Files and open it there; then delete the photos and see the scan still readable and still able to change its pages |
 
@@ -159,8 +159,9 @@ Things noticed but not scheduled.
   framework in the client. `ocrs`, the pure-Rust option, is out for German - its alphabet is
   96 ASCII characters, so the umlauts come back as `?`.
 - **A bilevel CCITT-G4 rung reaches 93.5% off**, which no JPEG rung comes near: 40 pages to
-  2.7 MB. Written up in full as [`TASKS.md`](./TASKS.md) 39. A pure-Rust G4 encoder was prototyped and verified at 201 lines - no dependency,
-  and the format is the one PDF has embedded since 1.0. It was **rejected, not deferred**,
+  2.7 MB. Written up in full as [`TASKS.md`](./TASKS.md) 39. A pure-Rust G4 encoder was
+  prototyped and verified at 201 lines - no dependency, and the format is the one PDF has
+  embedded since 1.0. It was **rejected, not deferred**,
   and for one reason: it is one bit per pixel, so something has to decide the threshold, and
   Otsu silently deletes 39-42% of faint pencil, turns a red stamp into flat print, and takes
   a photograph on the page to PSNR 14.8 dB. Silently is the word that kills it - a page that

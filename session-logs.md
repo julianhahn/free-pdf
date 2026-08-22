@@ -8,28 +8,33 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
-## 2026-08-22 - How small a page is written is a choice now, and the default is smaller
+## 2026-08-22 - How small a page is written is a choice, and quality 45 is the default
 
-Four commits. `save_page` rebuilds every page's Huffman tables from the page's own symbol
-counts, which changes the code words and not one pixel: 5 to 9% off a page of small text, up
-to 28% over a mixed scan - `core_engine/src/rehuff.rs`, no dependency, and `save_page` calls
-it through `unwrap_or` so a JPEG it refuses keeps its own bytes. On top of that `save_page`
-takes a `PageQuality` and the two writing C functions take a `FreepdfPageQuality`; NULL and
-`PageQuality::UNCHANGED` write the page this engine always wrote, byte for byte, pinned by a
-length and a fingerprint. The app now asks for quality 45 by default and the check after the
-first photo is where that is seen and switched back to Original, which is Julian's reversal of
-the picker half of DECISIONS 7. Measured on a dense text page: 40% off at quality 45, 71% at
-quality 45 with a 1700 px edge - that second rung is in the engine and the runner but not on
-any screen, because 150 dpi costs the OCR the project wants later.
+TASKS.md 36 to 40, one session. `save_page` now rebuilds each page's Huffman tables from its
+own symbol counts (new private `core_engine/src/rehuff.rs`, called through `unwrap_or`): the
+same pixels, **5 to 9% fewer bytes on a text page** - the "20 to 30%" in commit 966a52f's own
+message was the best case quoted as the rule, and is corrected everywhere now. Then `save_page`
+took a `PageQuality` and the two writing C functions took a `FreepdfPageQuality *` beside it,
+NULL and `PageQuality::UNCHANGED` still writing the page this engine always wrote byte for
+byte; the runner grew `--quality` and `--long-edge`. Still four C functions - a parameter, not
+a fifth. Then the app made quality 45 its default: one word in `quality.txt` per scan, in
+`sweep()`'s keep list, and one switch **Smaller pages** on the check after the first photo,
+whose preview runs at that same rung so what Julian judges is what gets written (his reversal
+of the picker half of `user-flows.md` DECISIONS 7). Measured page against page on dense text:
+48.6% off at quality 45, 74.0% with a 1700 px edge - and that second rung stays out of the UI,
+because 150 dpi costs the OCR the project wants later.
 
-Next person: the Swift is **unbuilt**. There is no Xcode and no `swiftc` here, so every iOS
-line is right by inspection only and `bridge_check.sh`'s Swift half never ran - a review
-already caught the app not compiling once, when the header grew a parameter and
-`EngineCalls.swift` still passed four. Nothing has been seen on a phone. Every byte figure
-came from synthetic photographs of synthetic glyphs, so the shares should carry and the
-absolute numbers will not: `--quality` over the real `test_images/` is the one measurement
-that closes it. The switch's English and German still need Julian. Tesseract in the bundle was
-investigated and refused, with the reasons in [`TASKS.md`](./TASKS.md).
+`cargo test --workspace` is 65 green here and 68 on a Mac.
+
+Next person, four things. The Swift is **unbuilt**: no Xcode and no `swiftc` here, so every iOS
+line is right by inspection only, and a review already caught the app not compiling once when
+the header grew a parameter and `EngineCalls.swift` still passed four arguments - `freepdf.h`
+and that file are one unit. Nothing has been seen on a phone, and the switch's five lines of
+English and German still need Julian (README **Next steps** rows 8 and 9). Every byte figure
+came from synthetic photographs of synthetic glyphs, so the shares carry and the absolute
+numbers do not - `--quality` over his own scans is the one measurement that closes it. And two
+things were investigated and deliberately not built, so they are answers and not gaps:
+Tesseract in the bundle (TASKS.md 40) and the CCITT-G4 rung at 93.5% off (TASKS.md 39).
 
 ## 2026-08-18 - The viewfinder shows the last page photographed
 

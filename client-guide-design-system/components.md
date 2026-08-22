@@ -73,7 +73,9 @@ thin under a thumb. Flagged, not solved.
 ## Adjust controls - in Storybook
 
 **Switch** - 42 x 24 outlined track, round knob. Off: knob at text 45%. On: accent border,
-accent knob. Two switches exist: `Grey` on the pages screen, `Apply to all pages` in Adjust.
+accent knob. Three switches exist: `Grey` on the pages screen, `Apply to all pages` in
+Adjust, and `Smaller pages` on both the first page check and the pages screen - that last
+label is new and waits for Julian's approval.
 
 **Slider** - 1 px track, round thumb with an accent border. It opens on the value the engine
 suggested; the value is printed beside the label in accent-700 / accent-300, tabular figures,
