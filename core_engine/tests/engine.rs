@@ -9,7 +9,8 @@ use core_engine::{
     save_page, sharpen, straighten, suggest_levels, suggest_straightening, to_grayscale,
     DynamicImage, Levels,
 };
-use image::{Rgb, RgbImage};
+use image::codecs::jpeg::JpegEncoder;
+use image::{ColorType, Rgb, RgbImage};
 use std::ops::Range;
 use std::path::PathBuf;
 
@@ -166,9 +167,12 @@ fn page_files_go_into_the_pdf_without_being_decoded() {
 
     let pdf = std::fs::read(&out).expect("the PDF was not written");
     let page = std::fs::read(&pages[0]).expect("no page written");
-    // Find where the page sits by a slice out of its middle - the first bytes of
-    // a JPEG are its header and every page here has the same one - then compare
-    // the whole page against it.
+    // Find where the page sits by a slice out of its middle, then compare the
+    // whole page against it. Not the first bytes: those are the header, and two
+    // pages of the same size share their sizes and their quantisation tables, so
+    // a header slice can match the wrong page. (`save_page` builds each page its
+    // own Huffman tables, so the headers are no longer all the same the way they
+    // once were - but they are still not what tells the pages apart.)
     let probe = &page[page.len() / 2..page.len() / 2 + 32];
     let found = pdf
         .windows(32)
@@ -192,6 +196,79 @@ fn page_files_go_into_the_pdf_without_being_decoded() {
     );
     assert!(pdf.ends_with(b"%%EOF"), "the PDF was cut off");
     assert_eq!(parse_pdf(&pdf).pages.len(), 12);
+}
+
+/// How much smaller a written page has to be than the same image handed to the
+/// encoder alone.
+///
+/// `save_page` rebuilds the page's Huffman tables from the page's own symbol
+/// counts, which changes the code words and not one pixel. Measured on
+/// `test_image(1200, 1600)`: 174,229 bytes become 136,069, so 21.90% goes. Real
+/// photographed pages measure 27.98% over a 40 page scan and 6.47% on the hardest
+/// one, a detailed grey page. The bound sits below the 21.90% rather than on it,
+/// because the exact figure moves with the `image` crate's encoder; under this,
+/// the rebuild has stopped happening.
+const LEAST_PAGE_SAVING: f64 = 0.15;
+
+#[test]
+fn a_written_page_holds_the_same_pixels_in_fewer_bytes() {
+    let path = temp_path("recoded_page.jpg");
+    let image = test_image(1200, 1600);
+    let mut by_hand = Vec::new();
+    image
+        .write_with_encoder(JpegEncoder::new_with_quality(&mut by_hand, 85))
+        .expect("encoding the page by hand failed");
+
+    save_page(&image, &path).expect("writing the page failed");
+
+    let written = std::fs::read(&path).expect("no page written");
+    let from_page = image::load_from_memory(&written).expect("the written page does not decode");
+    let from_hand =
+        image::load_from_memory(&by_hand).expect("the hand written page does not decode");
+    assert_eq!(
+        from_page.color(),
+        from_hand.color(),
+        "the written page came back in a different colour space"
+    );
+    assert_eq!(
+        from_page.as_bytes(),
+        from_hand.as_bytes(),
+        "the written page decodes to different pixels than the same image at quality 85"
+    );
+    let saved = 1.0 - written.len() as f64 / by_hand.len() as f64;
+    assert!(
+        saved >= LEAST_PAGE_SAVING,
+        "the page is {} bytes against the {} the encoder alone writes, only {:.2}% smaller",
+        written.len(),
+        by_hand.len(),
+        saved * 100.0
+    );
+}
+
+#[test]
+fn a_greyed_page_stays_grey_all_the_way_into_the_pdf() {
+    // If a written page came back as three channels, the PDF would say DeviceRGB
+    // and a greyed scan would grow again - which is what to_grayscale is for.
+    let page = temp_path("grey_page.jpg");
+    let out = temp_path("grey_page.pdf");
+    let grey = to_grayscale(&photographed_document());
+
+    save_page(&grey, &page).expect("writing the page failed");
+    pages_to_pdf(std::slice::from_ref(&page), &out).expect("writing the PDF failed");
+
+    let written = std::fs::read(&page).expect("no page written");
+    let decoded = image::load_from_memory(&written).expect("the written page does not decode");
+    assert_eq!(
+        decoded.color(),
+        ColorType::L8,
+        "the page came back as colour, so the PDF would call it DeviceRGB"
+    );
+    let pdf = std::fs::read(&out).expect("the PDF was not written");
+    assert!(
+        pdf.windows(10).any(|window| window == b"DeviceGray"),
+        "the grey page did not reach the PDF as DeviceGray"
+    );
+    assert_eq!(parse_pdf(&pdf).pages.len(), 1);
 }
 
 #[test]

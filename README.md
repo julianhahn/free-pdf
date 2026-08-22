@@ -27,7 +27,7 @@ Every command in this file runs from the repository root, `/Users/julianhahn/fre
 cargo test --workspace
 ```
 
-50 green on a Mac, 47 elsewhere - three tests need `sips` for HEIC. Then read
+53 green on a Mac, 50 elsewhere - three tests need `sips` for HEIC. Then read
 [Next steps](#next-steps): it is the one place that says what is being built right now, and
 every session leaves it correct.
 

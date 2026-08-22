@@ -7,8 +7,8 @@ root:
 cargo test --workspace
 ```
 
-42 tests are in this file. Five more are in `backend-core-runner/src/main.rs`, three of them
-only on macOS, and three in `ffi/src/lib.rs`, so the workspace shows 50 green on a Mac and 47
+44 tests are in this file. Five more are in `backend-core-runner/src/main.rs`, three of them
+only on macOS, and four in `ffi/src/lib.rs`, so the workspace shows 53 green on a Mac and 50
 elsewhere. A different number means something else was touched. [`../../README.md`](../../README.md) prints both counts
 under "Start here" - move them with the count, in the same commit.
 
@@ -38,7 +38,7 @@ in code, the way `a_sideways_photo_is_turned_upright_when_loaded` splices the ha
 
 Write only through `temp_path("<name>")`, and pick a name no other test uses. Nothing cleans
 up and the names are fixed, so a reused name means two tests overwrite each other in parallel
-and the failure looks random. Twelve names are taken today, one of them a directory
+and the failure looks random. Fifteen names are taken today, one of them a directory
 (`temp_path("pages")`). A test that asserts a file is absent
 deletes it first, as `refuses_to_write_a_pdf_without_pages` does. No `tempfile` crate: there
 is no `[dev-dependencies]` section and none is needed.

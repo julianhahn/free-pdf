@@ -11,6 +11,7 @@
 //! paths: a phone cannot hold forty decoded pages at once, so each page waits on
 //! disk as a JPEG and is handed to the PDF without ever being decoded again.
 
+use crate::rehuff;
 use image::codecs::jpeg::{JpegDecoder, JpegEncoder};
 use image::{ColorType, DynamicImage, ImageDecoder};
 use printpdf::{
@@ -35,7 +36,10 @@ const JPEG_QUALITY: f32 = 0.85;
 /// The same 85 as [`JPEG_QUALITY`], in the scale this encoder counts in. The two
 /// have to agree: a page written here is the stream the PDF embeds, so a
 /// document built page by page must not come out visibly different from the
-/// same document built by [`images_to_pdf`].
+/// same document built by [`images_to_pdf`]. Still true, and the page path is
+/// also 20 to 30% smaller than that, because it rebuilds the entropy tables of
+/// the JPEG it just wrote ([`crate::rehuff`]) - which changes the code words, not
+/// one pixel.
 const PAGE_JPEG_QUALITY: u8 = 85;
 
 /// Writes the images as a single PDF, one page per image.
@@ -65,8 +69,20 @@ pub fn images_to_pdf(images: &[DynamicImage], out_path: &Path) -> Result<(), Str
 /// These bytes are the exact stream [`pages_to_pdf`] embeds, so a page is
 /// compressed once instead of twice. The engine has to be the one writing it: a
 /// PDF ignores the camera rotation tag, so a page written by the client's own
-/// image code would land sideways, and a progressive JPEG cannot be embedded at
-/// all.
+/// image code would land sideways, and a client's encoder may well write a
+/// progressive JPEG. A progressive page does in fact go into the PDF and render
+/// (measured: byte for byte through [`pages_to_pdf`], and poppler draws it to the
+/// same picture), but `/DCTDecode` is specified around baseline JPEG, progressive
+/// has a long history of failing in real readers, and nobody here can test
+/// Apple's PDFKit. So the engine writes baseline and does not find out.
+///
+/// The page's Huffman tables are then rebuilt from the page's own symbol counts
+/// ([`crate::rehuff`]). That is free: the quantised coefficients are copied over
+/// untouched, so the file decodes to the same pixels, and it is 20 to 30% smaller
+/// because `image`'s encoder writes the fixed example tables out of the JPEG
+/// standard's Annex K instead of tables that fit this page. The PDF shrinks by
+/// the same share, and so does [`pages_to_pdf`]'s peak memory, whose peak is
+/// about twice the total size of the page streams.
 ///
 /// The bytes go to `<path>.part` and are renamed only once they are on disk, so
 /// a client that is killed mid-write finds either no file or a finished one -
@@ -93,6 +109,12 @@ pub fn save_page(img: &DynamicImage, path: &Path) -> Result<(), String> {
     let mut jpeg = Vec::new();
     src.write_with_encoder(JpegEncoder::new_with_quality(&mut jpeg, PAGE_JPEG_QUALITY))
         .map_err(|e| format!("Failed to encode the page for {}: {}", path.display(), e))?;
+
+    // Smaller by 20 to 30%, same pixels. `unwrap_or` and never `unwrap`: a JPEG
+    // the recoder refuses - a restart marker, a progressive scan, anything it did
+    // not expect - keeps its original bytes. So this call cannot fail, a page is
+    // never lost, and a scan is never left unfinishable by it.
+    let jpeg = rehuff::rehuff(&jpeg).unwrap_or(jpeg);
 
     let part = path.with_extension("part");
     let mut file = File::create(&part).map_err(|e| failed(&part, e))?;
@@ -322,6 +344,12 @@ fn to_raw_image(img: &DynamicImage) -> RawImage {
 
 /// JPEG-compresses the embedded images. Without this printpdf stores raw
 /// pixels, and one phone photo alone already makes a PDF of several megabytes.
+///
+/// This is [`images_to_pdf`]'s path only. On the [`pages_to_pdf`] path all four
+/// `PdfSaveOptions` fields do nothing at all: `ExternalXObject` never reaches
+/// `image_optimization` (printpdf/src/xobject.rs:54-88), and `optimize` only
+/// wraps a `doc.compress()` call that is commented out. Measured: the same file
+/// size at every setting, which is why that path passes the plain default.
 fn save_options() -> PdfSaveOptions {
     PdfSaveOptions {
         image_optimization: Some(ImageOptimizationOptions {

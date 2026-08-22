@@ -8,6 +8,12 @@ pub mod paper;
 pub mod pdf;
 pub mod tools;
 
+// Private on purpose. Rebuilding a JPEG's Huffman tables is a detail of how a
+// page is written, not a tool a client picks: nothing outside `pdf.rs` has a
+// reason to call it, and every name in the `pub use` block below is a name the C
+// wrapper has to keep working for good.
+mod rehuff;
+
 pub use deskew::{deskew, straighten, suggest_straightening};
 pub use paper::{find_paper, Paper, Point, Rect};
 pub use pdf::{images_to_pdf, pages_to_pdf, save_page};
