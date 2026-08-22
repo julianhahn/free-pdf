@@ -8,6 +8,29 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-22 - How small a page is written is a choice now, and the default is smaller
+
+Four commits. `save_page` rebuilds every page's Huffman tables from the page's own symbol
+counts, which changes the code words and not one pixel: 5 to 9% off a page of small text, up
+to 28% over a mixed scan - `core_engine/src/rehuff.rs`, no dependency, and `save_page` calls
+it through `unwrap_or` so a JPEG it refuses keeps its own bytes. On top of that `save_page`
+takes a `PageQuality` and the two writing C functions take a `FreepdfPageQuality`; NULL and
+`PageQuality::UNCHANGED` write the page this engine always wrote, byte for byte, pinned by a
+length and a fingerprint. The app now asks for quality 45 by default and the check after the
+first photo is where that is seen and switched back to Original, which is Julian's reversal of
+the picker half of DECISIONS 7. Measured on a dense text page: 40% off at quality 45, 71% at
+quality 45 with a 1700 px edge - that second rung is in the engine and the runner but not on
+any screen, because 150 dpi costs the OCR the project wants later.
+
+Next person: the Swift is **unbuilt**. There is no Xcode and no `swiftc` here, so every iOS
+line is right by inspection only and `bridge_check.sh`'s Swift half never ran - a review
+already caught the app not compiling once, when the header grew a parameter and
+`EngineCalls.swift` still passed four. Nothing has been seen on a phone. Every byte figure
+came from synthetic photographs of synthetic glyphs, so the shares should carry and the
+absolute numbers will not: `--quality` over the real `test_images/` is the one measurement
+that closes it. The switch's English and German still need Julian. Tesseract in the bundle was
+investigated and refused, with the reasons in [`TASKS.md`](./TASKS.md).
+
 ## 2026-08-18 - The viewfinder shows the last page photographed
 
 TASKS.md 35. [`ios/FreePDF/CameraView.swift`](./ios/FreePDF/CameraView.swift) keeps one

@@ -9,13 +9,20 @@ import Foundation
 
 extension Engine {
     /// One photo in, one finished page file out - deskewed, straightened, brightened,
-    /// capped and sharpened, in that order.
+    /// capped and sharpened, in that order, and written at the rung it is given.
     ///
     /// It either writes the whole page or nothing at all: the file wears its real name
     /// only after a complete write, which is what makes "page 7 exists" mean "page 7 is
     /// done" after a kill.
-    static func scanPage(_ photo: URL, into page: URL) throws {
-        try call { error, size in freepdf_scan_page(photo.path, page.path, error, size) }
+    ///
+    /// The rung carries no default, exactly like `Adjustments`: a default here would be a
+    /// second opinion about how small a page should be, and the scan's own answer is one
+    /// line on disk (`Scan.quality`).
+    static func scanPage(_ photo: URL, into page: URL, _ quality: PageQuality) throws {
+        var rung = cQuality(quality)
+        try call { error, size in
+            freepdf_scan_page(photo.path, page.path, &rung, error, size)
+        }
     }
 
     /// Asks the engine what it would do by itself. Writes no file. It costs about as much
@@ -57,10 +64,12 @@ extension Engine {
 
     /// The same recipe as `scanPage`, with the user's values, written the same way: the
     /// page file is replaced whole by rename, or nothing is written at all.
-    static func adjustPage(_ photo: URL, into page: URL, _ a: Adjustments) throws {
+    static func adjustPage(_ photo: URL, into page: URL, _ a: Adjustments,
+                           _ quality: PageQuality) throws {
         var values = cValues(a)
+        var rung = cQuality(quality)
         try call { error, size in
-            freepdf_adjust_page(photo.path, page.path, &values, error, size)
+            freepdf_adjust_page(photo.path, page.path, &values, &rung, error, size)
         }
     }
 
@@ -81,6 +90,20 @@ extension Engine {
             crop_width: a.cropWidth, crop_height: a.cropHeight,
             quarter_turns: a.quarterTurns,
             grey: a.grey ? 1 : 0)
+    }
+
+    /// The rung as the one read-only struct C takes. Nothing is converted here either -
+    /// the two numbers only change shape - and both structs are copied at the boundary.
+    ///
+    /// A pointer to a local `var` in the function that calls, never a stored one: `call`
+    /// takes a non-escaping closure and runs it before it returns, so the struct is still
+    /// alive for the whole call. NULL is never passed, although it is what the header
+    /// calls Original: this app knows about page sizes, so it names the rung it wants
+    /// every time and reads nothing into a missing argument
+    /// ([`../../ffi/AGENTS.md`](../../ffi/AGENTS.md)).
+    private static func cQuality(_ quality: PageQuality) -> FreepdfPageQuality {
+        FreepdfPageQuality(jpeg_quality: quality.jpegQuality,
+                           longest_edge: quality.longestEdge)
     }
 
     /// The finished pages as one PDF, in the order given.

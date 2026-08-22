@@ -15,6 +15,11 @@
 //  here once so the viewfinder's corner thumbnail needs no caption
 //  ([`CameraView.swift`](./CameraView.swift)).
 //
+//  The run is made at the rung the scan is set to, and the switch on this screen is what
+//  moves that rung. Both halves of one rule: what he looks at here is what every page of
+//  the scan will be, so the preview may never be made at one rung while the pages are
+//  written at another.
+//
 //  Every colour, size and step comes from `Token`. No number is written here.
 
 import SwiftUI
@@ -23,6 +28,11 @@ struct FirstPageCheck: View {
     let photo: URL
     /// The page the photo landed on, in the words the camera's counter uses.
     let number: Int
+    /// How small the pages of this scan are written, as `quality.txt` says it. The picture
+    /// below is made at this rung, and the switch hands a new one out - `ScanFlow` writes
+    /// the file and remakes the page, like every other file move.
+    let quality: Engine.PageQuality
+    var onQuality: (Engine.PageQuality) -> Void
     var onRetake: () -> Void
     var onCarryOn: () -> Void
 
@@ -63,6 +73,11 @@ struct FirstPageCheck: View {
                 .font(Token.Face.body(Token.Size.textMeta))
                 .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
                 .foregroundStyle(Token.Palette.textMuted)
+            // Only beside a page there is something to judge, exactly like the promise
+            // above it: the switch asks "does this look good enough", and over a refusal
+            // there is nothing to answer about. The pages screen carries the same switch
+            // for the scan that gets there anyway.
+            if failure == nil { smaller }
             Spacer(minLength: 0)
             Button("Scan this page again") { onRetake() }
                 .buttonStyle(GhostStyle())
@@ -77,27 +92,72 @@ struct FirstPageCheck: View {
         .tint(Token.Palette.accent)
         .navigationTitle("Page \(number)")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await showThePage() }
+        // Keyed on the rung: the switch is what makes the page again, and the screen
+        // never shows a page made at a rung the switch is not on.
+        .task(id: quality) { await showThePage() }
         // The scratch file is this screen's, and it goes with the screen.
         .onDisappear {
             if let preview { try? FileManager.default.removeItem(at: preview) }
         }
     }
 
-    /// One engine run, exactly the one the drain would make on this photo, into a file
-    /// outside the scan folder. A refusal is the engine's sentence unchanged.
+    /// The page size setting, on the one screen where he can see what it costs. On, the
+    /// default, is the smaller page; off is full quality, for the scan where this page
+    /// does not look good enough.
+    ///
+    /// A switch and not a picker, because there are two rungs and a switch is the honest
+    /// control for two - and the design system has neither a picker nor a segmented
+    /// control ([`../../client-guide-design-system/components.md`](../../client-guide-design-system/components.md)).
+    /// Nothing is written here: the value goes out and the new picture comes back in.
+    private var smaller: some View {
+        VStack(alignment: .leading, spacing: Token.Size.space1) {
+            Toggle(isOn: Binding(get: { quality == .small },
+                                 set: { onQuality($0 ? .small : .original) })) {
+                Text("Smaller pages")
+                    .font(Token.Face.heading(Token.Size.textControl))
+                    .tracking(Token.Size.textControl * Token.Number.trackingHeading)
+                    .foregroundStyle(Token.Palette.text)
+            }
+            .toggleStyle(.switch)
+            .tint(Token.Palette.accent)
+            .frame(minHeight: Token.Size.touchMin)
+            .accessibilityHint("Writes every page of this scan at about half the file size.")
+            Text("About half the file size. Switch it off if this page looks too soft.")
+                .font(Token.Face.body(Token.Size.textMeta))
+                .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
+                .foregroundStyle(Token.Palette.textMuted)
+        }
+    }
+
+    /// One engine run, exactly the one the drain would make on this photo at this rung,
+    /// into a file outside the scan folder. A refusal is the engine's sentence unchanged.
+    ///
+    /// Re-run by the switch, because `task(id:)` is keyed on the rung. The page that is up
+    /// stays up until the new one has landed and is deleted only then, the way the Adjust
+    /// screen's preview does it: a superseded run can never take the picture that is up,
+    /// and there is never a moment with nothing to judge.
     private func showThePage() async {
         let scratch = FileManager.default.temporaryDirectory
             .appendingPathComponent("first-page-\(UUID().uuidString).jpg")
         let source = photo
+        let rung = quality
         do {
             try await Task.detached(priority: .userInitiated) {
-                try Engine.scanPage(source, into: scratch)
+                try Engine.scanPage(source, into: scratch, rung)
             }.value
+            // A flip while this run was out cancelled this task, and the run it started
+            // is the one that tells the truth now.
+            guard !Task.isCancelled else {
+                try? FileManager.default.removeItem(at: scratch)
+                return
+            }
+            let stale = preview
             preview = scratch
             failure = nil
+            if let stale { try? FileManager.default.removeItem(at: stale) }
         } catch {
             try? FileManager.default.removeItem(at: scratch)
+            guard !Task.isCancelled else { return }
             failure = error.localizedDescription
         }
     }

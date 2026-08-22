@@ -27,6 +27,12 @@ struct DoneView: View {
     /// the files, never read here, which is the rule the pages screen keeps too.
     let photos: Int
     let photoBytes: Int
+    /// What the finished PDF really weighs, out of the same cache. Read-only, and never a
+    /// second number saying what the other page size would have cost: the engine cannot
+    /// answer that without encoding every page again, and a formula would be exactly the
+    /// guess its own rules forbid
+    /// ([`../../core_engine/AGENTS.md`](../../core_engine/AGENTS.md)).
+    let pdfBytes: Int
     /// The name field's focus, and whether it has been taken already. Make PDF always
     /// means a copy is about to leave, so the field is raised with the screen and the
     /// keyboard's first load is paid there rather than on the first tap. Taken once:
@@ -52,13 +58,14 @@ struct DoneView: View {
 
     /// Written out only to seed the field from the files. Everything else is the memberwise
     /// init this replaces.
-    init(pdf: URL, storedName: String, photos: Int, photoBytes: Int,
+    init(pdf: URL, storedName: String, photos: Int, photoBytes: Int, pdfBytes: Int,
          focusTaken: Binding<Bool>, onName: @escaping (String) -> Void,
          onChangePages: @escaping () -> Void, onDeletePhotos: @escaping () -> Void) {
         self.pdf = pdf
         self.storedName = storedName
         self.photos = photos
         self.photoBytes = photoBytes
+        self.pdfBytes = pdfBytes
         _focusTaken = focusTaken
         self.onName = onName
         self.onChangePages = onChangePages
@@ -86,6 +93,17 @@ struct DoneView: View {
                     Button("Change pages", action: onChangePages)
                         .buttonStyle(OutlineStyle(ink: Token.Palette.accent, edge: .clear))
                         .accessibilityHint("Goes back to the pages. The PDF is made again afterwards.")
+                }
+                // What the file he is about to share really weighs, and nothing else: one
+                // line off the disk, and no second number saying what the other page size
+                // would have cost. Left out rather than printed as "Zero KB" when the size
+                // could not be read at all, which is the photos block's rule about having
+                // nothing to say.
+                if pdfBytes > 0 {
+                    Text("This PDF is \(size(pdfBytes)).")
+                        .font(Token.Face.body(Token.Size.textMeta))
+                        .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
+                        .foregroundStyle(Token.Palette.textMuted)
                 }
                 // Gone whole once the photos are, never greyed out: there is nothing left
                 // to press and nothing to announce.
@@ -186,9 +204,12 @@ struct DoneView: View {
         "Delete the \(photos) photo\(photos == 1 ? "" : "s")?"
     }
 
-    /// "78 MB", in whatever the phone calls megabytes.
-    private var megabytes: String {
-        ByteCountFormatter.string(fromByteCount: Int64(photoBytes), countStyle: .file)
+    /// "78 MB", in whatever the phone calls megabytes. Both the photos' line and the PDF's
+    /// go through it, so the two numbers on this screen are counted the same way.
+    private var megabytes: String { size(photoBytes) }
+
+    private func size(_ bytes: Int) -> String {
+        ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
     }
 
     /// A hard link in the temporary directory carrying the typed name, so the share sheet

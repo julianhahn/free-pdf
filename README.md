@@ -6,7 +6,7 @@ device: no network calls anywhere, no account, no server.
 Four parts:
 
 - **`core_engine`** (Rust) - all image and PDF work. One function per step.
-- **`ffi`** (Rust) - the one library file a phone app links into itself, and the two C
+- **`ffi`** (Rust) - the one library file a phone app links into itself, and the four C
   functions it calls.
 - **clients** - the user interface. The client decides the order of the steps and shows
   each one. The first graphical client is the iPhone app; `backend-core-runner` is the
@@ -27,7 +27,9 @@ Every command in this file runs from the repository root, `/Users/julianhahn/fre
 cargo test --workspace
 ```
 
-67 green on a Mac, 64 elsewhere - three tests need `sips` for HEIC. Then read
+68 green on a Mac, 65 elsewhere - three tests need `sips` for HEIC. Counted on
+2026-08-22: 52 in `core_engine/tests/engine.rs`, 8 in `ffi/src/lib.rs` and 5 in
+`backend-core-runner` here, plus that crate's 3 HEIC tests on a Mac. Then read
 [Next steps](#next-steps): it is the one place that says what is being built right now, and
 every session leaves it correct.
 
@@ -48,7 +50,7 @@ every session leaves it correct.
 | `to_grayscale(img)` | Drops the colour. |
 | `fit_within(img, edge)` | Shrinks the page until neither edge is longer than that, keeping its shape. Never enlarges, and refuses a bound too small to read. |
 | `images_to_pdf(imgs, out)` | One page per image, A4, orientation follows the image, JPEG-compressed inside. |
-| `save_page(img, path, quality)` | Writes one finished page as the JPEG the PDF will embed later. The file wears its real name only once it is whole. `PageQuality::UNCHANGED` writes the page the engine has always written; a lower `jpeg_quality` writes a smaller one. |
+| `save_page(img, path, quality)` | Writes one finished page as the JPEG the PDF will embed later, with its Huffman tables rebuilt from the page's own symbol counts - the same pixels in fewer bytes. The file wears its real name only once it is whole. `PageQuality::UNCHANGED` writes the page the engine has always written, byte for byte; a lower `jpeg_quality` writes a smaller one. A non-zero `longest_edge` is refused here, because shrinking belongs where the size cap already is. |
 | `pages_to_pdf(pages, out)` | The same PDF, built from page files instead of images: each JPEG goes in untouched and is never decoded, so a forty page scan fits in a phone's memory. |
 
 To watch it work on a real photo:
@@ -62,8 +64,16 @@ straighten, levels, sharpen at radius 0.6. Every tool can also be asked for on i
 
 `--quality <1..100>` and `--long-edge <px>` say how small the pages should be, and are the two
 numbers a client's page size setting is built out of. Measured on one photographed page of
-dense text: the PDF is 1,327,815 bytes as it is, 730,453 at `--quality 45` (45% off) and
-368,148 at `--quality 45 --long-edge 1700` (72% off).
+dense text: the PDF is 1,327,815 bytes with no flag at all, 730,453 at `--quality 45`
+(45% off) and 368,148 at `--quality 45 --long-edge 1700` (72% off).
+
+Read those two shares for what they are. With no flag the runner builds the PDF through
+`images_to_pdf`, which is a different encoder and gets no Huffman recode, so 45% is the whole
+road change and not the quality drop on its own. Quality alone, page against page on the road
+the phone takes, is **48.6% off**: 777,981 bytes at Original against 400,105 at quality 45,
+invisible at 100% zoom. The 1700 px edge takes the same page to 201,951, which is 74.0% off
+and visibly softer. Every number here comes from a synthetic photograph of synthetic glyphs -
+see **Parked**.
 
 ## Next steps
 
@@ -81,8 +91,9 @@ the app should have and what control each engine tool gets, and
 [`client-guide-design-system/`](./client-guide-design-system/AGENTS.md), which is how a
 client looks. The reason there is any of this: **the app can reach almost none of the
 engine.** Sixteen capabilities - grey, brightness, sharpening, straightening, cropping,
-rotating, paper finding, page size, resolution - have no control anywhere. The client calls
-one fixed chain and that is all a user gets.
+rotating, paper finding, page size, resolution - had no control anywhere. The client called
+one fixed chain and that was all a user got. All of them have their control now except
+resolution, which is a deliberate non-choice: see row 7 below.
 
 The order from here, and nothing after step 1 can start before it:
 
@@ -98,7 +109,10 @@ camera; [`TASKS.md`](./TASKS.md) 34 is done too - after the first photo of a sca
 shows the page that photo becomes, once, with retake or "Photograph the rest". [`TASKS.md`](./TASKS.md) 35
 closes the camera work - the last photo taken sits small in a corner of the viewfinder, so he
 sees which sheet that was and not only a number. | client agent |
+| 7 | **done** on 2026-08-22 ([`TASKS.md`](./TASKS.md) 36, 37, 38) - how small a page is written is a choice, and the app makes it. `save_page` rebuilds each page's Huffman tables from its own symbol counts, so the same pixels cost fewer bytes; then it took a `PageQuality` and `freepdf_scan_page` / `freepdf_adjust_page` took a `FreepdfPageQuality *` beside it, NULL still meaning Original; then the app made quality 45 its default in `quality.txt` and put one switch, **Smaller pages**, on the check after the first photo and on the pages screen. Two rungs reach the user and no more. The engine's 1700 px rung is deliberately not offered - about 150 dpi on A4, and reading the text back out later wants about 300 - which is the one of the sixteen capabilities, resolution, that stays without a control on purpose. **Two things are open**: the five new lines of text wait for Julian's approval, and none of it has been seen on a phone. | engine + ffi + client |
 | 5 | **done** on 2026-08-18 ([`TASKS.md`](./TASKS.md) 31) - the automatic run no longer refuses a sheet that leaves the frame. It cuts on the points where the paper crosses the edge, exactly as Adjust already did, and the pages screen puts a calm note under such a page saying it is not the whole sheet, with the retake that already exists. Checked against the twelve real photos: eleven byte for byte as before, `runs_off_1.jpg` cut. | engine + client |
+| 8 | **open** - the five lines of text the page size setting adds are new words and none is approved: the switch **Smaller pages** / **Kleinere Seiten**, its line "About half the file size. Switch it off if this page looks too soft.", the two spoken hints, and the done screen's "This PDF is 1.3 MB." They are in the code so no screen is mute, written in the voice of the tables around them, and they are marked in [`user-flows.md`](./user-flows.md) sections 4c, 6 and 9 as waiting. Nothing already approved was reworded, and nothing was added to the design system's own tables: a client agent may not invent copy ([`client-guide-design-system/AGENTS.md`](./client-guide-design-system/AGENTS.md)), so the words wait in the app's own copy tables until he says yes. | Julian, by reading |
+| 9 | **open** - none of the page size work has been seen on a phone. What only a phone answers: whether two switches stacked in the pages footer and one above the two buttons on the check screen read as one setting or as clutter; whether "About half the file size" is an honest promise on a photographed page that is not dense text; and how long the re-run feels when the switch is flipped on the check screen, where the old picture stays up until the new one lands. The Swift is unbuilt here as well - there is no Swift toolchain on this Linux box, so every Swift line is right by inspection only. | Julian, on a phone |
 
 ```sh
 cd storybook && npm install && npm run storybook    # step 1 happens here
@@ -116,7 +130,7 @@ own iCloud container is gone, and a `ShareLink` is the whole export
 | # | State | What gets built | Check |
 | --- | --- | --- | --- |
 | 1 | **done** | `save_page`, `pages_to_pdf`, `place(...)` in the engine. | `cargo test --workspace`, and `--scan` on any photo still produces a PDF |
-| 2 | **done** | `ffi/`: one `staticlib` the app links into itself, the hand-written `ffi/include/freepdf.h`, and three C functions: `freepdf_scan_page`, `freepdf_adjust_page` and `freepdf_pages_to_pdf`. ([rules](./ffi/AGENTS.md)) | `bash ffi/bridge_check.sh` -> "bridge ok" (~1 s, host architecture) |
+| 2 | **done** | `ffi/`: one `staticlib` the app links into itself, the hand-written `ffi/include/freepdf.h`, and four C functions: `freepdf_scan_page`, `freepdf_suggest_adjustments`, `freepdf_adjust_page` and `freepdf_pages_to_pdf` - the page size rung came as a parameter on the two that write a page, not as a fifth function. ([rules](./ffi/AGENTS.md)) | `bash ffi/bridge_check.sh` -> "bridge ok" (~1 s, host architecture) |
 | 3 | **done** | `ios/FreePDF/Scan.swift` plus `ios/check/`: the folder layout, the derived step, the sweep. Foundation only. ([rules](./ios/AGENTS.md)) | `bash ios/check/run.sh` -> "resume ok" (~2 s, no Xcode) |
 | 4 | **done** | The Xcode project and the app: list, flow, the scan loop, the two FFI calls, and the camera stand-in with its `-autofake` launch argument. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` -> "scan ok" (~3 min, "iPhone 17 Pro" simulator) |
 | 5 | **done** | `ios/FreePDF/CameraView.swift`: the session, the preview, the shutter and `PageWriter`. The stand-in lost its button and kept its drawing. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` still says "scan ok"; the camera itself is by hand: shoot 5 pages, force-quit while aiming at 6, relaunch - the row reads "5 pages - keep shooting" and the counter says "Page 6" |
@@ -126,13 +140,55 @@ own iCloud container is gone, and a `ShareLink` is the whole export
 
 Things noticed but not scheduled.
 
-- **The camera screen has no corner thumbnail.** [Plan section
-  12](./iphone-client-plan.md#12-every-line-of-text-the-app-shows) gives the last shot a
-  thumbnail in the corner whose action reads "Retake page 7" / "Seite 7 neu fotografieren",
-  and it is the one line of that table with no code behind it. Retaking works from the
-  check screen already, so this only shortens four taps to two - worth about fifteen lines:
-  the decoder in `ScanFlow` at a smaller edge, plus one more piece of view state for the
-  page the next shot goes back to.
+- **The corner thumbnail is not tappable.** The thumbnail itself was built on 2026-08-18
+  ([`TASKS.md`](./TASKS.md) 35), but [plan section
+  12](./iphone-client-plan.md#12-every-line-of-text-the-app-shows) gives it an action reading
+  "Retake page 7" / "Seite 7 neu fotografieren", and that is the one line of that table with
+  no code behind it. Retaking works from the check screen already, so this only shortens four
+  taps to two - worth about fifteen lines: one more piece of view state for the page the next
+  shot goes back to.
+- **Tesseract cannot go into the Rust bundle.** Asked and answered on 2026-08-22, written up
+  as [`TASKS.md`](./TASKS.md) 40. It builds and it works well - 917 ms and 48 MB a page,
+  99.92% of German characters right, and no network call - but **no crate builds it for
+  `aarch64-apple-ios`**: all seven read the build machine's settings, and one downloads its
+  own sources at compile time. Doing it anyway means our own C++ cross-build for two Apple
+  platforms, +10.8 MB in the app, and C++ exceptions under a repository whose rule is that
+  nothing in the dependency tree is C - and `catch_unwind` does not catch a C++ exception.
+  The way in, when OCR is picked up: the engine draws the invisible text layer (about 42
+  lines, no dependency, no bundle bytes) and the words come from Apple's own on-device Vision
+  framework in the client. `ocrs`, the pure-Rust option, is out for German - its alphabet is
+  96 ASCII characters, so the umlauts come back as `?`.
+- **A bilevel CCITT-G4 rung reaches 93.5% off**, which no JPEG rung comes near: 40 pages to
+  2.7 MB. Written up in full as [`TASKS.md`](./TASKS.md) 39. A pure-Rust G4 encoder was prototyped and verified at 201 lines - no dependency,
+  and the format is the one PDF has embedded since 1.0. It was **rejected, not deferred**,
+  and for one reason: it is one bit per pixel, so something has to decide the threshold, and
+  Otsu silently deletes 39-42% of faint pencil, turns a red stamp into flat print, and takes
+  a photograph on the page to PSNR 14.8 dB. Silently is the word that kills it - a page that
+  lost the pencil still looks like a clean page. It is the best codec there is for text, so
+  the way in is not a fourth rung on the switch: it is a **suggest-half that refuses an
+  unsafe page**, in the engine's own suggest-then-apply shape - measure the page, and say
+  "not this one" for pencil, colour or a photograph. That is a design task, not an encoder
+  task, and the encoder is the part already known to work.
+- **Four compression levers were measured and are dead ends.** Chroma subsampling is
+  impossible with `image` 0.25 at all - it hardcodes h:1, v:1 - and would need a different
+  encoder. `to_grayscale` as a compression lever is 7.1%, which is not worth spending the
+  colour on. 4-bit grey measured **larger** than grey at quality 65. Flate over the PDF's
+  non-image streams saves 0 bytes, because the pages are already the whole file, and
+  PDF-1.5 object streams save 0.07%. None of these is worth trying again; that is why they
+  are written down.
+- **Every compression number in this repository comes from synthetic photographs of
+  synthetic glyphs.** `test_images/` is gitignored and reading it from code is forbidden
+  ([`AGENTS.md`](./AGENTS.md)), so the shares are sound - they are ratios of the same
+  pipeline against itself - but the absolute bytes are unproven on real paper. Only Julian
+  can close that, by running `cargo run -p backend-core-runner -- <his photo> -o out.pdf
+  --scan --quality 45` over his own scans and looking at the pages.
+- **Two small inconsistencies the page size work found and left alone.** `ios/check/run.sh`
+  has no assertion for the three `quality.txt` rules (an absent file reads as `small`, the
+  sweep keeps it, one write/read round trip) - the rule is written in
+  [`ios/AGENTS.md`](./ios/AGENTS.md) and the assertion is not. And on the pages screen the
+  Grey switch stays live once the photos are deleted while the new size switch is frozen;
+  neither can rewrite a page without its photo, so one of the two is wrong and it is
+  probably Grey.
 - **Forty pages on a real phone is still unweighed.** Twelve were measured on the simulator
   and the whole run peaked at 334 MB, which is comfortable
   ([plan section 9](./iphone-client-plan.md#9-memory)) - but that number is the Mac

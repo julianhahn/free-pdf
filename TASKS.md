@@ -1275,6 +1275,199 @@ camera and can run beside 32 and 33.
 
 ---
 
+## 36 to 39. How small a page is written - Julian, 2026-08-22
+
+Julian asked for a smaller PDF. Four tasks came out of it, three of them done in one session
+on 2026-08-22 and the fourth parked with its measurements written down so nobody measures it
+twice.
+
+## 36. The same pixels in fewer bytes — DONE
+
+**Why.** `image`'s JPEG encoder writes the fixed example Huffman tables out of the standard's
+Annex K, which are nobody's page. Rebuilding them from the page's own symbol counts costs one
+extra walk of the scan and changes no quantised coefficient, so the page decodes to the very
+same pixels and simply weighs less. It is the one saving that costs the user nothing at all,
+so it is not a setting and there is nothing to switch.
+
+**Built.** New private `core_engine/src/rehuff.rs` - no dependency, no `unsafe`, no panic
+path - called by `save_page` through `unwrap_or`, so a JPEG it refuses keeps its original
+bytes and a scan can never be left unfinishable by it. `pages_to_pdf` still embeds every page
+byte for byte, so the promise that no page is ever decoded stands.
+
+**What it is worth, corrected.** It was first written up as 20 to 30% and that was the best
+case quoted as the rule. Four measurements on realistic text pages put it at **5 to 9%**; it
+earns **15 to 16%** on grainy and photographic pages and **2.5 to 5%** on grey text. A
+document scanner's typical page is text, so 5 to 9% is the honest number to plan with.
+
+**Check.** `cargo test --workspace`. Two tests: a written page decodes to the same pixels the
+encoder alone writes and is at least 15% smaller, and a greyed page still reaches the PDF as
+DeviceGray.
+
+## 37. How small a page is written is a choice, not a constant — DONE
+
+**Why.** Everything below the recode costs image quality, so it is the user's call and not the
+engine's. But it has to be one call for the whole scan, made in one place, or forty pages
+disagree with each other.
+
+**Built.** `save_page` takes a `PageQuality { jpeg_quality, longest_edge }`;
+`PageQuality::UNCHANGED` is quality 85 with every pixel kept and writes the page this engine
+has always written, byte for byte. `freepdf_scan_page` and `freepdf_adjust_page` each take a
+`const FreepdfPageQuality *`, and **NULL is Original**, so nothing outside the app changed
+meaning. Still four C functions: the rung is a parameter, not a fifth function. Neither number
+is ever clamped - out of range comes back as a sentence and writes nothing.
+
+- **A non-zero `longest_edge` is refused by `save_page`.** The resampling belongs where the
+  size cap already is, before sharpening: shrinking afterwards throws the sharpening away, and
+  a crop is fractions of the image the cap made. `fit_within` is the tool - Lanczos3, shrink
+  only.
+- **The rung names are not in C.** How many rungs there are and what they promise is a product
+  decision; freezing them at the boundary would make a wording change a change to the
+  boundary.
+- **`backend-core-runner` grew `--quality` and `--long-edge`**, which is what makes the ladder
+  measurable from a command line at all.
+
+**Measured** end to end on a dense text page: Original 777,981 B; quality 45 400,105 B (48.6%
+off, invisible at 100% zoom); quality 45 with a 1700 px edge 201,951 B (74.0% off, and visibly
+softer). 80% off and "not even visible" are not both reachable on a photographed page, and the
+docs say so now instead of promising it.
+
+**Check.** `cargo test --workspace` and `bash ffi/bridge_check.sh` -> "bridge ok".
+
+## 38. The app writes quality 45 by default, and one switch says otherwise — DONE
+
+**Julian, 2026-08-22**, in his own words: *"Yes the q45 sounds good should be alrwady used for
+the first oagwn when previewing and just set on to default and can be disabled if the render
+for the first page doesn't look great."* Read as three things: quality 45 is the app's default,
+the check after the first photo is where he sees it, and that screen can switch it off back to
+Original.
+
+**Built**, eight files under `ios/FreePDF/`. `Engine.PageQuality` with `.small` (45, every
+pixel) and `.original` (85, every pixel); one word in `quality.txt` per scan, read like
+`name.txt` and written `.atomic`; `quality.txt` in the sweep's keep list; `ScanFlow` owns
+`setQuality` and `rewrite` and hands the rung to the drain, to `write` and to the screens; one
+`Toggle` in `.switch` style on the check after the first photo and a second, the same value and
+callback, in the pages footer under Grey; and one read-only line on the done screen with the
+PDF's real size.
+
+- **The preview is made at the rung the page will be written at.** The check screen's picture
+  is a real `freepdf_scan_page` run keyed on the rung, so a flip makes a new picture. Previewing
+  one thing and writing another is the whole failure this screen exists to prevent, which is why
+  `scanPage` and `adjustPage` have no default argument for the rung and the Adjust screen's
+  live preview had to be given the scan's too.
+- **A switch, not a picker.** Two rungs reach the user and the design system has neither a
+  picker nor a segmented control.
+- **The 1700 px rung stays out of the app on purpose.** 1700 px across A4 is about 150 dpi and
+  reading the text back out of a page later wants about 300. It stays in the engine and behind
+  `--long-edge`.
+- **Kill order in `setQuality`:** `scan.pdf`, then the one atomic `quality.txt` rename, then
+  the pages one at a time. A kill costs the PDF (two seconds), or leaves the setting new and
+  some pages old - which reads perfectly, is repaired by flipping the switch twice, and means
+  every page written from then on is at the new rung. The reverse order costs the whole run.
+- **A rewrite is the run that made the page**: a page with a `state/NNNN.txt` goes back through
+  `adjust_page` with exactly those stored values, one without through `scan_page`. Nothing new
+  is written into `state/` - what the user asked for did not change.
+
+**Still open, and both are Julian's.** The five lines of text are new words and none is
+approved (`user-flows.md` sections 4c, 6 and 9 mark them as waiting), and none of this has been
+seen on a phone. The Swift is also unbuilt: there is no Swift toolchain on the Linux box it was
+written on, so `ios/check/run.sh` stops at `swiftc: command not found` and
+`ios/check/scan_check.sh` stops at `ffi/build-ios.sh`, which needs Apple's clang and the iOS
+SDK. `cargo test --workspace` is green.
+
+**Check, once there is a Mac.** `bash ios/check/run.sh` -> "resume ok",
+`bash ios/check/scan_check.sh` -> "scan ok", `bash ffi/bridge_check.sh` -> "bridge ok"; then by
+hand on a phone: shoot one page and read the check screen, flip the switch off and watch a new
+picture arrive, photograph the rest and see the done screen's size line, then flip the switch
+on the pages screen and see every page rewritten.
+
+## 39. A bilevel rung that refuses an unsafe page - PARKED, measured, not built
+
+**What was measured.** CCITT-G4, one bit per pixel, reaches **93.5% off** - 40 pages to 2.7 MB
+- which no JPEG rung comes near. A pure-Rust G4 encoder was prototyped and verified at 201
+lines: no dependency, and the format is the one PDF has embedded since 1.0. The encoder is the
+part already known to work.
+
+**Why it is not built.** One bit per pixel means something has to choose the threshold, and
+Otsu **silently** deletes 39 to 42% of faint pencil, flattens a red stamp into print, and takes
+a photograph on the page to PSNR 14.8 dB. Silently is the word that kills it: a page that lost
+the pencil still looks like a clean page, and this app's whole promise is that a page is the
+sheet.
+
+**What the way in would be**, whenever it is picked up. Not a fourth rung on the switch, but a
+**suggest-half that refuses an unsafe page**, in the engine's own suggest-then-apply shape:
+measure the page and say "not this one" for pencil, colour or a photograph. That is a design
+task, not an encoder task.
+
+**Four levers measured and dead, so nobody measures them again.** Chroma subsampling is
+impossible with `image` 0.25 - it hardcodes h:1, v:1 - and would need a different encoder.
+`to_grayscale` as a compression lever is 7.1%, which is not worth spending the colour on.
+4-bit grey measured **larger** than grey at quality 65. Flate over the PDF's non-image streams
+saves 0 bytes, because the pages are already the whole file, and PDF-1.5 object streams save
+0.07%.
+
+**One honesty note that applies to every number in 36 to 39.** They all come from synthetic
+photographs of synthetic glyphs. `test_images/` is gitignored and reading it from code is
+forbidden, so the shares are sound - the same pipeline against itself - but the absolute bytes
+are unproven on real paper. Only Julian can close that, by running the runner over his own
+scans.
+
+---
+
+## 40. Tesseract in the core Rust bundle - INVESTIGATED, refused, 2026-08-22
+
+The wish: ship every PDF with the text already readable, so no client has to run OCR. The
+question asked: can Tesseract go into the `ffi` staticlib the app links?
+
+**It works, and it cannot get onto the phone.** Built by hand it is 168 s, a 5.35 MB
+`libleptonica.a` and a 7.97 MB `libtesseract.a`, and it reads a 2121x3000 page in 917 ms at
+48 MB peak with 99.92% of characters right in German on the small model. It makes no network
+call: `nm -u` on both archives finds no socket, no connect, no getaddrinfo, no SSL. That is
+the good half.
+
+**Why it is refused.** No Rust crate can build it for `aarch64-apple-ios`. All seven
+candidates - `tesseract-rs`, `tesseract-sys`, `leptonica-sys`, `tesseract-55-rs`,
+`tesseract-static`, `tesseract-ocr-static-c`, `kreuzberg-tesseract` - contain **zero**
+mentions of an iOS target in their build scripts, and the two that come closest read the
+**build machine's** settings (`-mmacosx-version-min`, `CMAKE_OSX_DEPLOYMENT_TARGET`, Homebrew
+pkg-config), so on a Mac they produce Mac code. `tesseract-rs` also downloads Leptonica and
+Tesseract from github.com at compile time - which breaks the offline rule at the build step -
+and pulls 113 crates including tokio and rustls. `rusty-tesseract` shells out to a binary,
+which the iOS sandbox has no fork or exec for.
+
+So "include Tesseract" really means: write and keep our own C++ cross-build for two Apple
+platforms, add **10.8 MB** to the app (5.45 code + 5.38 for German and English on
+`tessdata_fast`; German is not optional here), and put C++ exceptions and C++ threads under a
+repository whose rules are no threads, no `unsafe`, and nothing in the dependency tree is C.
+That last one is not a style point: `libtesseract.a` holds 34 `__cxa_throw` and
+`catch_unwind` does **not** catch a C++ exception, so `std::bad_alloc` on a 3000 px page is
+undefined behaviour crossing into Rust. The one-line cross-compile
+(`rustup target add`) would be gone with it.
+
+**The way in, when OCR is picked up.** Split it. The engine draws the invisible text layer -
+about 42 lines, **no dependency and no bundle bytes**, because printpdf writes a base-14
+Helvetica as a bare Type1 dict with no `/FontFile` (checked in a produced file). Use `Tm`
+(`SetTextMatrix`), never `Op::SetTextCursor`: that becomes a relative `Td` and the measured
+result was 1 extracted word out of 450. The words come from Apple's on-device Vision
+framework in the client: 0 MB, offline, German included, and no rule broken. OCR the page
+file `save_page` already wrote, never the photo - that file is the last image of the recipe,
+so its pixels are the ones `place()` maps, and this repo's own rule is that a number measured
+on one image means nothing on the next.
+
+**Two things that would decide it and are unmeasured.** Whether Vision's boxes are per word
+or only per line - if per line, the whole design becomes per line - and every phone timing
+here. Both need a Mac and a device.
+
+**One rung interacts with this.** The 1700 px page (task 37) is about 150 dpi, and OCR wants
+about 300, so it is deliberately not on any screen. If OCR is ever built, that stays true.
+
+**The pure-Rust alternative is out for German.** `ocrs`'s alphabet is 96 ASCII characters, so
+`a-umlaut`, `o-umlaut`, `u-umlaut` and the sharp s come back as `?` - measured 0 of 6 umlaut
+words right. It also wants 11.66 MB of models, 207 to 239 MB for one page, rayon threads and
+about 1,030 `unsafe` blocks in `rten`.
+
+**`iphone-client-plan.md` section 11 lists OCR under "Deliberately not built", so picking
+this up is a decision to reopen, not a gap to fill.**
+
 ## What is deleted by this plan
 
 - `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift`: `import ImageIO`, `Self.turn(photo:by:)` and the whole EXIF branch, the `own = false` re-ask it forced, `adjustGrey`. About 75 lines.

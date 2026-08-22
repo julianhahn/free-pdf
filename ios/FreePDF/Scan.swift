@@ -100,6 +100,51 @@ struct Scan: Hashable {
         try? Data(wanted.utf8).write(to: nameURL, options: .atomic)
     }
 
+    /// How small this scan's pages are written - one rung of the page size setting, one
+    /// word in `quality.txt`, for the whole scan.
+    ///
+    /// It sits beside `name.txt` and not in `state/NNNN.txt` for the same reason the name
+    /// does: `state/` is per page, and this is one fact about the scan. One fact stored
+    /// forty times is a fact that can disagree with itself, and `readState` counts exactly
+    /// 25 tokens anyway.
+    ///
+    /// Absent, empty, unreadable or a word this version does not know reads as
+    /// `Engine.PageQuality.small` - never Original. That is not a shrug: `.small` is what
+    /// the app promises a scan will cost, so a scan whose one small file was lost still
+    /// comes out the size it promised, and Original stays the choice the user makes on
+    /// purpose. No error sentence anywhere, exactly like `name` above.
+    ///
+    /// The word and not the two numbers, because the numbers behind a rung belong to
+    /// `Engine.PageQuality` and nowhere else: a stored `45` would freeze today's number
+    /// into every old scan and disagree with the switch the day the rung is retuned.
+    var quality: Engine.PageQuality {
+        guard let text = try? String(contentsOf: qualityURL, encoding: .utf8) else {
+            return .small
+        }
+        let word = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return word == Self.originalWord ? .original : .small
+    }
+
+    /// Beside `name.txt` and swept like it: one word, and the folder is never renamed.
+    var qualityURL: URL { url.appendingPathComponent("quality.txt") }
+
+    /// Writes the rung, the same way `writeName` writes the name: `.atomic` puts the bytes
+    /// down under a temporary name and renames that over `quality.txt`, and a rename over a
+    /// file never leaves the destination absent. So a kill mid-write leaves the old rung or
+    /// none at all - and none at all is the default, which is a rung and not a hole.
+    ///
+    /// The word is always written, never deleted for the default: what the app decided is
+    /// then on disk and readable, and the answer is the same either way.
+    func writeQuality(_ wanted: Engine.PageQuality) {
+        let word = wanted == .original ? Self.originalWord : Self.smallWord
+        try? Data(word.utf8).write(to: qualityURL, options: .atomic)
+    }
+
+    /// The two words `quality.txt` can hold. Anything else is the default, so a file
+    /// written by a newer version cannot make an older one refuse to open a scan.
+    private static let smallWord = "small"
+    private static let originalWord = "original"
+
     /// The one place a typed name is cleaned up, because the name that leaves in the share
     /// sheet and the name on the row are the same string: a name is one path component, so
     /// the two characters that are not allowed in one are replaced, and the ends trimmed.
@@ -367,8 +412,12 @@ struct Scan: Hashable {
                 try? manager.removeItem(at: stateDirectory.appendingPathComponent(name))
             }
         }
+        // The scan's own files, and the page size setting is one of them now. A name
+        // missing from this list is deleted at the next launch, so leaving `quality.txt`
+        // out would put every scan quietly back on the default rung.
+        let kept = ["photo", "page", "state", "scan.pdf", "name.txt", "quality.txt"]
         for name in (try? manager.contentsOfDirectory(atPath: url.path)) ?? []
-        where !["photo", "page", "state", "scan.pdf", "name.txt"].contains(name) {
+        where !kept.contains(name) {
             try? manager.removeItem(at: url.appendingPathComponent(name))
         }
     }
@@ -381,6 +430,18 @@ struct Scan: Hashable {
                 .attributesOfItem(atPath: photoURL(number).path)
             return total + (attributes?[.size] as? Int ?? 0)
         }
+    }
+
+    /// What the finished PDF costs, for the one line the done screen prints. Zero before
+    /// there is one, and read the same way the photos are.
+    ///
+    /// It is the real file and never an estimate of what the other rung would weigh: the
+    /// engine cannot answer that without encoding every page again, and a formula would be
+    /// the guess its own rules forbid
+    /// ([`../../core_engine/AGENTS.md`](../../core_engine/AGENTS.md)).
+    var pdfBytes: Int {
+        let attributes = try? FileManager.default.attributesOfItem(atPath: pdf.path)
+        return attributes?[.size] as? Int ?? 0
     }
 
     /// Deletes the photos and keeps everything else - the pages, the PDF, and `photo/`

@@ -32,10 +32,17 @@ struct PagesView: View {
     /// has a state file. One switch for the whole scan, and flipping it rewrites every
     /// page - so what is on screen is what is written.
     let grey: Bool
+    /// How small the pages are written, as `quality.txt` says it. One setting for the whole
+    /// scan, read by `ScanFlow` off that one file, and moving it rewrites every page - so
+    /// what the switch says is what is on disk. It is here as well as on the check after the
+    /// first photo, because that check is shown once per scan and a scan resumed tomorrow
+    /// never sees it again.
+    let quality: Engine.PageQuality
     @Binding var showing: Int
     var onRetake: (Int) -> Void
     var onDelete: (Int) -> Void
     var onGrey: (Bool) -> Void
+    var onQuality: (Engine.PageQuality) -> Void
     var onAdjust: (Int) -> Void
     var onShootAnother: () -> Void
     var onMakePDF: () -> Void
@@ -304,6 +311,22 @@ struct PagesView: View {
             .frame(minHeight: Token.Size.touchMin)
             .accessibilityHint("Rewrites every page of this scan in grey.")
 
+            // The same switch as on the check after the first photo, the same value and the
+            // same callback: one setting, two places to reach it. Dead rather than gone once
+            // the photos are, the way Adjust page is for a page whose photo is missing.
+            Toggle(isOn: Binding(get: { quality == .small },
+                                 set: { onQuality($0 ? .small : .original) })) {
+                Text("Smaller pages")
+                    .font(Token.Face.heading(Token.Size.textControl))
+                    .tracking(Token.Size.textControl * Token.Number.trackingHeading)
+                    .foregroundStyle(frozen ? Token.Palette.disabledText : Token.Palette.text)
+            }
+            .toggleStyle(.switch)
+            .tint(Token.Palette.accent)
+            .frame(minHeight: Token.Size.touchMin)
+            .disabled(frozen)
+            .accessibilityHint("Rewrites every page of this scan at about half the file size.")
+
             // Hidden until every photo has a page, so a scan cannot quietly lose a page
             // to a PDF the user thought was whole.
             if complete {
@@ -315,6 +338,13 @@ struct PagesView: View {
         }
         .padding(Token.Size.screenPadding)
     }
+
+    /// Once the photos are gone the rung is frozen: the real pixels went with them, so a
+    /// page can only be made from the page itself, which would be a second lossy pass and
+    /// never an improvement. The control stays where it is and does nothing, exactly as
+    /// Adjust page does for a page whose photo is missing - it re-runs the recipe from
+    /// `photo/NNNN.jpg` too.
+    private var frozen: Bool { photos.isEmpty }
 
     // MARK: - The page menu
 

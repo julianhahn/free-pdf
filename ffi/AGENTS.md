@@ -18,13 +18,16 @@ before the struct existed, so an app that knows nothing about page sizes keeps c
 it did. It is its own struct and not a field of `FreepdfAdjustments`, because that one is
 per page and the app serialises it as a version number and twenty-four values, while the
 page size is one choice for the whole scan - and `freepdf_scan_page` takes no
-`FreepdfAdjustments` at all and still needs the rung. The rung names ("Original",
-"Small", "Smallest") stay in the app: how many rungs there are and what they promise is a
-product decision, and freezing them here would make a wording change a change to this
-boundary. Still four functions. What never crosses: a pixel buffer, an image
-handle, an allocation the caller has to free, a callback. Adding any of those means
-the app has to manage the engine's memory, and a leak or a double free then lives on
-the phone rather than in a test.
+`FreepdfAdjustments` at all and still needs the rung. The rung names stay in the app: how
+many rungs there are and what they promise is a product decision, and freezing them here
+would make a wording change a change to this boundary. The iPhone app offers exactly two -
+its default at quality 45 and Original - behind one switch, and it never passes NULL
+([`../ios/AGENTS.md`](../ios/AGENTS.md)). Still four functions: the rung arrived as one more
+parameter on the two functions that write a page, not as a fifth function.
+
+What never crosses: a pixel buffer, an image handle, an allocation the caller has to free,
+a callback. Adding any of those means the app has to manage the engine's memory, and a leak
+or a double free then lives on the phone rather than in a test.
 
 - **Every entry point goes through `guard`.** Unwinding out of an `extern "C"`
   function is undefined behaviour, so `catch_unwind` is not error handling, it is the
@@ -155,6 +158,7 @@ rustup target add aarch64-apple-ios aarch64-apple-ios-sim
 ```
 
 Xcode does not know about cargo, so a forgotten `build-ios.sh` links yesterday's
-Rust. The four build settings on the app target, and the Swift wrapper that calls
-these functions, are in
-[plan section 5](../iphone-client-plan.md#5-the-c-surface) until `ios/` exists.
+Rust. The four build settings on the app target now live next to the app that carries them,
+in [`../ios/AGENTS.md`](../ios/AGENTS.md) under "How the Rust library gets in", and the
+Swift side of these four functions is `ios/FreePDF/EngineCalls.swift`. Plan section 5 is a
+pointer to this file and the header, and no longer a copy of either.
