@@ -327,15 +327,14 @@ only lives in memory today and a relaunch is the only retry there is.
 | Skipped after apply-to-all | Pages 4, 9 and 18 were not changed, because their photos are missing. | Seite 4, 9 und 18 wurden nicht geändert, weil ihre Fotos fehlen. |
 | Jump | Go to page | Seite wählen |
 | Jump, confirm | Go | Los |
-| Switch | Smaller pages | Kleinere Seiten |
-| Switch, spoken hint | Rewrites every page of this scan at about half the file size. | Schreibt jede Seite dieses Scans neu, mit etwa halber Dateigröße. |
 ```
 
-The last two rows are **new words and wait for Julian's approval** (2026-08-22). The switch
-is the same setting as the one on the check after the first photo, reached a second time -
-one value, two places. Here it *rewrites*: every page that already exists goes back through
-the engine at the new rung, the same takeover **Apply to all pages** uses, and it is dead
-rather than gone once the photos have been deleted, because a page cannot be rewritten
+This screen carries the page size switch a second time, in the footer under Grey - the same
+setting as on the check after the first photo, one value and two places to reach it. Its two
+words are in the table in section 7 beside Grey's, because that is where this screen's switch
+copy already lives. Here the switch *rewrites*: every page that already exists goes back
+through the engine at the new rung, the same takeover **Apply to all pages** uses, and it is
+dead rather than gone once the photos have been deleted, because a page cannot be rewritten
 without its photo.
 
 Changes to today: pinch-to-zoom on the page (this screen exists to check small print, and
@@ -424,6 +423,8 @@ Apply would write. Only Apply writes the page. (Julian, 2026-08-16, reversing th
 | Tool | Crop | Zuschneiden |
 | Tool | Turn | Drehen |
 | Pages screen switch | Grey | Graustufen |
+| Pages screen switch | Smaller pages | Kleinere Seiten |
+| Pages screen switch, spoken hint | Rewrites every page of this scan at about half the file size. | Schreibt jede Seite dieses Scans neu, mit etwa halber Dateigröße. |
 | All-pages switch | Apply to all pages | Auf alle Seiten anwenden |
 | Running, one page | Applying… | Wird angewendet… |
 | Running, all pages | Applying to 40 pages… | Wird auf 40 Seiten angewendet… |
@@ -437,6 +438,9 @@ Apply would write. Only Apply writes the page. (Julian, 2026-08-16, reversing th
 | Edges warning | The page runs off the frame. Move back and photograph it again. | Die Seite ragt aus dem Bild. Geh weiter weg und fotografiere sie noch einmal. |
 | Edges, nothing to cut | The sheet fills the whole photo, so there is nothing to cut away. | Das Blatt füllt das ganze Foto, es gibt nichts abzuschneiden. |
 ```
+
+The two **Smaller pages** rows are new words and **wait for Julian's approval**
+(2026-08-22); everything else in this table is approved and nothing in it was reworded.
 
 ### 7a. Each tool, and how it is reached
 
@@ -662,7 +666,7 @@ All settled, Julian, 2026-08-12. Each one is written into the section named besi
    screen where he can already see what it costs. The preview on that screen is made at the
    same rung the pages are written at, so what he judges is what he gets. It is still not a
    picker — two rungs is a switch, and the design system has neither a picker nor a
-   segmented control. (Sections 4c, 6, 7a and 9.)
+   segmented control. (Sections 4c, 6, 7, 7a and 9.)
 
 8. **Renaming the PDF is built**: a text field on the done screen. The name is stored with
    the scan and is also the list row's title. (Sections 9 and 10.)

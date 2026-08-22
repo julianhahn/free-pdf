@@ -1368,7 +1368,7 @@ PDF's real size.
   is written into `state/` - what the user asked for did not change.
 
 **Still open, and both are Julian's.** The five lines of text are new words and none is
-approved (`user-flows.md` sections 4c, 6 and 9 mark them as waiting), and none of this has been
+approved (`user-flows.md` sections 4c, 7 and 9 mark them as waiting), and none of this has been
 seen on a phone. The Swift is also unbuilt: there is no Swift toolchain on the Linux box it was
 written on, so `ios/check/run.sh` stops at `swiftc: command not found` and
 `ios/check/scan_check.sh` stops at `ffi/build-ios.sh`, which needs Apple's clang and the iOS

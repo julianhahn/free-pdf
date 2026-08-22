@@ -18,7 +18,7 @@ either order.
 
 Do not tidy that order away. Milestone 2's `freepdf_scan_page` repeats the deskew, straighten,
 levels, sharpen part of it in the `ffi/` crate, deskew skipped only when no sheet is found
-([plan section 5](../iphone-client-plan.md#5-the-c-surface)). And `USAGE` promises the order in
+([`../ffi/AGENTS.md`](../ffi/AGENTS.md)). And `USAGE` promises the order in
 words, so it and `apply_tools` change in one commit or the printed contract lies.
 
 `--long-edge` sits where it does because a page shrunk after sharpening throws the sharpening
@@ -46,8 +46,10 @@ real photo lands in the repository.
 
 `USAGE` in `main.rs` is the flag list. `--grayscale` works too and is deliberately not in it.
 `--quality <1..100>` and `--long-edge <px>` are the two numbers behind a page size setting, and
-they are raw numbers here on purpose: the rung names a user reads ("Small", "Smallest") are the
-client's product decision and live in one place only, which is not this file. `--quality` is
+they are raw numbers here on purpose: the rung names a user reads are the client's product
+decision and live in one place only, which is not this file - the iPhone app offers two rungs
+behind one switch and calls neither of them by a number
+([`../ios/AGENTS.md`](../ios/AGENTS.md)). `--quality` is
 range-checked while the arguments are read, so a typo is answered before the first photo is
 opened; `--long-edge` is answered by the engine's own floor as soon as the first page reaches
 it. `--quality` next to an image output is refused rather than ignored, because only a PDF has

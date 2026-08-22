@@ -111,6 +111,38 @@ Why the page path exists at all, so nobody simplifies it away later:
   it - and it only works because the page it checks is noise
   ([tests/AGENTS.md](./tests/AGENTS.md)).
 
+## rehuff.rs: the same pixels in fewer bytes
+
+`image`'s JPEG encoder writes the fixed example Huffman tables out of the standard's Annex K,
+which are nobody's page. `rehuff` rebuilds them from the page's own symbol counts and carries
+every quantised coefficient over untouched, so the file decodes to the very same pixels and
+simply weighs less. It is private, has no dependency, no `unsafe` and no panic path, and
+`save_page` calls it through `unwrap_or`: a JPEG it refuses keeps its original bytes, so a scan
+can never be left unfinishable by it. It is not a setting and there is nothing to switch,
+because it costs the user nothing.
+
+**What it is worth, and do not quote the best case.** 5 to 9% on realistic text pages, 15 to
+16% on grainy and photographic ones, 2.5 to 5% on grey text. A document scanner's typical page
+is text, so 5 to 9% is the number to plan with. The first write-up said 20 to 30%, which was
+one 40-page synthetic run quoted as the rule. The "up to 28% over a mixed scan" that
+`rehuff.rs`, `pdf.rs` and `tests/engine.rs` still carry is that same run, and it is kept beside
+the per-page spread on purpose: it is what a whole synthetic scan of mixed page kinds came to,
+not what any one real page will do. Quote the page kind, never the scan.
+
+**Four other compression levers were measured and are dead ends.** They are written down here
+so nobody spends the day again: chroma subsampling is impossible with `image` 0.25 at all - it
+hardcodes h:1, v:1 - and would need a different encoder. `to_grayscale` as a compression lever
+is 7.1%, which is not worth spending the colour on. 4-bit grey measured **larger** than grey at
+quality 65. Flate over the PDF's non-image streams saves 0 bytes, because the pages are already
+the whole file, and PDF-1.5 object streams save 0.07%. The one lever that is not a dead end is
+bilevel CCITT-G4 at 93.5% off, and it is parked rather than built because the threshold it
+needs deletes faint pencil silently ([`../TASKS.md`](../TASKS.md) 39).
+
+**Every one of those numbers came from synthetic photographs of synthetic glyphs.**
+`test_images/` is gitignored and reading it from code is forbidden
+([`../AGENTS.md`](../AGENTS.md)), so the shares are sound - the same pipeline against itself -
+but the absolute bytes are unproven on real paper.
+
 ## Limits, not bugs
 
 Finding the sheet starts from brightness and then follows the edges of the paper, so a document
