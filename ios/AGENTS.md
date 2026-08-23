@@ -715,6 +715,55 @@ file plus rename, the sweep, the C boundary and the streamed PDF.
   because it left a variable unused and `SWIFT_TREAT_WARNINGS_AS_ERRORS` stopped the
   build - which is that setting earning its place.
 
+## Tapping a control in the simulator, without hunting for it
+
+**No check in this repository ever taps a control.** `run.sh` reads the model, `scan_check.sh`
+builds the app and drives it through `-autofake` - both pass with a button that is painted and
+dead. A control is only proven by tapping it, and this is how to do that without guessing
+coordinates for twenty minutes, which is how the `SettingStyle` bug below was found.
+
+**Do not read coordinates off the screenshot you are shown.** It is rescaled for display and
+its height is not what it looks like; every coordinate guessed that way lands in the gap
+between two rows, or on the button underneath. Decode the real screenshot instead and find the
+control by its colour. The simulator takes taps in **points**, and `simctl` writes **pixels at
+3x**, so the only arithmetic needed is a division by three.
+
+```sh
+xcrun simctl io <udid> screenshot shot.png     # 1206 x 2622 px = 402 x 874 pt on iPhone 17 Pro
+```
+
+Then find the control. The accent colour is roughly `(180, 128, 42)`, which no background in
+this app comes near, so any accent control - a filled button, a switch that is on, an accent
+word - can be located exactly. `assets/find-control.py` is not a file that exists; the loop is
+short enough to write inline, and what matters is the two lines at the end:
+
+```python
+# ... decode the PNG rows (zlib + the five filter types), then:
+xs = [x for y in range(top, bottom) for x in range(w) if is_accent(*px(x, y))]
+print("Mitte in Punkten:", (min(xs) + max(xs)) / 2 / 3)   # divide by 3, always
+```
+
+**Then check the disk, not the picture.** A switch that draws its new position without writing
+anything looks exactly like a switch that worked. Every setting in this app is a file
+([One scan is one directory](#one-scan-is-one-directory)), so the honest test is to read it:
+
+```sh
+C=$(xcrun simctl get_app_container <udid> com.julianhahn.freepdf data)
+find "$C" -name quality.txt -exec sh -c 'echo "$(basename $(dirname $1)) -> $(cat $1)"' _ {} \;
+```
+
+Two things that cost time and are not bugs. **The first tap after `launch` is swallowed**
+while the app is still coming up - send it, expect nothing, then send the real one. And a tap
+between two rows hits neither: the switches sit about 53 points apart with a real gap between
+them, so a miss of 20 points is a miss.
+
+**`SettingStyle` was shipped dead once, in `8a40b68`, and caught this way.** Its `makeBody`
+built `Toggle(isOn: configuration.$isOn) { configuration.label }`, which draws a correct switch
+around a copy of the binding: the tap reaches the copy, nothing is written, and every check in
+the repository still passed. The fix is `Toggle(configuration)`, the initializer that exists
+for exactly this. Any new `ToggleStyle` or `ButtonStyle` has to be tapped once in the simulator
+before it is believed.
+
 ## The app icon is generated, not drawn here
 
 `FreePDF/Assets.xcassets/AppIcon.appiconset` holds two rasterised 1024 px PNGs of the

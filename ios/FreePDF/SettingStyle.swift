@@ -29,14 +29,17 @@ struct SettingStyle: ToggleStyle {
     var off = false
 
     func makeBody(configuration: Configuration) -> some View {
-        Toggle(isOn: configuration.$isOn) {
-            configuration.label
-                .font(Token.Face.heading(Token.Size.textControl))
-                .tracking(Token.Size.textControl * Token.Number.trackingHeading)
-                .foregroundStyle(off ? Token.Palette.disabledText : Token.Palette.text)
-        }
-        .toggleStyle(.switch)
-        .tint(Token.Palette.accent)
-        .frame(minHeight: Token.Size.touchMin)
+        // `Toggle(configuration)` and never `Toggle(isOn: configuration.$isOn) { ... }`.
+        // The second one builds a NEW control around a copy of the binding, and the tap
+        // never reaches the real one: the switch draws correctly, animates nothing and
+        // writes nothing. It was shipped that way once and caught by tapping it in the
+        // simulator, so this line is load bearing and the check below is what watches it.
+        Toggle(configuration)
+            .toggleStyle(.switch)
+            .font(Token.Face.heading(Token.Size.textControl))
+            .tracking(Token.Size.textControl * Token.Number.trackingHeading)
+            .foregroundStyle(off ? Token.Palette.disabledText : Token.Palette.text)
+            .tint(Token.Palette.accent)
+            .frame(minHeight: Token.Size.touchMin)
     }
 }

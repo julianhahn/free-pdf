@@ -29,8 +29,20 @@ the reason `ButtonStyle` is shared next door: the style decorates the label the 
 owns. A call site is two lines now instead of eight. `off:` carries the dead colour the pages
 screen needs once the photos are gone, beside the `.disabled(...)` that stops the tap.
 
+**And the refactor shipped the switch dead, which is how the gap below was found.** `SettingStyle`
+first built `Toggle(isOn: configuration.$isOn) { configuration.label }` - a correct looking
+switch around a copy of the binding. It draws, it animates nothing, it writes nothing, and
+`cargo test`, `bridge_check`, `run.sh` and `scan_check.sh` all still said ok, because **no check
+in this repository has ever tapped a control**. It was caught by tapping it in the simulator and
+then reading `quality.txt` off the app container, and the fix is `Toggle(configuration)`, the
+initializer that exists for this. The whole method - find the control by its accent colour in
+the real 3x screenshot rather than guessing from the rendered one, then check the disk and not
+the picture - is written down in [`../ios/AGENTS.md`](./ios/AGENTS.md) under **Tapping a control
+in the simulator**, because Julian lost patience watching it be rediscovered.
+
 Next person: the five lines of English and German still wait for Julian (README **Next steps**
-row 12), and two questions still need a phone rather than a simulator (row 13).
+row 12), and two questions still need a phone rather than a simulator (row 13). The app is
+**installed on his iPhone 15 Pro** as of this session, built and signed from `main`.
 
 ## 2026-08-23 - main is merged in, and two numbering collisions were settled
 
