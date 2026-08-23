@@ -231,6 +231,15 @@ This bug has been shipped twice and felt on the phone twice, the second time wit
   screen's `OutlineStyle` stay private beside the screen each belongs to.
 - **`Button { } label: { <decorated label> }`**, with every modifier inside the closure.
 
+A switch is not a button and has no hit-area trap, but it has the same drift trap: the app's
+six switches were the same eight lines written out in four places, so changing one changed one
+screen. They are drawn by one **`ToggleStyle`**, `SettingStyle` in
+[`FreePDF/SettingStyle.swift`](./FreePDF/SettingStyle.swift), for the same reason the two
+button styles are shared. A new setting is `Toggle("Its words", isOn:)` plus
+`.toggleStyle(SettingStyle())`, and nothing else. `off:` is the dead colour for a switch that
+`.disabled(...)` has already stopped - the two go together, one stops the tap and the other
+says so.
+
 Two things carry a hit area and nothing else does: a `.background(colour, in: shape)` and a
 `.contentShape`. A `.frame` alone is layout, and a `.overlay(Shape().stroke(…))` is a
 painted line - a shape is hit-tested on its own path, so an outlined box answers on the

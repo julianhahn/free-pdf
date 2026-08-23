@@ -129,21 +129,14 @@ struct FirstPageCheck: View {
     /// Nothing is written here: the value goes out and the new picture comes back in.
     private var smaller: some View {
         VStack(alignment: .leading, spacing: Token.Size.space1) {
-            Toggle(isOn: Binding(get: { quality == .small },
-                                 set: { onQuality($0 ? .small : .original) })) {
-                Text("Smaller pages")
-                    .font(Token.Face.heading(Token.Size.textControl))
-                    .tracking(Token.Size.textControl * Token.Number.trackingHeading)
-                    .foregroundStyle(Token.Palette.text)
-            }
-            .toggleStyle(.switch)
-            .tint(Token.Palette.accent)
-            .frame(minHeight: Token.Size.touchMin)
-            // Dead while a run is out, so a second flip cannot stack a second run on the
-            // first. The sentence under it says why, rather than a control going quiet
-            // with no reason given.
-            .disabled(making)
-            .accessibilityHint("Writes every page of this scan at about half the file size.")
+            Toggle("Smaller pages", isOn: Binding(get: { quality == .small },
+                                                  set: { onQuality($0 ? .small : .original) }))
+                .toggleStyle(SettingStyle())
+                // Dead while a run is out, so a second flip cannot stack a second run on the
+                // first. The sentence under it says why, rather than a control going quiet
+                // with no reason given.
+                .disabled(making)
+                .accessibilityHint("Writes every page of this scan at about half the file size.")
             // While the run is out, the picture above is still the page the other rung
             // made, and this line is the only thing that can say so. No spinner: this app
             // says things in sentences.

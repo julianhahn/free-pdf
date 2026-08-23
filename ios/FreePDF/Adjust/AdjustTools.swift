@@ -77,16 +77,9 @@ extension AdjustView {
     }
 
     func toggle(_ title: String, _ on: Binding<Bool>, hint: String) -> some View {
-        Toggle(isOn: on) {
-            Text(title)
-                .font(Token.Face.heading(Token.Size.textControl))
-                .tracking(Token.Size.textControl * Token.Number.trackingHeading)
-                .foregroundStyle(Token.Palette.text)
-        }
-        .toggleStyle(.switch)
-        .tint(Token.Palette.accent)
-        .frame(minHeight: Token.Size.touchMin)
-        .accessibilityHint(hint)
+        Toggle(title, isOn: on)
+            .toggleStyle(SettingStyle())
+            .accessibilityHint(hint)
     }
 
     private func slider(_ title: String, _ value: Binding<Double>,

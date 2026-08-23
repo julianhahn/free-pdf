@@ -8,6 +8,30 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-23 - The page size branch is on main, and the app's switch exists once
+
+`claude/pdf-compression-ocr-bundle-6tj04c` is merged into `main` (`2505dc9`). One thing had to
+happen first: the working tree of `main` still held the `paper.rs` split from 2026-08-19 -
+1485 lines becoming six files under `core_engine/src/paper/` - uncommitted, one `git checkout`
+from being lost. It compiles and the suite is unchanged at 52 on that tree, so it was committed
+as found under its own message (`e9bd7a9`), verified but explicitly not reviewed. The one other
+uncommitted change there, a "Build the engine" script phase in the Xcode project, is unrelated
+and was left alone. `main` after the merge: **69 green**, `bridge ok`, `resume ok`, `scan ok`.
+
+Then the refactor. The app has **six switches and had the same eight lines written out in
+four places** - `Grey` and `Smaller pages` in the pages footer, `Smaller pages` again on the
+first page check, and a private `toggle(_:_:hint:)` helper in `Adjust/AdjustTools.swift`
+carrying the other three. Heading face at control size, the heading's tracking, the accent
+tint, a 44 point slot, four times over, so changing one changed one screen and left the others
+saying something else. They are now one `ToggleStyle`,
+`SettingStyle` in [`../ios/FreePDF/SettingStyle.swift`](./ios/FreePDF/SettingStyle.swift), for
+the reason `ButtonStyle` is shared next door: the style decorates the label the control itself
+owns. A call site is two lines now instead of eight. `off:` carries the dead colour the pages
+screen needs once the photos are gone, beside the `.disabled(...)` that stops the tap.
+
+Next person: the five lines of English and German still wait for Julian (README **Next steps**
+row 12), and two questions still need a phone rather than a simulator (row 13).
+
 ## 2026-08-23 - main is merged in, and two numbering collisions were settled
 
 The page size branch had been sitting beside `main` for ten of its commits and nine of its
