@@ -40,9 +40,20 @@ the real 3x screenshot rather than guessing from the rendered one, then check th
 the picture - is written down in [`../ios/AGENTS.md`](./ios/AGENTS.md) under **Tapping a control
 in the simulator**, because Julian lost patience watching it be rediscovered.
 
+`run.sh` now greps for that one shape before it compiles anything, and a mutation proves it:
+putting `Toggle(isOn: configuration.$isOn)` back makes it print the file and line and exit 1.
+It is a grep and the comment beside it says so - a control can be dead in ten ways a grep
+cannot see, and only a finger in the simulator finds those. A real tapping check would need an
+XCUITest target, which means editing `project.pbxproj`, which currently carries somebody's
+uncommitted work; that is why this is a grep and not a test.
+
 Next person: the five lines of English and German still wait for Julian (README **Next steps**
 row 12), and two questions still need a phone rather than a simulator (row 13). The app is
-**installed on his iPhone 15 Pro** as of this session, built and signed from `main`.
+**installed on his iPhone 15 Pro** as of this session, built and signed from `main`. Two copy
+things turned up by looking at real screens and are his call: the pages screen shows
+**Smaller pages** with no line under it while the check screen explains it, and the done
+screen renders "This PDF is 2,3 MB." - an English sentence with a German decimal comma,
+because the number takes the device's locale and the sentence does not.
 
 ## 2026-08-23 - main is merged in, and two numbering collisions were settled
 

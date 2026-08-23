@@ -764,6 +764,13 @@ the repository still passed. The fix is `Toggle(configuration)`, the initializer
 for exactly this. Any new `ToggleStyle` or `ButtonStyle` has to be tapped once in the simulator
 before it is believed.
 
+`run.sh` now greps for that one shape before it compiles anything, and says which file and
+line built the copy. **It is a grep and it knows it**: it watches the door that was walked
+through, not the whole room. A control can be dead in ten other ways - a `.disabled` that is
+always true, an action closure that returns early, a hit area smaller than the paint - and
+none of those is greppable. Only a finger in the simulator finds those, which is why the
+method above exists rather than being replaced by the check.
+
 ## The app icon is generated, not drawn here
 
 `FreePDF/Assets.xcassets/AppIcon.appiconset` holds two rasterised 1024 px PNGs of the
