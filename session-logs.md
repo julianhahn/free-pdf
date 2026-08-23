@@ -8,6 +8,36 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-23 - main is merged in, and two numbering collisions were settled
+
+The page size branch had been sitting beside `main` for ten of its commits and nine of its
+own, and `main` had refactored the very files this branch changed. A trial merge showed seven
+conflicts, so `main` was merged in before anything else was built on top.
+
+**The two code conflicts.** `main` split `AdjustView.swift` into four files under `Adjust/`
+and deleted the original, which this branch had changed - a modify/delete, the kind git cannot
+decide. The three changed lines moved to where the split put their job: the
+`quality: Engine.PageQuality` property to `Adjust/AdjustView.swift` beside `grey`, and the
+`rung` the preview run passes to `Adjust/AdjustValues.swift`. That was not cosmetic:
+`EngineCalls.adjustPage` takes four arguments on this branch and `main`'s call site passed
+three, so without the move the app would not have built. In `FirstPageCheck.swift` both sides
+had added a modifier at the same place - this branch keyed the page run on the rung, `main`
+added the stand-in's one-page tap - and the resolution keeps both. `scan_check.sh` prints
+`one page scanned from the check screen` beside `scan ok`, which is `main`'s new assertion
+running through this branch's change.
+
+**Two numbering collisions, settled the same way: whoever is referenced more keeps the
+number.** Both branches had written a task 36. `main`'s - the bottom edge, dated 2026-08-18 -
+is **still open**, carries three rounds across README and five log entries, and keeps 36. The
+page size block renumbered to **37 to 41**, and every pointer to it moved with it. In README
+**Next steps** the same thing had happened to row 7: `main`'s four edge rows keep 7 to 10 and
+the page size rows became 11 to 14. Renumbering is a rename, so the prose in the older log
+entries is untouched and only the numbers in them follow.
+
+The test count both sides had guessed was counted on the merged tree instead: **69 green on a
+Mac, 66 elsewhere** - 53 in `core_engine/tests/engine.rs`, 8 in `ffi/src/lib.rs`, 5 in
+`backend-core-runner` plus its 3 HEIC tests. All four checks pass on the merged tree.
+
 ## 2026-08-23 - A Mac ran the three checks, and real paper corrected two numbers
 
 The whole page size branch was built in a Linux container, so everything needing Apple's
@@ -28,7 +58,7 @@ pixels, is **8 to 13%** on a photographed text page (thirteen probes, median 9.9
 
 So two of the old figures had drifted and one held. "About 71% with a 1700 px edge" was really
 81%, and the recode's "5 to 9%" was really 8 to 13% - both were synthetic. Quality 45's "about
-40%" was close and is now 45%. Corrected with the baseline named in README, TASKS 36/37/38,
+40%" was close and is now 45%. Corrected with the baseline named in README, TASKS 37/38/39,
 `core_engine/AGENTS.md`, `pdf.rs`, `rehuff.rs`, `tests/engine.rs` and `Engine.swift`. The two
 entries below this one keep their old numbers on purpose: this file is the past.
 
@@ -50,17 +80,17 @@ the file off the keep list, an absent file reading as `original`, and a `writeQu
 returns true and writes nothing. And the **marker file for a kill mid-rewrite stays unbuilt**,
 now for a measured reason rather than a guess: the rule was "build it the day a rung changes
 something a person can see", and quality 45 is not distinguishable from Original at 1:1, so a
-scan holding both sizes reads right on every page. TASKS 39's bilevel rung would be that day.
+scan holding both sizes reads right on every page. TASKS 40's bilevel rung would be that day.
 
 Next person, three things. The five lines of English and German still wait for Julian (README
-**Next steps** row 8). Two questions still need a phone in a hand, not a simulator: whether the
-stacked switches read as clutter, and how the re-run feels (row 9). And `test_images/` may
+**Next steps** row 12). Two questions still need a phone in a hand, not a simulator: whether the
+stacked switches read as clutter, and how the re-run feels (row 13). And `test_images/` may
 never be committed or read from code, so this measurement is reproducible by hand and not in
 CI - redo it the same way if the encoder ever changes.
 
 ## 2026-08-22 - How small a page is written is a choice, and quality 45 is the default
 
-TASKS.md 36 to 40, one session. `save_page` now rebuilds each page's Huffman tables from its
+TASKS.md 37 to 41, one session. `save_page` now rebuilds each page's Huffman tables from its
 own symbol counts (new private `core_engine/src/rehuff.rs`, called through `unwrap_or`): the
 same pixels, **5 to 9% fewer bytes on a text page** - the "20 to 30%" in commit 966a52f's own
 message was the best case quoted as the rule, and is corrected everywhere now. Then `save_page`
@@ -91,11 +121,148 @@ Next person, four things. The Swift is **unbuilt**: no Xcode and no `swiftc` her
 line is right by inspection only, and a review already caught the app not compiling once when
 the header grew a parameter and `EngineCalls.swift` still passed four arguments - `freepdf.h`
 and that file are one unit. Nothing has been seen on a phone, and the switch's five lines of
-English and German still need Julian (README **Next steps** rows 8 and 9). Every byte figure
+English and German still need Julian (README **Next steps** rows 12 and 13). Every byte figure
 came from synthetic photographs of synthetic glyphs, so the shares carry and the absolute
 numbers do not - `--quality` over his own scans is the one measurement that closes it. And two
 things were investigated and deliberately not built, so they are answers and not gaps:
-Tesseract in the bundle (TASKS.md 40) and the CCITT-G4 rung at 93.5% off (TASKS.md 39).
+Tesseract in the bundle (TASKS.md 41) and the CCITT-G4 rung at 93.5% off (TASKS.md 40).
+## 2026-08-18 - The ruler now loads the photo the way the app does, and the documents say what it measures
+
+TASKS.md 36, third round, and no engine code changed - `core_engine/examples/edge_error.rs` loads
+the photo with `load_image` instead of `image::open`, one line. That is the whole lesson of this
+round: an instrument that does not load its input the way the product does will send work at the
+wrong thing. All thirteen photos are stored 4032 by 3024 on their side with EXIF orientation 6, so
+the ruler was fitting a landscape raster the app never processes, one working pixel being 10.1 photo
+pixels there against 7.6 in the upright one - and its four side names came out turned a quarter. Two
+rounds chased a page's LEFT side under the name `bottom`, and Julian's own report agreed with the
+wrong column by coincidence.
+
+**What Julian reported is fixed.** Read the app's way, on his own build (dbb895a) every one of the
+twenty-four tops and bottoms of the twelve photos sat outside the paper, -1 to -13; now twenty-three
+of the twenty-four have no place outside the paper at all and the twenty-fourth reads -1. What is
+left is on the left and right edges, which he never mentioned: nine sides keep a wedge of desk, -5
+to -57 pixels. Task 36 stays open, and its row says so - a page in his hand is what decides the
+rest.
+
+The four readings worse than -40 were settled with a walk of 101 places along the side, copying the
+ruler's own `miss_at` so it reproduces the nine readings exactly (a throwaway example, deleted
+after use). Two are the ruler and not the desk: `extra_2`'s left dives at three single places whose
+neighbours read +11 to +14, and `extra_3`'s right loses the edge out of its 60 pixel window
+completely. Two are real: `sheen_3`'s right falls over 27 places in a row without a reversal, and
+`sheen_5`'s right bows nearly 90 pixels end to end. One new thing came out of it and is in README's
+**Parked**: `extra_3`'s right side stands up to 59 pixels INSIDE the paper near a corner, about 5 mm
+of that page, which the ruler's middle and worst columns cannot show. Every side name and count in
+README, TASKS.md 36, core_engine/AGENTS.md and the doc comments in paper.rs was corrected against
+the fixed ruler; the counts in the two entries below this one are in the turned frame.
+
+## 2026-08-18 - A side may lean, and the ruler turned out to be lying on its side
+
+TASKS.md 36, second round. The last change laid each side on its innermost reading but kept the
+slope the 400 pixel copy gave it, so one number had to satisfy nine readings: `sheen_7`'s right side
+read -10, -5, -1, 0, +1, +3, +4, +6, +10 from end to end, which is that slope being off by a pixel
+of the copy and not a bow at all. The new `how_the_side_leans` (core_engine/src/paper.rs) tries
+whole-pixel leans up to `MOST_LEAN = 12` photo pixels across a side and keeps the one leaving the
+least bow for `where_the_side_goes` to pay for out of `MOST_INWARD`. That helper is unchanged, no
+test changed, and a drawn flat sheet gets no lean, which is why the corner fixtures pass untouched.
+
+Measured with core_engine/examples/edge_error.rs on the twelve real photos: sides whose worst place
+is within the 3 pixels task 36 allows went from 32 of 48 to 40 of 48, and sides with no place
+outside the paper at all from 26 to 35. It is nearly free, because a lean re-aims a side instead of
+pushing it in - the mean middle reading FELL from +9.3 to +7.6 pixels, the sides pinned at the +12
+ceiling from ten to five, and a page came out 13 pixels wider to 11 narrower and 17 taller to 5
+shorter. One side got worse, `sheen_5`'s bottom, -7 to -10. What a lean spends lands at a CORNER,
+which no reading covers: worst on the twelve, a corner moved 11.7 pixels and cut 11.0 further into
+the paper, measured on the corners `backend-core-runner --deskew` prints.
+
+**Then the review found the instrument is turned, and that is the thing to carry forward.**
+edge_error.rs loads with `image::open`, which ignores the turn the phone wrote into the file, so it
+fits a 4032 pixel wide landscape raster while the app fits a 3024 pixel wide upright one: its
+`bottom` is a page's LEFT, its `top` a page's RIGHT, checked on `jpegtran -rotate 90` copies of all
+twelve. Counted in the frame the app really runs, the state is 33 sides clean and 37 within -3, not
+35 and 40 - and `extra_3`'s right side reads -57 there while this ruler prints that same side clean.
+Nobody has looked at it. Every tuned number in task 36 came through the coarser frame, so fixing the
+one line and measuring the whole table again is the third round: TASKS.md 36 and README's **Parked**
+say so.
+
+**Task 36 stays open and its row now says so.** Two lanes were built and measured against what
+shipped and both lost: the lean from the middle of the pairwise slopes of the readings makes two
+pages worse, because a side humped in its middle has no honest lean, and a corner of its own for
+each end needs three constants, one of them a fudge pixel. Three sides are provably out of reach of
+any straight line under Julian's millimetre - the arithmetic is the `ponytail:` note on
+`sides_read_again_in_the_photo`. And one thing the ruler cannot check at all: the lean is measured
+to the innermost reading, so on `extra_2`'s bottom the dark spot already proved to be a mark on the
+desk swings the lean from +7 to the -12 cap, nineteen pixels at that corner.
+
+## 2026-08-18 - Each side is laid on its innermost reading, not on the middle of them
+
+TASKS.md 36. The page still carried a strip of Julian's table, and the reason was the number
+the last change finished on: `sides_read_again_in_the_photo` laid each side on the MIDDLE of its
+nine readings, which leaves half of them outside the paper by definition. The new
+`where_the_side_goes` (core_engine/src/paper.rs) lays the side on the INNERMOST reading instead,
+capped at `MOST_INWARD = 10` photo pixels past the middle - 10 plus the 1.5 hair is 11.5 pixels,
+which is 1.0 mm of these A4 photos, Julian's whole allowance. The margin is self-scaling: a flat
+edge has nine equal readings, so its innermost is its middle and it pays nothing, which is why
+the two corner tests pass untouched at 6.0 and 8.0 tolerance where a bigger `INWARD_HAIR` broke
+them this morning.
+
+Measured with `core_engine/examples/edge_error.rs` on the twelve real photos: sides whose worst
+place is no more than the 3 pixels task 36 allows went from 9 of 48 to 32 of 48, and 26 of the 48
+have no place outside the paper at all, where before none did. No middle reads past +12, and ten
+read exactly +12, so the cap has nothing left to spend. Pages come out 8 to 26 pixels narrower
+and 1 to 18 shorter; no single side can lose more than 11.5 pixels, which is 1.0 mm, against the
+20 mm of margin a letter has.
+
+Three things the next person needs. **The acceptance of task 36 cannot be met** and it is
+arithmetic, not tuning: a place of a side ends at `innermost - middle + 11.5`, so "worst at
+least -3" asks every side to bow within 14.5 pixels, and sixteen of the forty-eight bow further.
+Thirteen of those sixteen are real table left in the page - `sheen_7`'s top bows up to 49 pixels
+and a 101-place walk along it finds the paper really ending there. Three are the ruler misreading
+and are excluded, each with its evidence in TASKS.md 36: `extra_2`'s bottom, and the tops of
+`sheen_3` and `sheen_5`. **Do not raise the cap** to chase the rest: at 20 the reading of
+`extra_4`'s bottom got worse, -27 to -60, because moving a side slides its nine places along the
+edge, so the number is not monotone and cannot be bisected.
+
+**Two tops read worse than before and neither is a regression.** `sheen_3`'s top went -45 to -60
+and `sheen_5`'s -41 to -55, both sitting on the ruler's own limit of `LOOK_FOR_THE_EDGE = 60`.
+The placement can only ever move a side inward - the innermost reading is never outside the
+middle of the readings - so no page can carry more table than it did before, at any point. What
+changed is which feature the ruler locks onto in a corner a 101-place walk had already shown to
+swing from -56 to +57 within a few percent of the side. Anyone diffing the two tables will see
+these two get worse under a change that takes table away, and this is why.
+
+**One coupling to watch, unproven on these thirteen photos.** `Paper::runs_off_the_picture` reads
+the outermost row and column of the 400 pixel mask, and a side can now be pulled 11.5 photo
+pixels - about 1.5 working pixels - off the frame instead of 1.5. A sheet poking past the frame
+by less than that, with all four sides fitted, could stop reporting that the page is not the
+whole sheet while a sliver really is missing. None of the thirteen shows it, `runs_off_1.jpg`
+reads exactly as it did before, and the bridge check passes; if that note ever appears to go
+missing, start here.
+
+The dark-table test's expected box moved ten pixels in, and it now asserts each side is 0 to 15
+pixels INSIDE the drawn sheet rather than within 15 either way - the reason is that fixture's
+sixty-pixel cut corners, written next to it.
+
+## 2026-08-18 - Every side is read again in the photo, not only in the shrunk copy
+
+A page still came out with a strip of desk along its edges. The four sides were fitted on the
+400 pixel copy alone, where one pixel is 7.6 pixels of a phone photo, and the miss was
+different on each side, so `INWARD_BIAS` could not fix it - measured at 0.5, three sides cut
+up to 17 pixels into the sheet while the top still left desk. `find_paper` now calls
+`sides_read_again_in_the_photo` (core_engine/src/paper.rs): nine places along each side, the
+photo walked across the side at each, the steepest paper-to-table step taken as the edge, and
+the whole side moved onto the middle of those readings, 1.5 pixels inside. The slope stays as
+the rough fit found it. Fewer than five answering places leaves the side alone, so no edge is
+invented.
+
+Measured with the ruler `core_engine/examples/edge_error.rs` (keep it, it is what this was
+judged with): all twelve real photos now read 0 to +3 pixels inside the paper on all four
+sides, nothing outside. `LOOK_FOR_THE_EDGE = 60` and `INWARD_HAIR = 1.5` were both measured -
+at 32 the folded letter `extra_4` found no edge on its bottom side and fell back 14 pixels
+into the sheet, at hair 1.0 three sides read outside the paper. `find_paper` went from 18.9 ms
+to 19.3 ms on a 3024 pixel photo, about 2 percent; only the four sides are read, some 15,000
+pixels. New test `the_corners_are_found_in_the_photo_and_not_only_in_the_shrunk_copy` draws a
+big tilted sheet with the shadow a real sheet casts: without the refinement its corners land 4
+to 6 pixels out in that shadow.
 
 ## 2026-08-18 - The viewfinder shows the last page photographed
 
@@ -176,8 +343,52 @@ corner at the frame's edge, which is the bug),
 `bridge_check.sh` covered), `a_dark_thing_lying_on_the_page_does_not_shorten_it` and
 `a_dark_bar_right_across_the_page_does_not_halve_it` - each of the last two fails if its own
 guard is taken out. Judged by painting the mask over twelve real photos and looking:
-all twelve come out cut to the sheet. Curled sheets lean their side a percent or two outwards on
-purpose (`OUTWARD_BIAS`) - swallowed desk bends a straightening, lost paper loses writing.
+all twelve come out cut to the sheet. Each side leans a little off the fitted line on purpose
+(`INWARD_BIAS`, turned inward on 2026-08-18 - see that day's entry).
+
+## 2026-08-18 - a scan of one page could not be finished
+
+Task 34's check screen has two ways out on purpose: shoot this page again, or photograph the
+rest. Julian, on his phone: a document of one page cannot be finished at all. Both ways out
+lead back to the camera, and the footer that scans - the only control that ends a scan - is
+not on this screen. A receipt was a dead end.
+
+His decision: three ways out. **Scan 1 page**, in the camera footer's own words for one page,
+reaching the same end that footer reaches. No new path, no second retake, and Photograph the
+rest stays the normal answer.
+
+The check harness could not see this, because `FakeShoot.autoShoot` writes its photos
+straight to disk and never goes through `CameraView.landed()`, so the check screen never
+appeared in it at all. `-autofake-one` now shoots once through the screen's own shutter and
+then presses that screen's Scan 1 page, and `scan_check.sh` says "one page scanned from the
+check screen". Proved by mutation: pressing Photograph the rest there instead ends the run
+with "a one page scan could not be finished from the check screen".
+
+Also today, and the reason Julian saw the old edge behaviour after the bias was turned
+inward: the iOS client links the prebuilt Rust static library out of `target/`, and it was
+three hours older than the change. `ffi/build-ios.sh` after an engine change, or the phone
+runs yesterday's engine.
+
+## 2026-08-18 - the cut leaned the wrong way, and Julian saw it
+
+Task 29 pushed every fitted side half a pixel of the shrunk copy **outward**, reasoning that
+swallowed desk only bends a straightening while lost paper loses writing. On a real phone that
+came out as a hair of desk along all four sides of every page - Julian's words: "each corner
+overshot by a few pixels, so I always have a slight border of the table". A 400 pixel wide
+working copy against a 3024 pixel photo makes one working pixel 7.6 real ones, so the bias plus
+the rounding is 4 to 11 pixels of desk per side.
+
+Julian's decision: turn it inward, and rename it, because the name carried the old reasoning
+(`OUTWARD_BIAS` -> `INWARD_BIAS`, `core_engine/src/paper.rs`). The sign is the whole change. What
+pays for it is the white margin a sheet of writing carries at its edge - inward costs those
+pixels and nothing that is in them.
+
+Measured on the thirteen photos in `test_images/phone/`: every page lost 14 to 22 pixels of
+width, and the outer band of each page got brighter with fewer dark pixels in it - desk leaving,
+not content. Worst case before, `sheen_1`, went from a quarter of its outer band dark to under a
+tenth. Two photos (`extra_4`, `sheen_7`) still carry about a tenth, so a stronger bias is the way
+up if Julian still sees desk on a phone. `runs_off_1` is unchanged, as its lower corners come
+from where the paper leaves the frame rather than from a fitted side.
 
 ## 2026-08-17 - the automatic cut has never worked on a lit desk, and why
 

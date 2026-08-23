@@ -7,9 +7,9 @@ root:
 cargo test --workspace
 ```
 
-52 tests are in this file. Eight more are in `backend-core-runner/src/main.rs`, three of them
-only on macOS, and eight in `ffi/src/lib.rs`, so the workspace shows 68 green on a Mac and 65
-elsewhere. Counted by running it on 2026-08-22. A different number means something else was
+53 tests are in this file. Eight more are in `backend-core-runner/src/main.rs`, three of them
+only on macOS, and eight in `ffi/src/lib.rs`, so the workspace shows 69 green on a Mac and 66
+elsewhere. Counted by running it on 2026-08-23. A different number means something else was
 touched. [`../../README.md`](../../README.md) prints both counts
 under "Start here" - move them with the count, in the same commit.
 
@@ -18,7 +18,9 @@ under "Start here" - move them with the count, in the same commit.
 Reuse a generator before writing one: `test_image(width, height)`, `photographed_document()`
 (warm, unevenly lit paper with a block of writing), `document_on_a_dark_table()` (cut corners
 plus a bright reflection), `photo_of_a_tilted_sheet()` (a trapezoid, and it returns its own
-four corners), `crooked_page(tilt_degrees)` (a known tilt), `noise_page(width, height)`
+four corners), `photo_of_a_big_tilted_sheet()` (the same sheet drawn large enough that the
+search has to shrink it, with the shadow a real sheet casts, which is the only fixture that can
+show the error the shrunk copy makes), `crooked_page(tilt_degrees)` (a known tilt), `noise_page(width, height)`
 (pseudo-random pixels). Each doc comment says what the fixture is there to trip over. A
 fresh, naive fixture usually removes the trap, and then the new test proves nothing.
 
@@ -52,7 +54,18 @@ If a test fails, the code is wrong until proven otherwise. Never widen a bound a
 an assertion to get green. These numbers were measured, not guessed:
 `levels_turn_the_paper_white_and_the_writing_black` wants the paper exactly
 `[255, 255, 255]`, `a_bright_speck_is_not_mistaken_for_a_sheet` wants `None`,
-`the_corners_of_the_sheet_are_found` wants `< 6.0`.
+`the_corners_of_the_sheet_are_found` wants `< 6.0`, and
+`the_corners_are_found_in_the_photo_and_not_only_in_the_shrunk_copy` wants `< 6.0` and every
+side on the paper, where the sides fitted on the shrunk copy alone landed 4 to 6 pixels out in
+the shadow. Both of those still hold unchanged.
+
+One expectation was corrected on 2026-08-18: `the_sheet_is_found_on_a_dark_table` wanted its
+box within 15 pixels of the drawn sheet in either direction, and now wants each side 0 to 15
+pixels INSIDE it. That is not a widening - it forbids the reach out towards the reflection
+that the old bound allowed, which is the one thing that fixture exists to catch - and why the
+drawn numbers themselves moved is written beside the assertion. A fixture's expectation may be
+corrected when a real photograph proves it wrong and Julian decides so
+([`../../TASKS.md`](../../TASKS.md) 36). A bound may still never be widened to get green.
 
 Keep the guards that prove a fixture is still hard, and keep them before the real assertion:
 `before < 0.5` in `straightening_puts_the_lines_of_writing_back_in_their_rows`,

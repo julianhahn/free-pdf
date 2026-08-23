@@ -70,6 +70,7 @@ themselves are drawn by Storybook.
 | 33 | iOS: shooting another page does not stop after one — DONE | - | bash ios/check/scan_check.sh, by hand |
 | 34 | iOS: after the first page, the app shows what it is about to do — DONE | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
 | 35 | iOS: the viewfinder shows the last page photographed — DONE | 34 | bash ios/check/scan_check.sh, by hand |
+| 36 | The bottom edge still overshoots, and cropping in is allowed — the edge Julian named is clean, the row is NOT done: a page's top and bottom read no worse than -1, nine left or right sides still keep desk, and Julian looking at a page decides the rest | - | cargo run --example edge_error, cargo test --workspace, by eye on a phone |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -448,7 +449,7 @@ unchanged. All text is English in the code with German checked by hand against t
 cd /Users/julianhahn/free-pdf && swiftc -typecheck -parse-as-library -swift-version 6 \
   -warnings-as-errors -sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
   -target arm64-apple-ios18.0-simulator \
-  -import-objc-header ffi/include/freepdf.h ios/FreePDF/*.swift
+  -import-objc-header ffi/include/freepdf.h $(find ios/FreePDF -name '*.swift')
 ```
 
 **Blocked by.** 12, all of them.
@@ -1121,6 +1122,12 @@ long a scan will be, so there is no good moment to check except the earliest one
 Julian's decision on 2026-08-17: after the first photo of a scan, and only after that one, the
 app shows what the page made from it would look like, and asks whether to carry on.
 
+**Corrected on 2026-08-18, by Julian on a phone: there are three ways out, not two.** A
+document of one page could not be finished from this screen at all - both ways out below lead
+back to the camera, and the footer that scans is not on this screen. It gained a third
+control, **Scan 1 page**, in the camera footer's own words for one page. The rest of this
+section stands.
+
 **The two ways out, which is the whole point of the screen.** Left: the surroundings are the
 problem and the shot is taken again - more light, a plainer surface, less shine. Right: this is
 right, carry on and photograph the rest in one go. The second is the normal answer and the
@@ -1275,13 +1282,562 @@ camera and can run beside 32 and 33.
 
 ---
 
-## 36 to 39. How small a page is written - Julian, 2026-08-22
+## 36. The bottom edge still overshoots, and cropping in is allowed - Julian, 2026-08-18
+
+**Read this whole section before you touch anything.** Three attempts at this have already
+been made today, two of them wrong, and the wrong ones are written down here so you do not
+repeat them. The person who made them is the agent handing over; the numbers are all
+measured and reproducible.
+
+**Every side name in this section down to the third round is the RULER's, and the ruler was
+turned a quarter.** Read the third round at the end of this section before you believe a side
+name or a number anywhere above it.
+
+**What Julian sees, on a phone, on the current build.** The top corners are exactly right.
+The bottom corners still overshoot - less than before, but the page still carries a strip of
+his table along the bottom. His words: "we could easily crop in more and would be rid of the
+table." That sentence is a decision, and it is the one thing this task turns on. His build was
+verified current: the app was built at 15:02:43 and the engine library it links at 15:02,
+after the last engine change.
+
+**The instrument. Use it, do not reason without it.**
+
+```sh
+cargo run --release --example edge_error -- test_images/phone/*.jpg
+```
+
+`core_engine/examples/edge_error.rs` walks across each found side in the FULL sized photo and
+finds the true paper-to-table step. It prints two numbers per side, `middle/worst`, over nine
+places along that side. **Sign: positive means the side sits INSIDE the paper. Negative means
+it sits outside it - a strip of desk in the page, which is the bug.** The middle says whether
+the side sits on the edge at all; the worst says whether any part of it is outside. They
+disagree because a sheet on a desk bows, and that gap is this task's whole subject.
+
+The state as this is written, `INWARD_HAIR = 1.5`, twelve photos, `runs_off_1.jpg` excluded
+because its lower corners come from where the paper leaves the frame (task 31) and not from a
+fitted side:
+
+```
+| photo | left mid/worst | right | top | bottom |
+| --- | --- | --- | --- | --- |
+| extra_1 | +1 / -3 | +2 / -3 | +1 / -16 | +1 / -8 |
+| extra_2 | +2 / -12 | +2 / -5 | +1 / -13 | +2 / -57 |
+| extra_3 | +2 / -3 | +0 / -6 | +0 / -11 | +1 / -37 |
+| extra_4 | +2 / -4 | +2 / -3 | +1 / -36 | +2 / -37 |
+| extra_5 | +1 / -4 | +2 / -2 | +1 / -8 | +1 / -20 |
+| sheen_1 | +1 / -2 | +1 / -9 | +0 / -13 | +3 / -18 |
+| sheen_2 | +1 / -4 | +2 / -10 | +0 / -13 | +1 / -16 |
+| sheen_3 | +1 / -6 | +1 / -8 | +1 / -45 | +1 / -15 |
+| sheen_4 | +1 / -1 | +1 / -10 | +1 / -11 | +0 / -18 |
+| sheen_5 | +2 / -3 | +0 / -9 | +0 / -41 | +1 / -24 |
+| sheen_6 | +1 / -4 | +1 / -16 | +1 / -14 | +2 / -7 |
+| sheen_7 | +1 / -2 | +1 / -10 | +2 / -47 | +0 / -5 |
+```
+
+Every middle is 0 to +3, which is why the last change was called done. Every worst is
+negative, which is why Julian still sees his table. **The middle was the wrong number to
+finish on.**
+
+**What the code does today.** `find_paper` in
+`/Users/julianhahn/free-pdf/core_engine/src/paper.rs`: brightness gives a rough area, rays
+along rows and columns find where the paper stops on a 400 pixel wide copy (`WORK_WIDTH`),
+four straight sides are fitted through those places, and then
+`sides_read_again_in_the_photo` moves each side onto the **middle** of nine readings taken in
+the full sized photo, minus `INWARD_HAIR = 1.5` pixels. The corners are where the sides
+cross. One working pixel is 7.6 photo pixels, which is why the second reading exists at all.
+
+**The three attempts already made, so you do not make them again.**
+
+1. **Flipping `OUTWARD_BIAS` to `INWARD_BIAS`** (committed, `4819c32`). Moved all four sides
+   inward by the same amount. It cannot work: the miss was asymmetric, so it traded desk on
+   three sides for cutting 7 pixels into the sheet on those three while the top kept its desk.
+2. **Turning that constant up.** 0.5, 1.0, 1.5, 2.0 were all measured. Same problem, further
+   along. A single scalar cannot fix a per-side error, and this is why Julian saw "better but
+   still wrong" twice in a row.
+3. **Aiming at the worst reading instead of the middle** (second smallest of nine, to leave no
+   place outside the paper). Tried and reverted: it lets a single misread place - a fold, a
+   shadow, a second sheet inside the 60 pixel search window - drag a whole side deep into the
+   page. Some readings jumped between -25 and -59 without tracking the constant at all, which
+   is the signature of a misread edge rather than a real miss: **a real miss moves by exactly
+   as much as the constant is moved, an artefact jumps about.** Use that test.
+4. **`INWARD_HAIR = 6.0`**, which does put every place of every left and right side inside the
+   paper. Reverted because it cuts 6 pixels off a **flat** sheet and two synthetic tests in
+   `core_engine/tests/engine.rs` fail:
+   `a_patch_of_sheen_beside_the_sheet_is_not_part_of_it` and
+   `the_corners_are_found_in_the_photo_and_not_only_in_the_shrunk_copy`.
+
+**Point 4 is where the previous agent got stuck, and it is the thing you are being handed.**
+Two truths disagreed and it kept the wrong one. The synthetic tests draw a perfectly flat
+sheet and demand the corners land within a few pixels of it. Julian's paper is not flat and
+his phone is the truth. **His decision on 2026-08-18: crop in more.** A few pixels of white
+margin are invisible; a strip of his desk is not. So the synthetic tests' expectation is what
+gives way here - they are a fixture the previous agent wrote this morning, not a rule Julian
+set - and they are corrected to expect a page cut slightly inside the drawn sheet, with the
+reason written next to them.
+
+**Build.**
+
+- **Ask why the bottom is the worst side before you change anything.** It is the only side
+  Julian named, and the numbers agree with him: bottom worst runs -5 to -57 while left is -1
+  to -12. Find out why, and write it into your report. Two things worth measuring first: a
+  sheet photographed from above lifts at the edge nearest the camera, and the shadow under
+  that lifted edge is wider - so ask whether the reading is landing on the shadow's outer
+  boundary rather than on the paper. If the bottom has a cause of its own, fixing that cause
+  beats any margin.
+- **Then make the page cut inside the paper everywhere, not on average.** The straightforward
+  way is a margin that covers the bow. Measure what it costs on all twelve photos and on the
+  synthetic fixtures, and say the cost in your report in pixels and in millimetres of an A4
+  page. Do not exceed what the acceptance below allows.
+- **Whatever you build must be measured with the instrument, not argued.** Paste the table.
+
+**Do not.**
+
+- Do not tune per photo, and do not add a constant read from the image's own name or size.
+- Do not raise the margin until the worst column is positive everywhere: `sheen_3`'s top and
+  `extra_2`'s bottom are misread places, not 45 pixels of desk, and chasing them would cut
+  half a centimetre off every page. Prove which is which with the tracking test above.
+- Do not widen the C boundary, do not touch the iOS client, do not change `WORK_WIDTH`, and do
+  not read the whole full sized photo into memory - only along the four sides (see the memory
+  budget in `/Users/julianhahn/free-pdf/ios/AGENTS.md`).
+- Do not let a side invent an edge. A place with no clear step is dropped, and a side with
+  fewer than five answers keeps the rough fit's position. That rule stays.
+- Do not delete `core_engine/examples/edge_error.rs`. It is not shipped and it is the only
+  reason any of this is known.
+
+**Acceptance.** Not a feeling, and not the middle column:
+
+- On the twelve photos, every side's **worst** reading is at least -3, except where you have
+  shown with the tracking test that a reading is a misread edge rather than desk - and each
+  such exception is named in your report with its evidence.
+- No side's middle reading exceeds +12, so no page loses more than about a millimetre of its
+  margin.
+- `cargo test --workspace` passes. `bash /Users/julianhahn/free-pdf/ffi/bridge_check.sh` says
+  "bridge ok". All thirteen photos still produce a page through
+  `target/release/backend-core-runner <photo> --scan -o <out.jpg>`.
+- `bash /Users/julianhahn/free-pdf/ffi/build-ios.sh` at the end, or Julian's phone runs
+  yesterday's engine. His Xcode now runs cargo itself through a "Build the engine" phase
+  (uncommitted at handover time, in `ios/FreePDF.xcodeproj/project.pbxproj`), so a Cmd+R is
+  enough for him - but a library built here has to be fresh for the checks.
+- Then Julian looks at a page on his phone. That is what decides it.
+
+**Blocked by.** Nothing.
+
+---
+
+### Done on 2026-08-18 - the report
+
+**The bottom is not the worst side. It has no cause of its own.** Bottom and top are the same
+defect, a straight side laid on a curved long edge, and the numbers cannot tell them apart: the
+bottom's nine readings spread by 44 pixels on average and the top's by 40, the bottom is worse on
+seven photos and the top on five.
+
+Both things this task asked to measure first are real, and neither is the cause.
+
+- **The sheet does lift at the edge nearest the camera.** The shadow under the bottom edge is 30
+  pixels wide on average over the twelve photos, 29.8; under the top edge it is 3.4. But a lifted
+  near edge
+  would make the bottom worse than the top, and it is not worse. A shadow also makes the step from
+  paper to table bigger, so the edge is easier to find there, not harder.
+- **A reading does sometimes land on the outer boundary of something else, but it is sheen, not
+  shadow, and it errs the safe way.** On `sheen_4`'s bottom, three of the nine places sit on the
+  outer edge of a bright band lying on the table beyond the sheet. Walking outward at one of them:
+  the paper reads 217 to 222, drops to 148 at its own edge, climbs again to 179, 203, 213, 231 out
+  to +12, then falls to 60, 59, 8. The paper's own step is 74 and the band's outer step is 223, so
+  the steeper one wins, and the place reports +16 when the paper's edge is at -2. That is 18 pixels
+  of extra white margin, not table. On the top side the steepest step is the first step at every
+  one of the nine places on all twelve photos, so this cannot reach the top at all.
+
+**Why Julian saw the bottom, then: how visible it is, not how big it is.** The table beyond the
+bottom edge reads 39 grey on average, the table beyond the top edge 77, on the same scale where the
+paper reads 150 to 220. A 15 pixel strip of near-black along the bottom of a page looks like his
+table. The same strip along the top is light grey, looks like more white margin, and `scan` pushes
+it further towards white. Same defect on both sides; only one of them shows.
+
+**What was built.** One line of arithmetic, in a new four-line helper called
+`where_the_side_goes`, in
+`/Users/julianhahn/free-pdf/core_engine/src/paper.rs`. A side used to be laid on the MIDDLE of its
+nine readings, which leaves half of its places outside the paper by definition - that was the
+number the last change finished on. It is now laid on the INNERMOST reading, and never more than
+`MOST_INWARD = 10` photo pixels past the middle. The cap is the whole defence against a misread
+place: at 10 pixels, `extra_2`'s wild reading is pulled in by the same 11.5 pixels as any ordinary
+bowed side, so no second test for a lone reading is needed and none was added. The margin scales
+itself - a flat edge gives nine equal readings, so its innermost IS its middle and it pays nothing
+at all. That is why the two synthetic tests that hold corners to a drawn sheet pass untouched, and
+why only one fixture expectation had to be corrected.
+
+**The table, after the fix.** `cargo run --release --example edge_error -- test_images/phone/*.jpg`,
+run twice with the same result. `middle/worst`, in pixels of the photograph; positive is inside the
+paper.
+
+```
+| photo | left mid/worst | right | top | bottom |
+| --- | --- | --- | --- | --- |
+| extra_1 | +6 / 2 | +7 / 2 | +12 / -5 | +10 / 1 |
+| extra_2 | +12 / -3 | +7 / 1 | +11 / -3 | +11 / -47 |
+| extra_3 | +7 / 3 | +7 / 1 | +10 / -1 | +11 / -25 |
+| extra_4 | +6 / 2 | +3 / 1 | +11 / -27 | +12 / -27 |
+| extra_5 | +6 / 1 | +6 / 2 | +10 / 1 | +12 / -10 |
+| sheen_1 | +7 / 3 | +11 / 1 | +10 / -1 | +12 / -9 |
+| sheen_2 | +5 / 0 | +12 / 1 | +11 / -2 | +10 / -6 |
+| sheen_3 | +7 / 1 | +11 / 2 | +9 / -60 | +11 / -6 |
+| sheen_4 | +4 / 1 | +11 / 0 | +12 / -1 | +11 / -8 |
+| sheen_5 | +6 / 1 | +10 / 1 | +11 / -55 | +12 / -7 |
+| sheen_6 | +6 / 1 | +12 / -6 | +11 / -4 | +11 / 2 |
+| sheen_7 | +5 / 2 | +11 / 0 | +12 / -36 | +7 / 1 |
+```
+
+`runs_off_1.jpg` reads +9/7, +40/-28, +37/-39, +59/34, exactly as it did before - unchanged is the
+proof that its corners come from where the paper leaves the frame (task 31) and not from a fitted
+side.
+
+**What it costs.** A millimetre of these photos is about 11.7 pixels; the page sizes that number
+comes from are in the `MOST_INWARD` doc comment, re-measured after the second round, and are not
+repeated here.
+
+- **Per side, the hard ceiling is `MOST_INWARD` plus `INWARD_HAIR`, 11.5 pixels, a hair under that
+  millimetre.** It cannot be more, whatever the photo.
+- **Per page, measured on the JPEGs before and after:** 8 to 26 pixels of width, mean 18, which is
+  1.6 mm across both left and right margins together; and 1 to 18 pixels of height, mean 10, which
+  is 0.9 mm across top and bottom together. The middle column of the ruler says the same from the
+  other end: it moved from +0..+3 to +3..+12. A printed letter has 20 to 25 mm of white margin, so
+  this is about a twentieth of it.
+- **A flat sheet pays nothing.** Three of the four synthetic fixtures are unchanged to the last
+  decimal, at their original 6.0 and 8.0 tolerances. The fourth, `document_on_a_dark_table`, comes
+  in 9 to 12 pixels, and it pays for real geometry rather than for the constant: its corners are cut
+  off by 60 pixels, a sixth of its width, so the outermost of the nine places really does sit where
+  the drawn paper has ended. Its expectation was corrected, as this task allows, and the reason is
+  written beside the assertion.
+- **A bigger allowance does not buy what it looks like it would.** At `MOST_INWARD = 20` the middles
+  run up to +22, over the cap Julian set, and `extra_4`'s bottom gets WORSE, -27 to -60: moving a
+  side slides the nine places it is read at along the edge, so the reading is not monotone in the
+  constant and cannot be bisected.
+
+**Acceptance, plainly: the second, third, fourth and fifth criteria are met. The first is not, and
+cannot be.**
+
+- **Worst reading at least -3: NOT met.** Sixteen of the forty-eight sides read worse than -3. Three
+  are the ruler misreading and are named below. The other thirteen are real table left in the page:
+  `extra_1` top -5, `extra_3` bottom -25, `extra_4` top -27 and bottom -27, `extra_5` bottom -10,
+  `sheen_1` bottom -9, `sheen_2` bottom -6, `sheen_3` bottom -6, `sheen_4` bottom -8, `sheen_5`
+  bottom -7, `sheen_6` right -6 and top -4, `sheen_7` top -36. Each was checked two independent
+  ways - a continuous walk along the whole side, and the brightness of the strip the side cuts off -
+  and both say paper on one side and table on the other. This is arithmetic, not tuning: a place of
+  a side ends up at `innermost - middle + 11.5`, so "worst at least -3" asks every side to bow
+  within 14.5 pixels, and these thirteen bow further, up to 49 pixels on `sheen_7`'s top. No placing
+  of a straight line reaches them. `extra_2`'s left and top read exactly -3 and pass.
+- **No middle above +12: met, with nothing to spare.** Ten of the forty-eight read exactly +12.
+- **`cargo test --workspace` passes:** 52 green on this Mac, 0 failed, no test added or removed and
+  one expectation corrected.
+- **`bash ffi/bridge_check.sh`:** prints "bridge ok".
+- **All thirteen photos still produce a page:** 13 of 13 through
+  `target/release/backend-core-runner <photo> --scan -o <out.jpg>`, all non-empty.
+- **`bash ffi/build-ios.sh`:** both libraries built at 16:50, after the last change to `paper.rs`.
+
+**The three excluded readings, each with its evidence.** The tracking test this task gave -
+a real miss moves by exactly as much as the constant is moved, an artefact jumps about - settles two
+of the three on its own. The first one needs a walk along the side as well, and that is worth
+knowing: the tracking test alone is not enough.
+
+1. **`extra_2` bottom, -47, at the ninth of nine places.** It PASSES the tracking test: as the cap
+   moves, the reading follows it exactly, -57, -54, -51, -47. The walk along the side kills it. At
+   1 percent steps the readings around it are 87%: -2, 88%: -2, 89%: -3, 90%: -57, 91%: -3, 92%: -4,
+   93%: -5. One sample in a hundred and one. Something dark genuinely is there - walking outward
+   from the photo point (3323, 2833) reads 173, 183, 136 and then 32 to 88 continuously, and the
+   strip scores dark - but it is 2 percent of the side wide, with the paper's edge at -3 on both
+   sides of it. No sheet dives 54 pixels in and back out within 2 percent of its length; a mark, a
+   staple or a shadow touching the edge does exactly that, and the ninth place of the grid lands on
+   it. Following it would cut 54 pixels off every page for one place on one photo. Excluded.
+   `extra_2`'s bottom is really -5 at worst.
+2. **`sheen_3` top, -60.** In the last tenth of that side the ruler returns pure noise: as the
+   constant moves, the ninth place reads +54, +37, +31, +36 - it does not track, and it changes
+   sign. A walk along the same zone swings from -56 to +57 within a few percent of the side. The
+   true edge there lies further out than the 60 pixels of `LOOK_FOR_THE_EDGE`, so nothing stable
+   ever wins. This is the reading this task already warned about. Excluded.
+3. **`sheen_5` top, -55.** The same corner, the same failure: -31, -60, -59, -56, a jump of 29
+   pixels on the first three-pixel step. Excluded.
+
+Both excluded tops read at or within a few pixels of the ruler's own limit of 60, which is the
+tell. They are what a corner does to the instrument, not evidence about a side.
+
+**One wording in this task's "Do not" list is worth making exact.** It calls `sheen_3`'s top and
+`extra_2`'s bottom "misread places, not 45 pixels of desk". On `extra_2`'s bottom something dark
+really is there, measured above: the mistake is not that the ruler saw nothing, it is that the
+ruler saw a spot and reported it as a side. The conclusion the list draws is right either way, and
+the reason is worth stating exactly, because the next person will measure that brightness and find
+table.
+
+**What is left, and where it is written.** Thirteen sides bow further than the millimetre a page may
+lose, so a thin wedge of table stays near one end of those sides - a wedge at a corner, not a band
+along an edge. The way up is a corner of its own for each end, or four sides that may bend; both
+are more than a constant. That is the `ponytail:` note on `sides_read_again_in_the_photo`, and the
+row in **Parked** in `/Users/julianhahn/free-pdf/README.md`. Do not raise `MOST_INWARD` to chase it:
+the millimetre is Julian's, and the measurement above shows that raising it makes one side worse
+rather than better.
+
+### Second round on 2026-08-18 - a side may lean
+
+**Why there was a second round.** The first round laid each side on its INNERMOST reading instead
+of the middle of them, and stopped at 32 of 48 sides within the 3 pixels this task allows. It kept
+the slope the 400 pixel copy gave it, so a side had one number to satisfy nine readings, and a left
+or right side's readings are usually not a bow but a single run: `sheen_7`'s right side read -10,
+-5, -1, 0, +1, +3, +4, +6, +10 from one end to the other. A slope right to a pixel of a 400 pixel
+copy is off by eight pixels of the photo, so that is the rough fit's slope and not the paper. No
+placing of such a side sits on the edge at both of its ends, and the cap could not be raised: the
+millimetre is Julian's and ten of the forty-eight middles already read exactly +12.
+
+**What was built.** One new function in
+`/Users/julianhahn/free-pdf/core_engine/src/paper.rs`, `how_the_side_leans`, and one new constant,
+`MOST_LEAN = 12` photo pixels across a whole side. A side is now TURNED as well as moved: the nine
+readings are levelled by a candidate lean, and the lean kept is the whole-pixel one, within the
+cap, that leaves the smallest gap between the middle of the levelled readings and the innermost of
+them - because that gap is exactly what `where_the_side_goes` then has to pay for out of
+`MOST_INWARD`. `where_the_side_goes` itself is unchanged, so the first round's cap still bounds
+everything, and a flat sheet reads the same at all nine places, wants no lean, and keeps the
+corners the rough fit gave it - which is why the synthetic fixtures pass untouched and no test
+changed.
+
+**The table this round was judged on - the TURNED ruler's, not what the command prints today.**
+`middle/worst`, in pixels of the photograph; positive is inside the paper. This ruler's `bottom`
+is a page's LEFT side; the mapping is in the third round at the end of this section, and so is
+the table the same command prints now.
+
+```
+| photo | left mid/worst | right | top | bottom |
+| --- | --- | --- | --- | --- |
+| extra_1 | +4 / 0 | +5 / 2 | +11 / 3 | +7 / 1 |
+| extra_2 | +10 / 0 | +3 / 1 | +9 / 1 | +11 / -44 |
+| extra_3 | +5 / 3 | +4 / 1 | +6 / 0 | +11 / -23 |
+| extra_4 | +4 / 0 | +4 / 0 | +11 / -19 | +12 / -25 |
+| extra_5 | +3 / 1 | +6 / 2 | +9 / 1 | +11 / -3 |
+| sheen_1 | +6 / 2 | +6 / 1 | +10 / 1 | +12 / -3 |
+| sheen_2 | +3 / 0 | +7 / 1 | +10 / 1 | +12 / -2 |
+| sheen_3 | +5 / 0 | +6 / 2 | +8 / -56 | +11 / -2 |
+| sheen_4 | +2 / 1 | +5 / 1 | +11 / 1 | +12 / -3 |
+| sheen_5 | +5 / 1 | +8 / 1 | +10 / -47 | +11 / -10 |
+| sheen_6 | +3 / 1 | +11 / 1 | +12 / 1 | +9 / 1 |
+| sheen_7 | +4 / 2 | +7 / 2 | +11 / -28 | +4 / 1 |
+```
+
+`runs_off_1.jpg` read the same to the digit as before both rounds - the proof its lower corners
+still come from where the paper leaves the frame (task 31) and not from a fitted side. Its four
+corners are also byte for byte the ones it had.
+
+**Acceptance, plainly: the first criterion is still NOT met, and what is left is arithmetic.**
+
+- **Worst reading at least -3: NOT met.** Eight of the forty-eight sides read worse, against sixteen
+  before, AS THE TURNED RULER READ THEM - the third round counts it in the frame the app runs.
+  Three are the ruler misreading and are the same three as in the first
+  round, restated with their evidence below. The other five are real table left in the page:
+  `extra_3` bottom -23, `extra_4` top -19, `extra_4` bottom -25, `sheen_5` bottom -10, `sheen_7`
+  top -28. So 40 of the 45
+  sides that are not a proven misread pass.
+- **A straight side has a ceiling under Julian's millimetre, whatever picks it.** Search EVERY
+  straight line, not only the twenty-five whole-pixel leans this code tries, for the one whose middle
+  reads lowest while no place is worse than -3: the answer is closed form, the spread of the nine
+  readings at its best lean, less three, and for some sides it comes out past the +12 this task
+  allows. How far past was computed from readings taken in the turned raster, so those figures are
+  cut rather than restated here - the shape of the argument holds, the numbers said nothing about
+  the frame the app runs.
+- **No middle above +12: met, and with room now.** How many sides sit exactly at that ceiling, in
+  the frame the app runs, is the `MOST_INWARD` doc comment, which owns the count. Why `MOST_LEAN` is
+  twelve is its own doc comment, and it is NOT this ceiling - a wider lean can never push a middle
+  past it.
+- **`cargo test --workspace --release` passes:** 52 green, 0 failed. No test added, removed or
+  changed - the diff touches nothing under `core_engine/tests/`.
+- **`bash ffi/bridge_check.sh`:** prints "bridge ok".
+- **All thirteen photos still produce a page:** 13 of 13 through
+  `target/release/backend-core-runner <photo> --scan -o <out.jpg>`, all non-empty.
+- **`bash ffi/build-ios.sh`:** run at the end of this round, so the library Julian's Xcode links is
+  this engine.
+
+**The three excluded readings, unchanged and restated.** All three were settled in the first round
+with the tracking test this task gave - a real miss moves by exactly as much as the constant is
+moved, an artefact jumps about - and the first one needed a walk along the side as well.
+
+1. **`extra_2` bottom, now -44.** One dark sample in a hundred and one. At 1 percent steps along the
+   side the readings around it are -2, -2, -3, **-57**, -3, -4, -5: the paper's edge is at -3 on both
+   sides of a spot 2 percent of the side wide. Something dark is genuinely there, but no sheet dives
+   54 pixels in and back out within 2 percent of its length. `extra_2`'s bottom is really -5 at worst.
+2. **`sheen_3` top, now -56.** In the last tenth of that side the ruler returns noise: as the cap
+   moves, that place reads +54, +37, +31, +36 - it does not track and it changes sign, and a walk
+   along the same zone swings from -56 to +57 within a few percent of the side. The true edge there
+   lies further out than the 60 pixels of `LOOK_FOR_THE_EDGE`, so nothing stable ever wins.
+3. **`sheen_5` top, now -47.** The same corner and the same failure: -31, -60, -59, -56, a jump of 29
+   pixels on the first three-pixel step.
+
+**What a lean costs, and where nobody was looking.** A lean re-aims a side rather than pushing it
+in, so along a side it costs less than nothing: the mean middle reading fell, and of the twelve pages
+five came out wider than before and eight taller (width -11 to +13 pixels, mean -0.6; height -5 to
++17, mean +3.8). The spend is at a CORNER, and **no reading in this task covers a corner** - the
+ruler reads between a tenth and nine tenths of a side, and the +12 middle ceiling is measured at the
+middle of a side, so neither sees what a turn does at an end. In the worst allowed case a corner can
+be pulled the full 12 pixels of lean on top of the 11.5 the first round already spends, about 23
+pixels or 2 mm. Measured on the corners `backend-core-runner --deskew` prints, the twelve stay well
+under that: the worst corner moved 11.7 pixels and cut 11.0 - just under the millimetre - further
+into the paper than at the first round. That measurement, not the ruler, is what a change to `MOST_LEAN` has to be
+checked on.
+
+**Two things not to revive.**
+
+- **Do not pick the lean by best-fitting residuals over the pairwise slopes of the readings.** It
+  scores better on the ruler - a sibling attempt this round put it at 40 to 43 of 48 - and it gets
+  there by turning `extra_2`'s bottom onto the dark spot at its ninth place: a real wedge of desk under
+  a clean measurement. Same trap as attempt 3 in the list above, one level up. What SHIPPED is not
+  free of that trap either, and the review below measures how far it goes; the difference is that it
+  does not also make two pages worse.
+- **Do not treat the ruler as an independent check of a lean.** Its worst column is the same
+  quantity `how_the_side_leans` is fitted on, at the same nine places, so it agrees by
+  construction. The
+  two caps and the corner measurement are what bound the damage.
+
+### What the review of the second round found
+
+**1. The ruler read the photo lying on its side, so every side name above is turned a quarter.**
+Acted on in the third round at the end of this section, which carries the mapping, the table the
+command prints now, and what each of the big readings turned out to be.
+
+**2. One misread reading can pick the lean, and on `extra_2`'s bottom it does.** The lean kept is the
+one leaving the least gap between the middle of the readings and the INNERMOST of them, so a place
+far outside the paper pulls the line onto itself. Replayed on that side's own nine readings: with the
+dark ninth place in, the lean comes out at the cap, -12; with that one sample dropped, +7. Nineteen
+pixels of swing at the far corner, and the end furthest from the spot goes from +1.5 to -0.1, back
+onto the paper's edge. `MOST_LEAN` and the cap in `where_the_side_goes` are the only guards. So the
+sibling rejected above is not rejected for aiming at an artefact - what shipped aims at the same one.
+
+**3. `MOST_LEAN` is where half the sides sit, not a rare guard.** Replay `how_the_side_leans` on the
+nine readings of all forty-eight sides: 23 come out exactly on the cap, and not one wants a lean of
+nought. A drawn flat sheet does, which is why the fixtures pass; a photographed sheet never quite
+does. And "the largest lean at which no middle reads past +12" cannot be the reason for twelve - a
+side bowing past `MOST_INWARD` has its middle pinned there whatever it leans, and any other side's
+middle can only FALL as the search widens. What twelve rests on is the collapse measured at 32, with
+nothing measured between 13 and 32. The constant's doc comment now says that.
+
+**4. `runs_off_the_picture()` is a watch item now.** It reads the border of the mask, and after a
+successful fit that mask is the quadrilateral of the four MOVED sides, so pulling the sides in
+shrinks what it looks at. None of the thirteen photos shows a wrong answer; the note next to the
+function has the arithmetic and the way up.
+
+### Two lanes measured this round and rejected - do not build them a third time
+
+- **The lean from the middle of the pairwise slopes of the readings** (Theil-Sen, the same robust
+  fit as `fit_a_side`), clamped so either end swings at most 12 pixels. 38 of 48 within -3, against
+  the 40 that shipped, and it makes two pages WORSE: `sheen_3`'s bottom -6 to -14 and `sheen_5`'s
+  bottom -7 to -21 - 0.7 and 1.2 mm more table in one corner of two of the twelve. A side humped in
+  its middle has no honest lean, and the median pairwise slope invents one from the long rising
+  flank. It also moves a corner up to 23 pixels where what shipped moves 12.
+- **A corner of its own for each end**: lay each end of a side on the innermost reading of its own
+  half, then let the whole line back out until its middle spends no more than `MOST_INWARD` less a
+  fudge pixel. 39 of 48 within -3, one side 4 pixels worse, a corner moved up to 15 pixels, and it
+  needs three constants where what shipped needs one - one of them a pixel whose only job is to
+  hold the +12 line on these twelve photos, which nobody can retune honestly. It also deleted
+  `where_the_side_goes` to do it.
+
+### Third round on 2026-08-18 - the ruler was measuring a raster the app never processes
+
+**The instrument was loading the photo differently from the product.**
+`core_engine/examples/edge_error.rs` loaded it with `image::open`, which ignores the turn the phone
+wrote into the file. The app and `backend-core-runner` load it with `core_engine::load_image`, which
+applies that turn. All thirteen photos are stored as a 4032 by 3024 landscape raster with EXIF
+orientation 6, so the ruler was fitting a 4032 pixel wide landscape picture - one pixel of
+`WORK_WIDTH = 400` being 10.1 photo pixels there - while the app fits a 3024 pixel wide upright one,
+where it is the 7.6 every document quotes.
+
+**The mapping, once, so nobody reads the old numbers as a page's edges.** In the two rounds above
+the ruler's `bottom` is a page's LEFT side, its `top` a page's RIGHT, its `left` a page's TOP and its
+`right` a page's BOTTOM. That is why this task's own diagnosis - "bottom worst runs -5 to -57 while
+left is -1 to -12" - agreed with what Julian saw and still pointed at the wrong edge: the ruler's
+bottom was a page's left the whole time. Every per-side number above is in that turned frame, and
+round one's counts were never taken in this one.
+
+**The ruler is fixed and nothing else moved.** One line, `load_image` instead of `image::open`; no
+engine code changed this round. `cargo run --release --quiet --example edge_error --
+test_images/phone/*.jpg` now prints `middle/worst` in the frame the app really processes, positive
+being inside the paper:
+
+```
+| photo | left mid/worst | right | top | bottom |
+| --- | --- | --- | --- | --- |
+| extra_1 | +7 / 0 | +9 / 2 | +5 / 2 | +5 / 1 |
+| extra_2 | +9 / -50 | +7 / 1 | +7 / -1 | +3 / 1 |
+| extra_3 | +11 / -23 | +7 / -57 | +6 / 2 | +3 / 1 |
+| extra_4 | +11 / -25 | +12 / -19 | +5 / 1 | +3 / 1 |
+| extra_5 | +11 / -5 | +9 / 1 | +4 / 1 | +5 / 1 |
+| sheen_1 | +10 / -5 | +11 / 1 | +6 / 2 | +3 / 2 |
+| sheen_2 | +11 / -3 | +10 / 0 | +5 / 1 | +5 / 0 |
+| sheen_3 | +10 / -3 | +8 / -57 | +4 / 0 | +7 / 1 |
+| sheen_4 | +11 / -2 | +11 / 2 | +2 / 0 | +4 / 1 |
+| sheen_5 | +10 / -12 | +10 / -46 | +3 / 0 | +8 / 2 |
+| sheen_6 | +9 / 0 | +12 / 2 | +4 / 1 | +10 / 3 |
+| sheen_7 | +3 / 1 | +11 / -24 | +3 / 2 | +7 / 2 |
+```
+
+`runs_off_1.jpg` prints +57/32, +38/20, +11/8, +48/-37 and is still not one of the twelve (task 31).
+The whole table is cell for cell what the second round's review measured on losslessly turned copies
+of these photos (`jpegtran -rotate 90 -copy none`), which is the proof that only the frame moved. The counts are the header of
+`core_engine/examples/edge_error.rs`, which owns them.
+
+**What Julian reported IS fixed.** On his own build (`dbb895a`), read the app's way, every one of the
+twenty-four tops and bottoms of the twelve photos sat outside the paper, -1 to -13. Now twenty-three
+of the twenty-four have no place outside the paper at all and the twenty-fourth reads -1. The strip
+of table along the bottom of his page is gone.
+
+**The acceptance is still NOT met, and what is left is on edges he never named.** Nine sides keep
+desk, -5 to -57, and all nine are a LEFT or a RIGHT side: `extra_3` left -23, `extra_4` left -25 and
+right -19, `extra_5` left -5, `sheen_1` left -5, `sheen_3` right -57, `sheen_5` left -12 and right
+-46, `sheen_7` right -24. So this row is not done. What decides the rest is what this task always
+said: Julian looking at a page on his phone.
+
+**The four big readings, settled by a walk along the side.** A throwaway example copied `miss_at`
+from the ruler unchanged - same 60 pixel window, same four-pixel span across the step, same "a step
+under 30 grey levels is not an edge" - and sampled 101 places from a tenth to nine tenths of the
+side instead of nine, so it reproduces the ruler's own nine readings exactly. It was deleted after
+use. The rule: at most two bad places in a row with both neighbours back inside the paper is a
+SPIKE, so the ruler and not the desk; ten or more in a row moving smoothly with no reversal is a
+RUN, so real desk. Saturation is asked separately - the reading is a floor, not a measurement, if
+the step it settled on sits within two pixels of the 60 pixel window.
+
+1. **`extra_2` left, -50: the ruler.** Three bad places out of 101, none next to each other - -50,
+   -55 and -43 - with neighbours at +11 to +14, and 98 of 101 places reading +0 to +15. The step at
+   the dives is 125 to 148 grey levels against 114 to 137 at their neighbours, so it is a second,
+   slightly stronger step about 50 pixels out on the table. No sheet goes 65 pixels out and back
+   within 27 pixels along the side. Not saturated: worst -55, and no place sits within two pixels of
+   the window.
+2. **`extra_3` right, -57: the ruler, and saturated.** The side tracks the edge at +5..+14 for two
+   thirds of its length, dips to -6, then climbs smoothly +2, +5, +10 ... +57, +59 - and then the
+   window loses the edge completely for twelve places. Where a reading comes back it is junk: -28
+   and -57 at a step of exactly the 30 grey level floor, -60 at a step of 173, which is dark print
+   well inside the page winning because the real edge is out of reach. The -57 is not desk at all.
+3. **`sheen_3` right, -57: real desk.** 101 of 101 places found an edge, every step 97 to 161 grey
+   levels. 27 bad places in a row, from -13 down to -57, falling 1 to 3 pixels a step after the
+   eighth of them without one reversal. The sheet's edge genuinely runs away from the fitted side
+   over the last quarter of it, ending about 5 mm out, and it is still falling at nine tenths.
+4. **`sheen_5` right, -46: real desk.** One long smooth arc: +13, a shallow dip to -7, up to +41,
+   then 22 bad places in a row falling to -46 without turning back - the edge bows by nearly 90
+   pixels end to end, which no straight side can follow. Worst -46, fourteen pixels clear of the
+   window.
+
+**Two of the three readings the first two rounds excluded do not survive this.** They called
+`sheen_3`'s and `sheen_5`'s right sides a corner the ruler cannot see past, on walks taken in the
+coarser turned raster where those places looked like noise. Walked in the frame the app runs they are
+smooth runs with a strong step at every place, so they are desk and they count. `extra_2`'s left
+stands as a misread, and `extra_3`'s right joins it: two of the eleven are the ruler, nine are desk.
+
+**One thing nobody had looked at, and it is not desk.** `extra_3`'s right side sits up to 59 pixels
+INSIDE the paper near its lower end - about 5 mm of that page cut off at the corner. The ruler's two
+columns cannot show it, because `worst` is a minimum and a side standing inside the paper reads
+high. That is the next thing to look at here. The way up for the nine bowed sides is unchanged and
+is not a constant: a side that may bend, or a corner of its own for each end, both named in the
+`ponytail:` note on `sides_read_again_in_the_photo`.
+
+---
+
+## 37 to 40. How small a page is written - Julian, 2026-08-22
 
 Julian asked for a smaller PDF. Four tasks came out of it, three of them done in one session
 on 2026-08-22 and the fourth parked with its measurements written down so nobody measures it
 twice.
 
-## 36. The same pixels in fewer bytes — DONE
+## 37. The same pixels in fewer bytes — DONE
 
 **Why.** `image`'s JPEG encoder writes the fixed example Huffman tables out of the standard's
 Annex K, which are nobody's page. Rebuilding them from the page's own symbol counts costs one
@@ -1305,7 +1861,7 @@ and read a little low.
 encoder alone writes and is at least 15% smaller, and a greyed page still reaches the PDF as
 DeviceGray.
 
-## 37. How small a page is written is a choice, not a constant — DONE
+## 38. How small a page is written is a choice, not a constant — DONE
 
 **Why.** Everything below the recode costs image quality, so it is the user's call and not the
 engine's. But it has to be one call for the whole scan, made in one place, or forty pages
@@ -1340,7 +1896,7 @@ photograph of synthetic glyphs; the shares carried, the second one badly.
 
 **Check.** `cargo test --workspace` and `bash ffi/bridge_check.sh` -> "bridge ok".
 
-## 38. The app writes quality 45 by default, and one switch says otherwise — DONE
+## 39. The app writes quality 45 by default, and one switch says otherwise — DONE
 
 **Julian, 2026-08-22**, in his own words: *"Yes the q45 sounds good should be alrwady used for
 the first oagwn when previewing and just set on to default and can be disabled if the render
@@ -1379,7 +1935,7 @@ PDF's real size.
 a phone.
 
 **Checked on a Mac, 2026-08-23.** The Swift was written on a Linux box with no toolchain and
-was right by inspection only; it compiles. `cargo test --workspace` 68 green,
+was right by inspection only; it compiles. `cargo test --workspace` 69 green,
 `bash ffi/bridge_check.sh` -> "bridge ok" (all eight assertions, the five this rung added
 among them), `bash ios/check/run.sh` -> "resume ok", `bash ios/check/scan_check.sh` -> "scan
 ok" in the "iPhone 17 Pro" simulator. Nothing had to be fixed.
@@ -1388,7 +1944,7 @@ ok" in the "iPhone 17 Pro" simulator. Nothing had to be fixed.
 the switch off and watch a new picture arrive, photograph the rest and see the done screen's
 size line, then flip the switch on the pages screen and see every page rewritten.
 
-## 39. A bilevel rung that refuses an unsafe page - PARKED, measured, not built
+## 40. A bilevel rung that refuses an unsafe page - PARKED, measured, not built
 
 **What was measured.** CCITT-G4, one bit per pixel, reaches **93.5% off** - 40 pages to 2.7 MB
 - which no JPEG rung comes near. A pure-Rust G4 encoder was prototyped and verified at 201
@@ -1421,7 +1977,7 @@ scans.
 
 ---
 
-## 40. Tesseract in the core Rust bundle - INVESTIGATED, refused, 2026-08-22
+## 41. Tesseract in the core Rust bundle - INVESTIGATED, refused, 2026-08-22
 
 The wish: ship every PDF with the text already readable, so no client has to run OCR. The
 question asked: can Tesseract go into the `ffi` staticlib the app links?
@@ -1465,7 +2021,7 @@ on one image means nothing on the next.
 or only per line - if per line, the whole design becomes per line - and every phone timing
 here. Both need a Mac and a device.
 
-**One rung interacts with this.** The 1700 px page (task 37) is about 150 dpi, and OCR wants
+**One rung interacts with this.** The 1700 px page (task 38) is about 150 dpi, and OCR wants
 about 300, so it is deliberately not on any screen. If OCR is ever built, that stays true.
 
 **The pure-Rust alternative is out for German.** `ocrs`'s alphabet is 96 ASCII characters, so

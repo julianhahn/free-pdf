@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="FreePDF">
+  <title>FreePDF app icon — 6c, Gegenwechsel mit hoher schräger Naht</title>
+  <defs>
+    <clipPath id="band"><path d="M0 0H1024V287L0 635Z"></path></clipPath>
+    <clipPath id="below"><path d="M0 635L1024 287V1024H0Z"></path></clipPath>
+    <g id="F">
+      <rect x="297" y="225" width="123" height="573"></rect>
+      <rect x="297" y="225" width="430" height="123"></rect>
+      <rect x="297" y="461" width="348" height="123"></rect>
+    </g>
+  </defs>
+  <rect width="1024" height="1024" fill="#1b1a19"></rect>
+  <path d="M0 0H1024V287L0 635Z" fill="#b68235"></path>
+  <g clip-path="url(#band)" fill="#1b1a19"><use href="#F"></use></g>
+  <g clip-path="url(#below)" fill="#b68235"><use href="#F"></use></g>
+</svg>

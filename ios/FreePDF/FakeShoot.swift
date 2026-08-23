@@ -30,6 +30,18 @@ enum FakeShoot {
         return Int(arguments[at + 1])
     }
 
+    /// Whether `-autofake-one` is set: a scan of exactly one page, finished from the
+    /// check screen rather than from the camera footer.
+    ///
+    /// It presses what a one page document really presses, and nothing else does: the
+    /// shutter once through the camera's own path - so the check after the first photo
+    /// appears at all - and then that screen's **Scan 1 page**. A screen offering only
+    /// its two other ways out leaves a receipt unfinishable, which is what this makes
+    /// visible to [`../check/scan_check.sh`](../check/scan_check.sh).
+    static var onePageWanted: Bool {
+        ProcessInfo.processInfo.arguments.contains("-autofake-one")
+    }
+
     /// How many extra pages `-autofake-more` should add to the finished scan, or nil.
     ///
     /// The taps for **Shoot another page** on a finished scan. The camera has to stay up
@@ -88,7 +100,10 @@ enum FakeShoot {
     /// - Returns: the failure that stopped it, or nil - which also means "nothing to
     ///   do here", because on a phone `pagesWanted` is nil.
     static func autoShoot(_ scan: Scan, finished: () -> Void) -> Failure? {
-        guard let wanted = pagesWanted else { return nil }
+        // `-autofake-one` presses the shutter itself, one press through the screen the
+        // thumb uses, because writing the photo straight to disk here would skip the
+        // check after the first photo - the screen that run is about.
+        guard let wanted = pagesWanted, !onePageWanted else { return nil }
         // A scan that already has pages belongs on the progress line, not in the
         // viewfinder. Pressing on from here would hide exactly that bug from the check,
         // which cannot see which screen the app is on - only the files it writes. So it

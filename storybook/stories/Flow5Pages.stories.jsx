@@ -1,5 +1,5 @@
 import React from "react";
-import { AppBar, Screen, StatusLine } from "@ds/ui_kits/iphone/Chrome.jsx";
+import { AppBar, Screen } from "@ds/ui_kits/iphone/Chrome.jsx";
 import {
   Button,
   ConfirmDialog,
@@ -12,25 +12,9 @@ import {
   ProgressLine,
   Switch,
 } from "../ds.js";
+import { Phone } from "./Phone.jsx";
 
-/* Flow 5, the pages: S16, S16b, S17 to S22 of "FreePDF Flow 5 Pages.dc.html".
-   Same phone frame as Flow1Scans.stories.jsx. */
-const Phone = ({ children }) => (
-  <div
-    style={{
-      position: "relative",
-      width: 390,
-      height: 844,
-      background: "var(--bg)",
-      display: "grid",
-      gridTemplateRows: "auto 1fr",
-      overflow: "hidden",
-    }}
-  >
-    <StatusLine />
-    <div style={{ position: "relative", minHeight: 0 }}>{children}</div>
-  </div>
-);
+/* Flow 5, the pages: S16, S16b, S17 to S22 of "FreePDF Flow 5 Pages.dc.html". */
 
 /* Pages, as the delivered document builds them: page 5 is the refused one. */
 const pages = (n, refused = []) =>

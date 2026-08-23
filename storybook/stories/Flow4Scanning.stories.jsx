@@ -1,27 +1,10 @@
 import React from "react";
-import { AppBar, StatusLine } from "@ds/ui_kits/iphone/Chrome.jsx";
+import { AppBar } from "@ds/ui_kits/iphone/Chrome.jsx";
 import { ErrorLine, ProgressLine } from "../ds.js";
+import { Phone } from "./Phone.jsx";
 
 /* Flow 4, the scan runs: S13 and S14 of "FreePDF Flow 4 Scanning.dc.html".
-   Behaviour: user-flows.md §5. Same phone frame as the other flow stories. */
-const Phone = ({ children }) => (
-  <div
-    style={{
-      position: "relative",
-      width: 390,
-      height: 844,
-      background: "var(--bg)",
-      display: "grid",
-      gridTemplateRows: "auto 1fr",
-      overflow: "hidden",
-    }}
-  >
-    <StatusLine />
-    <div style={{ position: "relative", minHeight: 0, display: "grid", gridTemplateRows: "auto 1fr" }}>
-      {children}
-    </div>
-  </div>
-);
+   Behaviour: user-flows.md §5. */
 
 /* The bar carries the scan's date and a back arrow — leaving is safe, the page in
    flight finishes (§5.3). Nothing else: no cancel, no thumbnails, no preview. */
@@ -57,7 +40,7 @@ export default { title: "Flows/4 Scanning" };
 export const S13Early = {
   name: "S13 — early, 1 of 12",
   render: () => (
-    <Phone>
+    <Phone grid>
       {bar}
       <Body value={1} />
     </Phone>
@@ -67,7 +50,7 @@ export const S13Early = {
 export const S13Late = {
   name: "S13 — late, 11 of 12",
   render: () => (
-    <Phone>
+    <Phone grid>
       {bar}
       <Body value={11} />
     </Phone>
@@ -80,7 +63,7 @@ export const S14Refused = {
      table holds it, so this is the stand-in the delivered document draws. The count
      stays on the page being worked on now — the bar never gets stuck (§5). */
   render: () => (
-    <Phone>
+    <Phone grid>
       {bar}
       <Body
         value={6}

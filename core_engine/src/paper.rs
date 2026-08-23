@@ -6,7 +6,7 @@
 //! brightness stretch measured over the whole image then comes out wrong. Telling
 //! the two apart needs to know *where* the paper is, which is what this does.
 
-use image::DynamicImage;
+use image::{DynamicImage, GenericImageView};
 
 /// A box inside an image, in pixels from the top left corner.
 ///
@@ -146,6 +146,18 @@ impl Paper {
     /// points where the paper leaves the frame instead of the corners of the sheet, so
     /// the straightened page is a piece of the sheet rather than the whole of it. A
     /// caller that shows pages tells the user that, and offers a new photo.
+    ///
+    /// ponytail: watch item, not a bug anybody has seen. This reads the border of the mask, and
+    /// after a successful fit that mask is the quadrilateral of the four MOVED sides cut against
+    /// the rough area ([`the_sheet_between_the_sides`]), so every pixel the sides are pulled
+    /// inward shrinks what this looks at: about 1.5 pixels of the shrunk copy from
+    /// [`MOST_INWARD`] and up to another 1.6 at a corner from [`MOST_LEAN`]. A sheet whose four
+    /// fitted corners are all inside the frame while its edge still touches it could therefore
+    /// stop reporting itself incomplete, and the user would not be offered a new photo. None of
+    /// the thirteen real photos shows it, and `runs_off_1.jpg` cannot: its corners fall outside
+    /// the frame, so the fit is dropped and this reads the untouched rough mask - which is why
+    /// its answer has not moved through either round of `TASKS.md` 36. The way up is to keep the
+    /// rough mask for this one question instead of the fitted one.
     pub fn runs_off_the_picture(&self) -> bool {
         let on_paper = |x: u32, y: u32| self.on_paper[(y * self.width + x) as usize];
 
@@ -244,7 +256,12 @@ pub fn find_paper(img: &DynamicImage) -> Option<Paper> {
     }
 
     let fitted = paper_and_table_levels(&small, &on_paper)
-        .and_then(|levels| sides_of_the_sheet(&small, &on_paper, &background, bounds, &levels))
+        .and_then(|levels| {
+            let sides = sides_of_the_sheet(&small, &on_paper, &background, bounds, &levels)?;
+            Some(sides_read_again_in_the_photo(
+                img, sides, &levels, width, height,
+            ))
+        })
         .and_then(|sides| the_sheet_between_the_sides(&sides, &on_paper, width, height));
     let (bounds, on_paper, corners) = match fitted {
         Some((bounds, mask, corners)) => (bounds, mask, Some(corners)),
@@ -375,14 +392,420 @@ const ROUGH_AREA_INSIDE_THE_QUAD: f32 = 0.9;
 const JUST_PAST_A_SIDE: i32 = 4;
 const WELL_PAST_A_SIDE: i32 = 10;
 
-/// How far outward each fitted side is moved, in pixels of the shrunk copy - about
-/// four pixels of a photograph from a phone. The two ways a straight line can miss a
-/// slightly wavy edge are not worth the same: a sliver of desk left inside the page
-/// bends the straightening a little, a hairline taken off the page loses writing. So
-/// the miss is pushed into the harmless direction on purpose. Measured on real
-/// photos, one page had its bottom edge fitted a pixel inside the sheet and lost a
-/// hair of its white margin without this.
-const OUTWARD_BIAS: f32 = 0.5;
+/// How far inward a fitted side is moved when it could not be read again in the photo
+/// ([`sides_read_again_in_the_photo`]), in pixels of the shrunk copy - about four
+/// pixels of a photograph from a phone.
+///
+/// A straight line through slightly wavy edge points misses by a pixel or two either
+/// way, and the miss is pushed into the harmless direction on purpose. Which
+/// direction that is was decided by Julian on 2026-08-18, on scans off a real phone,
+/// against the earlier reading: outward left every page with a hair of desk along all
+/// four sides - visible, and it is what a straightening then has to work around.
+/// Inward costs the outer pixels of the sheet, and a sheet of paper carries a white
+/// margin there, so on a page of writing there is nothing in them to lose.
+///
+/// Do not turn it back outward to protect a page whose writing runs to the very edge
+/// of the paper. That page needs Adjust, which sends its own corners, and no bias in
+/// either direction saves it.
+const INWARD_BIAS: f32 = 0.5;
+
+/// How many places along each side are measured again in the full sized photo, spread
+/// evenly between its two ends and none of them at an end. Nine, over the whole side: a
+/// photographed sheet is never flat, so its edge bows along its length and the places have
+/// to be spread over the whole of it for the innermost of them to be the innermost of the
+/// edge - see [`where_the_side_goes`]. How far a real edge bows is measured in the
+/// `ponytail:` note on [`sides_read_again_in_the_photo`]. The ends are left out because a
+/// corner is where two edges meet and neither is clean there.
+///
+/// These nine now fix two numbers, not one: where the side sits and how it leans
+/// ([`how_the_side_leans`]). A lean is therefore fitted between a tenth and nine tenths of a
+/// side and then carried out to the two corners, where nothing reads at all.
+const PLACES_READ_AGAIN: usize = 9;
+
+/// How far either way the true edge is looked for, in pixels of the photograph. Sixty,
+/// because a real sheet is not flat: on `extra_4`, a letter with a fold in it, the left
+/// edge wanders far enough from the fitted side that at thirty two most of its places
+/// found no edge at all, the side fell back on the rough fit, and the page was cut
+/// fourteen pixels into the sheet.
+const LOOK_FOR_THE_EDGE: i32 = 60;
+
+/// How many pixels of the photograph are averaged on each side of a candidate step, and
+/// how far off the step itself they start. Averaging kills the film grain, and the gap
+/// keeps the samples out of the two or three pixels the edge itself is smeared over.
+const PHOTO_EDGE_SAMPLES: i32 = 3;
+const PHOTO_EDGE_GAP: i32 = 2;
+
+/// The fewest places along a side that have to find an edge before the side is moved
+/// onto them. Below that the side keeps the position the rough fit gave it: a page cut
+/// by two or three readings on a shadow is worse than a page cut a few pixels wide.
+const FEWEST_PLACES_READ_AGAIN: usize = 5;
+
+/// How far inward every side is put on top of the reading it is laid on, in pixels of the
+/// photograph.
+///
+/// A hair, because the side sits on a measured edge rather than on a guess, and inward
+/// rather than outward because a sliver of desk in the page bends the straightening while a
+/// hair off the white margin costs nothing. Measured with `examples/edge_error.rs` before
+/// task 36, when a side was still laid on the middle of its readings: at this value the
+/// middle of all four sides of all twelve real photos read 0 to +3 pixels inside the paper,
+/// at 1.0 three middles read a pixel outside it, and at 2.0 one read +4. Those middles read
+/// +2 to +12 today - that is [`MOST_INWARD`] and [`MOST_LEAN`] moving the side, not this
+/// hair, so do not re-measure the three numbers above and conclude the hair drifted.
+///
+/// Do not raise it to cover a bowed edge. That was tried at 6.0, on the reading that six
+/// pixels would put the worst place of a left or right side inside the paper too: it does,
+/// and it then cuts six pixels off a *flat* sheet as well, which two synthetic tests caught.
+/// A bow is not the same on two sides and it is not the same on two photos, so it is
+/// covered by [`MOST_INWARD`], which is what each side bows by, and never by a constant
+/// every side pays.
+const INWARD_HAIR: f32 = 1.5;
+
+/// How far past the middle of one side's own readings that side may be laid, in pixels of
+/// the photograph.
+///
+/// What this buys is not a constant margin: it is whatever that one side bows by, so a flat
+/// edge pays nothing at all and a bowed edge pays exactly its bow, up to here. That is why
+/// the synthetic fixtures of a drawn straight sheet come through with corners unchanged to
+/// the last decimal - every reading of such a side is the same, so its innermost is its
+/// middle.
+///
+/// Ten, because a page may lose about a millimetre of its white margin and no more
+/// (Julian, 2026-08-18). A millimetre of these photos is 11.7 pixels: the twelve pages come
+/// out 2318 to 2590 pixels across, mean 2460, for the 210 mm of an A4 sheet. Ten plus
+/// [`INWARD_HAIR`] is 11.5 pixels, a hair under that millimetre, and measured with
+/// `examples/edge_error.rs` it is also the largest value at which no middle of any side of
+/// the twelve reads past +12 - two of the forty-eight read exactly +12, `extra_4`'s right
+/// side and `sheen_6`'s, so the ceiling is reached but not crowded.
+///
+/// It is also the only guard a misread place needs where the PLACING of a side is concerned. A
+/// misread also swings the lean, and there the guard is [`MOST_LEAN`] - see
+/// [`how_the_side_leans`], which measures how far one real misread swings one real side.
+/// `extra_2`'s LEFT side reads 50 pixels out at one of its nine places. A walk of a hundred
+/// and one places across it reads +0 to +15 at ninety-eight of them and dives at three single
+/// places, -50, -55 and -43, whose neighbours read +11 to +14 - so those three are something
+/// on the desk touching the sheet and not the sheet. Laid on the plain innermost reading that
+/// page would be cut 55 pixels short; capped here it is cut the same 11.5 as every other
+/// bowed side.
+const MOST_INWARD: f32 = 10.0;
+
+/// How much further inward one end of a side may be moved than the other, in pixels of the
+/// photograph across the whole side ([`how_the_side_leans`]).
+///
+/// Twelve, and NOT for the reason [`MOST_INWARD`] is ten. The +12 middle cannot bound a
+/// lean at all: a side bowing further than [`MOST_INWARD`] has its middle pinned at
+/// [`MOST_INWARD`] plus [`INWARD_HAIR`] whatever it leans, and for any other side a wider
+/// search can only leave LESS bow, so a lower middle. What twelve rests on is the collapse
+/// measured below at thirty-two, and nothing between thirteen and thirty-two was measured -
+/// so a change here is a measuring job, not a knob to turn.
+///
+/// Nor is it a rare guard. Replayed on the nine readings of all forty-eight sides of the
+/// twelve real photos, twenty-three of them came out sitting exactly on this cap and not one
+/// wanted a lean of nought. A drawn flat sheet does, which is why the fixtures pass; a
+/// photographed sheet never quite does. That replay used readings taken while the ruler still
+/// loaded the photo lying on its side, so the count has not been taken again in the frame the
+/// app runs - the claim it makes has not moved, the number in it is unchecked.
+///
+/// What a lean costs the MIDDLE of a side is nothing, because it re-aims the side instead of
+/// pushing it in. Measured on the finished JPEGs of the twelve against the same code with no
+/// lean at all, a page came out 13 pixels wider to 11 narrower and 17 taller to 5 shorter -
+/// mean half a pixel narrower and four pixels taller - so on average a page keeps MORE of its
+/// margin than before. The middle of all forty-eight sides averages +7.2 pixels today.
+///
+/// What it costs a CORNER is this whole number, and no reading covers a corner: the ruler
+/// reads between a tenth and nine tenths of a side, so the deepest cut a lean makes lands
+/// where nothing measures it. Adding the two caps gives 23 pixels, 2 mm of A4 - the whole
+/// lean on top of the 11.5 that [`MOST_INWARD`] and [`INWARD_HAIR`] spend - but no corner can
+/// reach that sum. The lean is fitted between a tenth and nine tenths of the side
+/// ([`PLACES_READ_AGAIN`]), so a corner lies only a tenth of a span past the last reading, and
+/// the deepest cut it can take is nine tenths of this cap plus [`INWARD_HAIR`], or
+/// [`MOST_INWARD`] plus [`INWARD_HAIR`] plus a tenth of this cap: 12.3 to 12.7 pixels, 1.05 to
+/// 1.09 mm. This constant is still the only thing bounding it. Measured on the corners
+/// `backend-core-runner --deskew` prints, the twelve use about half that ceiling: against the
+/// same code with no lean, the corner that moved furthest moved 11.7 pixels (`sheen_5`'s bottom
+/// left) and the one cut deepest was cut 11.0 pixels - just under the millimetre - further into
+/// the paper (`sheen_6`'s bottom right).
+///
+/// So do not raise it far to chase the last bowed sides. At thirty-two `extra_4`'s left side -
+/// a letter with a fold in it - collapses from -25 to -60: the lean grows until the places read
+/// the fold instead of the edge, and the reading is no more monotone in this constant than in
+/// [`MOST_INWARD`].
+const MOST_LEAN: i32 = 12;
+
+/// Moves each fitted side onto the edge of the paper as the full sized photo shows it.
+///
+/// The rough fit runs on a 400 pixel wide copy, where one pixel is about eight pixels of
+/// the photo, so its four sides are only ever right to within a pixel or two of that
+/// copy - and the miss is not the same on all four, which is why no single bias can take
+/// it out. So each side is read again where it matters: at [`PLACES_READ_AGAIN`] places
+/// along it the photo is walked across the side, the steepest step from paper to table
+/// is taken as the true edge, and the whole side is then TURNED and moved onto those
+/// readings: [`how_the_side_leans`] says how much further one end of it goes than the other,
+/// and [`where_the_side_goes`] then lays the turned side on its innermost reading.
+///
+/// The slope does NOT stay as the rough fit found it, and that was the last thing wrong here.
+/// A slope measured on a 400 pixel wide copy is only right to a pixel of that copy, which is
+/// eight of the photo, so a side that keeps it has one number to satisfy nine readings.
+/// `sheen_7`'s bottom side read -10, -5, -1, 0, +1, +3, +4, +6, +10 from one end to the other:
+/// that is a slope off by a pixel of the copy and not a bow, and no placing of such a side can
+/// sit on the edge at both of its ends. Turned, it reads +7 in the middle and +2 at worst.
+///
+/// Only these few lines of the photo are ever read - a page is a few thousand pixels,
+/// not the twelve million of the picture, which the phone has no room for.
+///
+/// Where a place finds no clear step it is left out, and where fewer than
+/// [`FEWEST_PLACES_READ_AGAIN`] places answer the side is returned untouched: an invented
+/// edge cuts writing off the page. Two numbers now come off as few as five readings, so a
+/// turn can be a guess about a side rather than a measurement of it, and [`MOST_LEAN`] is the
+/// only thing bounding that guess.
+///
+/// ponytail: the side stays STRAIGHT, and a straight line has two numbers to spend where a
+/// bowed edge wants a curve. So an edge whose readings still spread further than
+/// [`MOST_INWARD`] after the best turn keeps a wedge of desk near one end, and no placing or
+/// turning of a straight line takes it out. Nine of the forty-eight sides of the twelve real
+/// photos are like that, -5 to -57 pixels, and every one of them is a LEFT or a RIGHT side: a
+/// page's top and bottom now read no worse than -1. Two more read far outside the paper and are
+/// not sides at all but the ruler misreading a mark or a corner. `TASKS.md` 36 names all eleven
+/// and carries the walk along the side that tells the two kinds apart; the header of
+/// `examples/edge_error.rs` carries the count.
+///
+/// The way up is four sides that may bend, or a corner of its own for each end - both more than
+/// a constant. How far a straight side could ever get was worked out in the first two rounds,
+/// but on the readings of a raster the app never processes, so those figures said nothing about
+/// this code and are gone.
+///
+/// Do not revive picking the lean from the middle of the pairwise slopes of the readings. It
+/// was measured this round and it made two pages WORSE - `sheen_3`'s left side -6 to -14 and
+/// `sheen_5`'s left -7 to -21 - because a side humped in its middle has no honest lean and
+/// that fit invents one. It is not rejected for aiming at a misread place: this code does that
+/// too, see [`how_the_side_leans`].
+fn sides_read_again_in_the_photo(
+    img: &DynamicImage,
+    sides: [Side; 4],
+    levels: &EdgeLevels,
+    width: u32,
+    height: u32,
+) -> [Side; 4] {
+    let [left, right, top, bottom] = &sides;
+    // Where the side begins and ends: the corners the rough fit already implies, so the
+    // places are spread over the side itself and not over the box around the sheet.
+    let (Some(top_left), Some(top_right), Some(bottom_right), Some(bottom_left)) = (
+        crossing(left, top),
+        crossing(right, top),
+        crossing(right, bottom),
+        crossing(left, bottom),
+    ) else {
+        return sides;
+    };
+    let ends = [
+        (top_left.y, bottom_left.y),
+        (top_right.y, bottom_right.y),
+        (top_left.x, top_right.x),
+        (bottom_left.x, bottom_right.x),
+    ];
+    let (across_x, across_y) = (
+        img.width() as f32 / width as f32,
+        img.height() as f32 / height as f32,
+    );
+    // Each side, as: does it run along the rows, and which way across it points off the
+    // paper. The same order and the same directions as the rays that fitted it.
+    let shape = [(true, -1.0), (true, 1.0), (false, -1.0), (false, 1.0)];
+
+    std::array::from_fn(|index| {
+        let (along_the_rows, outward) = shape[index];
+        let side = &sides[index];
+        let scale = if along_the_rows { across_x } else { across_y };
+        let (first, last) = ends[index];
+
+        let span = last - first;
+        let mut misses = Vec::new();
+        for place in 1..=PLACES_READ_AGAIN {
+            // How far down the side this place sits, nought at the first corner and one at
+            // the second, so that a lean means the same on a short side and on a long one.
+            let part = place as f32 / (PLACES_READ_AGAIN + 1) as f32;
+            let along = first + span * part;
+            let across = side.across(along);
+            let at = if along_the_rows {
+                Point {
+                    x: (across + 0.5) * across_x,
+                    y: (along + 0.5) * across_y,
+                }
+            } else {
+                Point {
+                    x: (along + 0.5) * across_x,
+                    y: (across + 0.5) * across_y,
+                }
+            };
+            if let Some(miss) = edge_across_the_side(img, at, along_the_rows, outward, levels.step)
+            {
+                misses.push((part, miss));
+            }
+        }
+
+        // The rough side, moved inward by the hair that used to be the whole
+        // correction. Left and top move down the axis, right and bottom up it, so every
+        // side moves towards the middle of the sheet.
+        let unmoved = Side {
+            slope: side.slope,
+            offset: side.offset - outward * INWARD_BIAS,
+        };
+        if misses.len() < FEWEST_PLACES_READ_AGAIN {
+            return unmoved;
+        }
+        // How much of the lean falls on one pixel along the side. A side shorter than a
+        // pixel of the shrunk copy has no two ends to lean between, and dividing by its
+        // span is what would break.
+        let (lean, turn) = if span.abs() >= 1.0 {
+            let lean = how_the_side_leans(&misses);
+            (lean, lean / span)
+        } else {
+            (0.0, 0.0)
+        };
+        let mut levelled: Vec<f32> = misses
+            .iter()
+            .map(|&(part, miss)| miss - lean * part)
+            .collect();
+        match where_the_side_goes(&mut levelled) {
+            // The turn swings the side about its first corner and the place slides the
+            // whole of it across, both in pixels of the photograph, so both are divided by
+            // `scale` to land in the shrunk copy the sides live in.
+            Some(place) => Side {
+                slope: side.slope + outward * turn / scale,
+                offset: side.offset + outward * (place - INWARD_HAIR - turn * first) / scale,
+            },
+            None => unmoved,
+        }
+    })
+}
+
+/// How much further inward the far end of one side is moved than its near end, in pixels of
+/// the photograph, given the readings as `(how far down the side, how far off it)`.
+///
+/// The nine readings of a side are often one smooth run rather than a bow, `sheen_7`'s bottom
+/// going -10, -5, -1, 0, +1, +3, +4, +6, +10 from end to end. That is not the paper bowing, it
+/// is the rough fit's slope being off: it is measured on a 400 pixel wide copy where one pixel
+/// is about eight of the photo, so a line straight to within a pixel there leans by eight here.
+/// A side that may lean has two numbers for its nine readings instead of one, and the second
+/// is what lets it sit on the edge along its whole length rather than only in its middle.
+///
+/// The lean chosen is the one that leaves the LEAST bow behind - the smallest gap between the
+/// middle of the levelled readings and the innermost of them - because that gap is exactly what
+/// [`where_the_side_goes`] then has to pay for out of [`MOST_INWARD`]. Whole pixels, because
+/// the readings themselves are whole pixels of the photograph, and the smallest lean wins a
+/// tie: a flat sheet reads the same at all nine places, wants no lean at all, and keeps the
+/// corners the rough fit gave it.
+///
+/// ONE reading can decide the lean, and one does. The gap is measured to the INNERMOST reading,
+/// so a place that misreads far out of the paper pulls the whole line towards itself. On
+/// `extra_2`'s left side, one of whose nine places lands on the dark mark `TASKS.md` 36 proves
+/// is not the sheet, the lean comes out at the cap, -12, with that place in and +7 without it:
+/// nineteen pixels of swing at the far corner, and the end furthest from the mark goes from
+/// +1.5 to -0.1, back onto the paper's edge. Only [`MOST_LEAN`] and the cap in [`where_the_side_goes`] hold it there.
+///
+/// ponytail: that gap IS the worst column of `examples/edge_error.rs`, read at the same nine
+/// places, so the ruler cannot check this independently - it agrees by construction. What checks
+/// a lean from outside is where the four corners end up, which `backend-core-runner --deskew`
+/// prints, and nothing in `tests/` reaches it: a drawn sheet is straight, so its lean is nought.
+/// The way up is a fixture with one edge bowed, asserting the corner follows it and the middle
+/// of the side moves no further than [`MOST_INWARD`].
+fn how_the_side_leans(readings: &[(f32, f32)]) -> f32 {
+    let bow_at = |lean: f32| -> Option<f32> {
+        let mut levelled: Vec<f32> = readings
+            .iter()
+            .map(|&(part, miss)| miss - lean * part)
+            .collect();
+        let innermost = levelled.iter().copied().reduce(f32::min)?;
+
+        Some(middle_of(&mut levelled)? - innermost)
+    };
+
+    // Outward from nothing, so that of two leans leaving the same bow the smaller is kept:
+    // the corners move less, and a corner is the part no reading covers.
+    let mut best = (f32::INFINITY, 0.0);
+    for step in 0..=MOST_LEAN {
+        for lean in [step as f32, -(step as f32)] {
+            if let Some(bow) = bow_at(lean) {
+                if bow < best.0 {
+                    best = (bow, lean);
+                }
+            }
+        }
+    }
+
+    best.1
+}
+
+/// Which of one side's readings that side is laid on, in pixels of the photograph. A
+/// reading further out means the side stands further inside the paper.
+///
+/// The readings handed in are LEVELLED - each one less what the side's lean already gives it
+/// at that place ([`how_the_side_leans`]) - so this only has to answer where the levelled side
+/// sits, and each of the two questions stays one line of arithmetic.
+///
+/// The middle of them was the wrong answer, and wrong by definition: half the places of a
+/// side end up outside the paper, and a place outside the paper is a strip of desk in the
+/// finished page. So the side goes on the INNERMOST reading, and no further in than
+/// [`MOST_INWARD`] past the middle, so that one place reading nonsense can never eat the
+/// page. A side bowing within that cap then has no measured place outside the paper at all;
+/// one bowing further is laid at the cap and keeps the rest of its bow outside, which is the
+/// `ponytail:` note on [`sides_read_again_in_the_photo`].
+fn where_the_side_goes(readings: &mut [f32]) -> Option<f32> {
+    let innermost = readings.iter().copied().reduce(f32::min)?;
+
+    Some(innermost.max(middle_of(readings)? - MOST_INWARD))
+}
+
+/// How far off the fitted side the real edge of the paper lies at one place, in pixels of
+/// the photograph, walking across the side. Positive means further out, so the side is
+/// standing inside the paper.
+///
+/// The steepest step from bright to dark within [`LOOK_FOR_THE_EDGE`] wins, and nothing
+/// comes back unless that step is as big as the edge of a sheet in this picture -
+/// otherwise it is a line of writing, a shadow, or the grain of a flat surface.
+fn edge_across_the_side(
+    img: &DynamicImage,
+    at: Point,
+    along_the_rows: bool,
+    outward: f32,
+    step: f32,
+) -> Option<f32> {
+    let brightness = |offset: f32| -> Option<f32> {
+        let moved = outward * offset;
+        let (x, y) = if along_the_rows {
+            (at.x + moved, at.y)
+        } else {
+            (at.x, at.y + moved)
+        };
+        if x < 0.0 || y < 0.0 || x >= img.width() as f32 || y >= img.height() as f32 {
+            return None;
+        }
+        let pixel = img.get_pixel(x as u32, y as u32).0;
+        // The same grey the rest of the file works in.
+        Some(0.299 * pixel[0] as f32 + 0.587 * pixel[1] as f32 + 0.114 * pixel[2] as f32)
+    };
+    let mean = |from: f32, step: f32| -> Option<f32> {
+        let mut total = 0.0;
+        for sample in 0..PHOTO_EDGE_SAMPLES {
+            total += brightness(from + step * sample as f32)?;
+        }
+        Some(total / PHOTO_EDGE_SAMPLES as f32)
+    };
+
+    let mut steepest = (0.0, 0.0);
+    for offset in -LOOK_FOR_THE_EDGE..=LOOK_FOR_THE_EDGE {
+        let offset = offset as f32;
+        let (Some(inside), Some(outside)) = (
+            mean(offset - PHOTO_EDGE_GAP as f32, -1.0),
+            mean(offset + PHOTO_EDGE_GAP as f32, 1.0),
+        ) else {
+            continue;
+        };
+        if inside - outside > steepest.0 {
+            steepest = (inside - outside, offset);
+        }
+    }
+
+    (steepest.0 >= step).then_some(steepest.1)
+}
 
 /// One side of the sheet, as a straight line across the shrunk copy: `across` is
 /// where the side is at the position `along` down it.
@@ -521,14 +944,9 @@ fn sides_of_the_sheet(
         }
     }
 
-    let outward = [-OUTWARD_BIAS, OUTWARD_BIAS, -OUTWARD_BIAS, OUTWARD_BIAS];
     let mut sides = Vec::with_capacity(4);
-    for (points, bias) in [left, right, top, bottom].iter().zip(outward) {
-        let side = fit_a_side(points)?;
-        sides.push(Side {
-            offset: side.offset + bias,
-            ..side
-        });
+    for points in [left, right, top, bottom].iter() {
+        sides.push(fit_a_side(points)?);
     }
 
     sides.try_into().ok()
