@@ -108,7 +108,7 @@ affected by any of them**.
 
 | Change | Why the goal is unreachable without it | Breaks the runner |
 | --- | --- | --- |
-| ADD `pdf::save_page(img, path)` | The resume rule is "page 7 exists = page 7 is done", which is only true if a page can never appear under its real name half-written. Its bytes must also be the exact stream the PDF embeds, or every page is compressed twice. It must be the engine that writes it: a PDF ignores EXIF rotation, so a page written by Swift's ImageIO lands sideways, and a progressive JPEG is not readable as `/DCTDecode`. | no |
+| ADD `pdf::save_page(img, path)` (it took a third argument, a `PageQuality`, on 2026-08-22 — the engine's own rules are now [`core_engine/AGENTS.md`](./core_engine/AGENTS.md) and this table is the record of what was planned, not of today's signature) | The resume rule is "page 7 exists = page 7 is done", which is only true if a page can never appear under its real name half-written. Its bytes must also be the exact stream the PDF embeds, or every page is compressed twice. It must be the engine that writes it: a PDF ignores EXIF rotation, so a page written by Swift's ImageIO lands sideways, and a progressive JPEG is not readable as `/DCTDecode`. | no |
 | ADD `pdf::pages_to_pdf(pages, out)` + private `jpeg_shape`, `jpeg_page` | Today 40 pages cost ~3.1 GB against a ~2.0 GB jetsam limit. `RawImage` can only hold decoded pixels and printpdf clones the buffer three more times at save; printpdf cannot stream. `XObject::External` is the only escape hatch in 0.12.5, and a path list is the only signature under which the phone can name 40 pages without holding them. | no |
 | EXTRACT `place(id, px_w, px_h)` from `build_page` | Otherwise 20 lines of fit/centre maths get copied into the new path and drift. Pure extraction; the five existing PDF tests prove it by staying green. | no |
 | `lib.rs`: `pub use pdf::{images_to_pdf, pages_to_pdf, save_page};` | The ffi crate calls them by name. | no |
@@ -263,62 +263,39 @@ fn page_files_go_into_the_pdf_without_being_decoded() {
 
 ## 5. The C surface
 
-Built, and its rules now live next to it in [`ffi/AGENTS.md`](./ffi/AGENTS.md): what may
-cross the boundary, why every entry point is wrapped against panics, the order of tools
-inside `freepdf_scan_page`, the 3000 px cap, and the check. What the app has to know is
-the header it imports as its bridging header,
-[`ffi/include/freepdf.h`](./ffi/include/freepdf.h) — hand-written, no cbindgen, no
-generator:
+**This section is a pointer, not a copy.** It is built, so its rules moved next to the code
+and the code snippets that used to stand here are gone — they described two functions with
+no page size rung and a Swift wrapper of two calls, and by the time they were four functions
+each with a struct beside it, the copy here was simply a second, older truth about a
+boundary that has exactly one. A plan section is not a home
+([`AGENTS.md`](./AGENTS.md)).
 
-```c
-/* 0 = ok. Anything else = failed, and `error` holds a sentence (may be NULL). */
-int32_t freepdf_scan_page(const char *photo_path, const char *out_page_path,
-                          char *error, size_t error_size);
-int32_t freepdf_pages_to_pdf(const char *const *page_paths, size_t page_count,
-                             const char *out_pdf_path,
-                             char *error, size_t error_size);
-```
+Where the C surface actually lives, and nowhere else:
 
-The error buffer replaces a `freepdf_last_error()` thread-local. That is not only one
-function fewer — the drain `await`s a detached task between the call and the error read,
-and a thread-local would return an empty string there, giving "Page 12 failed: " in the one
-place the message is the only clue.
+| What | Where |
+| --- | --- |
+| The surface itself, hand-written, no cbindgen, no generator | [`ffi/include/freepdf.h`](./ffi/include/freepdf.h) — four functions and three structs, and the app imports it as its bridging header |
+| Why it is shaped that way: what may cross, why every entry point is wrapped against panics, the order of tools inside `freepdf_scan_page`, the 3000 px cap and the page size rung underneath it, and the check | [`ffi/AGENTS.md`](./ffi/AGENTS.md) |
+| The Swift side of all four calls | [`ios/FreePDF/EngineCalls.swift`](./ios/FreePDF/EngineCalls.swift), with the types it passes in [`ios/FreePDF/Engine.swift`](./ios/FreePDF/Engine.swift) |
+| The four build settings that link the library, and what to know about a project file written by hand | [`ios/AGENTS.md`](./ios/AGENTS.md), "How the Rust library gets in" |
 
-Swift wrapper, the whole thing. This exact text was compiled and linked against the real
-library, and the sentence came back out of it, so it can be copied as it stands. Two
-spellings in it are load-bearing and were found by the compiler: `strdup(…)!`, and
-`UnsafePointer<CChar>` written out — without either, Swift cannot work out the element
-type of the array C wants and refuses the whole function.
+Two decisions from this section are worth keeping, because they are reasons and not code,
+and both now live in [`ffi/AGENTS.md`](./ffi/AGENTS.md) as well:
 
-```swift
-enum Engine {
-    struct Failed: Error, LocalizedError {
-        let message: String
-        var errorDescription: String? { message }
-    }
-    static func scanPage(_ photo: URL, into out: URL) throws {
-        try call { e, n in freepdf_scan_page(photo.path, out.path, e, n) }
-    }
-    static func pagesToPDF(_ pages: [URL], out: URL) throws {
-        let owned = pages.map { strdup($0.path)! }
-        defer { owned.forEach { free($0) } }
-        var c: [UnsafePointer<CChar>?] = owned.map { UnsafePointer<CChar>($0) }
-        try call { e, n in freepdf_pages_to_pdf(&c, c.count, out.path, e, n) }
-    }
-    private static func call(_ body: (UnsafeMutablePointer<CChar>, Int) -> Int32) throws {
-        var buf = [CChar](repeating: 0, count: 512)
-        if body(&buf, 512) != 0 { throw Failed(message: String(cString: buf)) }
-    }
-}
-```
+- **The error buffer belongs to the caller**, which replaces a `freepdf_last_error()`
+  thread-local. That is not only one function fewer — the drain `await`s a detached task
+  between the call and the error read, and a thread-local would return an empty string
+  there, giving "Page 12 failed: " in the one place the message is the only clue.
+- **Two spellings in the Swift wrapper are load-bearing** and were found by the compiler:
+  `strdup(…)!`, and `UnsafePointer<CChar>` written out. Without either, Swift cannot work
+  out the element type of the array C wants and refuses the whole function. They are still
+  in `EngineCalls.swift`; do not tidy them away.
 
 ### Build and link
 
 `bash /Users/julianhahn/free-pdf/ffi/build-ios.sh` writes both libraries, one per
 platform, and why there are two rather than one `lipo`'d file is in
-[`ffi/AGENTS.md`](./ffi/AGENTS.md). The four build settings that pick between them, and
-the three things worth knowing about a project file written by hand, are now in
-[`ios/AGENTS.md`](./ios/AGENTS.md).
+[`ffi/AGENTS.md`](./ffi/AGENTS.md).
 
 ---
 
@@ -338,7 +315,8 @@ the three things worth knowing about a project file written by hand, are now in
 | `/Users/julianhahn/free-pdf/ffi/AGENTS.md` | the rules of the boundary, moved out of section 5 |
 | `/Users/julianhahn/free-pdf/ios/FreePDF.xcodeproj` | one app target, four build settings. Hand-written, never opened in Xcode |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/Scan.swift` | the storage model and the whole state machine. Foundation only |
-| `/Users/julianhahn/free-pdf/ios/FreePDF/Engine.swift` | the two FFI calls (~20 lines) |
+| `/Users/julianhahn/free-pdf/ios/FreePDF/Engine.swift` | the types the engine's answers take in Swift - `Adjustments`, `Suggestion`, `PageQuality` - and `composed()`. Foundation only, so `check/run.sh` compiles it |
+| `/Users/julianhahn/free-pdf/ios/FreePDF/EngineCalls.swift` | the four FFI calls, and the only file that includes the bridging header |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/ScanList.swift` | the landing screen: `Scan.all()`, derived subtitles, New scan, swipe-to-delete |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/ScanFlow.swift` | the switch on `state`, the drain, the pages, Make PDF, Open PDF |
 | `/Users/julianhahn/free-pdf/ios/FreePDF/FakeShoot.swift` | the camera stand-in: the drawn page and the `-autofake` launch argument. Not a screen any more, and it stays as long as nothing can tap a simulator |
@@ -524,6 +502,7 @@ The delete prompt shows the measured size, not this estimate.
 | Cut | Ceiling | Upgrade |
 | --- | --- | --- |
 | pages capped at 3000 px (~257 dpi on A4) | print below ~6 pt gets soft | raise the constant; +33 bytes of peak per pixel |
+| pages written at JPEG quality 45 by default (2026-08-22) | a page that is not dense text - a hard shadow, a photograph on the sheet - can look softer than the same page at Original | one switch, **Smaller pages**, off: the page is written again from its photo at quality 85, so nothing is lost while the photos are there. Once they are deleted the pages are all there is |
 | the PDF step is not resumable per page | a kill costs the whole 1-3 s build, and peak grows ~2 MB per page | write the page objects and xref by hand (~120 lines) |
 | `images_to_pdf` untouched | the CLI still peaks ~3.1 GB at 40 pages and can truncate on a kill | point its body at `pages_to_pdf` when the CLI needs long documents |
 | no `F_FULLFSYNC` | power loss can leave a real name with garbage | `fcntl(fd, F_FULLFSYNC)` before each rename |
@@ -548,7 +527,9 @@ The delete prompt shows the measured size, not this estimate.
 Manifest / SwiftData / Core Data. VisionKit (its delegate has no per-page hook, so a cancel
 at page 39 loses all 39 — that is the bug, not a shortcut). HEIC anywhere. Thumbnail files.
 Reorder and insert-in-the-middle. Renaming a scan. Per-page redo settings. Upload progress
-UI. Background execution. A settings screen or a remembered delete choice. The document
+UI. A page size **picker**, and with it the engine's third rung, a 1700 px longest edge —
+two rungs reach the user behind one switch, and 1700 px across A4 is about 150 dpi where
+reading the text back out later wants about 300 (`user-flows.md` section 7a). Background execution. A settings screen or a remembered delete choice. The document
 picker as the normal destination. CloudKit. Uploading a finished scan by itself. Landscape, iPad,
 widgets, Shortcuts, photo-library import, OCR. UniFFI / swift-bridge / cbindgen /
 XCFramework / cdylib. `isExcludedFromBackup`. An XCTest target.
@@ -588,6 +569,8 @@ English is the source of truth in code. German is checked by hand, as always.
 | Done screen - destructive action, quiet, below the two buttons (this is "keep only the PDF") | Delete the 40 photos (78 MB) | Die 40 Fotos löschen (78 MB) |
 | Done screen - line under that action | The PDF stays. Deleted photos cannot be brought back. | Das PDF bleibt. Gelöschte Fotos kann man nicht zurückholen. |
 | Done screen - the export, and the only one there is (ShareLink) | Share PDF | PDF teilen |
+| The page size setting - the switch **Smaller pages**, its line, its two spoken hints and the done screen's size line | new on 2026-08-22 and **not approved yet**: they sit in [`user-flows.md`](./user-flows.md) sections 4c, 7 and 9, which is where the app's copy tables live | (same) |
+| Check after the first photo - all five of its lines | in [`user-flows.md`](./user-flows.md) section 4c, because the screen is built | (same) |
 | Info.plist NSCameraUsageDescription - the ONLY place the word "document" is allowed, because there it means the paper in his hand | FreePDF uses the camera to photograph the pages of your document. | FreePDF nutzt die Kamera, um die Seiten deines Dokuments zu fotografieren. |
 | OPTIONAL, only if you want the final choice as an explicit two-way dialog instead of one quiet button - dialog title | Keep the photos? | Fotos behalten? |
 | OPTIONAL two-way dialog - keep option | Keep them (78 MB) | Behalten (78 MB) |

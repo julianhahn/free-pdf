@@ -16,6 +16,40 @@ enum Engine {
         var errorDescription: String? { message }
     }
 
+    /// How small a written page is: one rung of the page size setting, and the whole of
+    /// what the app decides about it.
+    ///
+    /// Two rungs reach the user, and a switch is the honest control for two: `.small` is
+    /// the default every scan is written at, and `.original` is the page the engine has
+    /// always written, for the scan where `.small` does not look good enough. The rung
+    /// names live here and not in C, because how many rungs there are and what they
+    /// promise is the app's decision ([`../../ffi/AGENTS.md`](../../ffi/AGENTS.md)).
+    ///
+    /// Measured on 2026-08-23 over thirteen real photographed sheets: `.small` takes
+    /// **about 45% off** what `.original` writes - 40 to 68% across the thirteen - and is
+    /// invisible at 100% zoom, fine print and long digit strings included. One page's
+    /// bytes, near the middle: 996,409 at `.original`, 526,077 at `.small`. The engine has
+    /// a third rung, a 1700 px longest edge, which takes about 81% off and is visibly
+    /// softer. It is deliberately not offered: 1700 px across A4 is about 150 dpi, and
+    /// reading the text back out of the page later wants about 300.
+    ///
+    /// `Equatable` so a screen can key its preview on the rung itself - a flip is a new
+    /// run - and `Sendable` because that run is a detached task.
+    struct PageQuality: Sendable, Equatable {
+        /// 1 to 100. Higher is a bigger, better looking page.
+        let jpegQuality: Int32
+        /// The longest edge the page may keep, in pixels, or 0 to keep every pixel. Only
+        /// 0 ever crosses today: both rungs the app offers keep every pixel, and the one
+        /// that does not is the 1700 px rung above.
+        let longestEdge: Int32
+
+        /// The default, and what a scan is written at unless the user says otherwise.
+        static let small = PageQuality(jpegQuality: 45, longestEdge: 0)
+        /// Full quality: the engine's own `PageQuality::UNCHANGED`, which is byte for byte
+        /// the page this engine wrote before there was anything to choose.
+        static let original = PageQuality(jpegQuality: 85, longestEdge: 0)
+    }
+
     /// Every value the Adjust screen can move, in Swift's own types.
     ///
     /// It exists rather than passing `FreepdfAdjustments` around because the C struct

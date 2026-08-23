@@ -39,6 +39,10 @@ struct AdjustView: View {
     /// The scan's Grey switch as the files say it, carried through: applying without it
     /// would quietly un-grey the page.
     let grey: Bool
+    /// How small the scan's pages are written, carried through for the same reason: the
+    /// preview below is a real engine run, and one made at another rung would show a page
+    /// Apply is not going to write. `ScanFlow` writes the page, and it uses this rung too.
+    let quality: Engine.PageQuality
     /// What the user last asked for on this page, read out of `state/NNNN.txt` by
     /// `ScanFlow`. `nil` the first time a page is adjusted, and then the engine's
     /// suggestion is what the controls open on.

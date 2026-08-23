@@ -1,6 +1,7 @@
 //  Does the model come back correctly after the process dies, and does it say the right
-//  thing? Seventeen sections: twelve moments - ten where it is killed, two the user
-//  reaches on his own - then the sentences the list rows say and the values a page keeps.
+//  thing? Eighteen sections: twelve moments - ten where it is killed, two the user
+//  reaches on his own - then the sentences the list rows say, the values a page keeps, and
+//  the one rung the whole scan is written at.
 //
 //  Real files in a temporary directory, because that is the model's only input - and
 //  Foundation only, so this runs in about two seconds with no Xcode and no simulator.
@@ -490,3 +491,47 @@ cropReads(cut(asked, 0, 0, 0, 0, turns: 1).composed(onto: stored),
 // Nothing stored is the first cut, kept as it is.
 cropReads(cut(asked, 0.5, 0.25, 0.25, 0.5, turns: 0).composed(onto: nil),
           0.5, 0.25, 0.25, 0.5, "the first crop on a page with no state")
+
+// MARK: - 18. The rung the whole scan is written at
+
+// Three rules were written down in `ios/AGENTS.md` and watched by nothing. All three live
+// in the half of the app this check compiles, so this is where they belong.
+
+let runged = newScan(in: workspace.appendingPathComponent("Rungs", isDirectory: true))
+shoot(runged, [1])
+scanned(runged, [1])
+
+// No file is not a hole, it is the default - and the default is `.small`, because that is
+// what the app promises a scan will cost. Original is only ever a choice someone made.
+precondition(!exists(runged.qualityURL), "a new scan already names a rung")
+precondition(runged.quality == .small, "an absent quality.txt does not read as small")
+
+// One write, one read, both ways round. A rung that cannot come back off the disk is a
+// switch that forgets, and the only thing this file exists to do is remember.
+precondition(runged.writeQuality(.original), "writing the original rung said it failed")
+precondition(runged.quality == .original, "the written rung came back as small")
+precondition(runged.writeQuality(.small), "writing the small rung said it failed")
+precondition(runged.quality == .small, "the written rung came back as original")
+
+// Empty, blank and a word from a version this one has never heard of: all `.small`, no
+// sentence. An older app must not refuse a scan a newer one wrote.
+for (text, why) in [("", "an empty"), ("   \n", "a blank"), ("bilevel", "an unknown word in a")] {
+    write(text, to: runged.qualityURL)
+    precondition(runged.quality == .small, "\(why) quality.txt does not read as small")
+}
+
+// The sweep keeps it and takes the half-written one a kill left behind. Left off the keep
+// list, the user's choice would survive until he next opens the app - a bug that works
+// while he is watching.
+runged.writeQuality(.original)
+write("origi", to: runged.url.appendingPathComponent("quality.part"))
+runged.sweep()
+precondition(fileNames(in: runged.url) == ["page", "photo", "quality.txt", "state"],
+             "the scan folder after the sweep: \(fileNames(in: runged.url))")
+precondition(runged.quality == .original, "the sweep ate the rung")
+
+// And the rung is no more a page than the name is: it moves neither the step nor the
+// sentence under the row.
+precondition(runged.state == .ready, "the rung moved the scan to \(runged.state)")
+precondition(runged.photos == [1] && runged.pages == [1] && runged.nextPage == 2,
+             "the rung was counted as a page: \(runged.photos) \(runged.pages)")

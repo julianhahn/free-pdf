@@ -9,7 +9,7 @@ not a product, so it gets no feature for its own sake.
 
 `apply_tools` always runs this order, whatever order the flags were typed in:
 
-    rotate -> crop -> auto-crop -> deskew -> straighten -> levels -> sharpen -> gray
+    rotate -> crop -> auto-crop -> deskew -> straighten -> levels -> long-edge -> sharpen -> gray
 
 `--scan` means deskew + straighten + levels + `sharpen(&img, 0.6, 0)`. `SCAN_SHARPEN = 0.6`
 was measured against a hand edit of the same photo; more starts to draw halos around the
@@ -18,11 +18,14 @@ either order.
 
 Do not tidy that order away. Milestone 2's `freepdf_scan_page` repeats the deskew, straighten,
 levels, sharpen part of it in the `ffi/` crate, deskew skipped only when no sheet is found
-([plan section 5](../iphone-client-plan.md#5-the-c-surface)). And `USAGE` promises the order in
+([`../ffi/AGENTS.md`](../ffi/AGENTS.md)). And `USAGE` promises the order in
 words, so it and `apply_tools` change in one commit or the printed contract lies.
 
-There is no resolution cap here on purpose. The 3000 px cap belongs to the phone, which has a
-low-memory limit a desktop does not.
+`--long-edge` sits where it does because a page shrunk after sharpening throws the sharpening
+away - the phone shrinks in the same place, before `sharpen`, and the two orders are worth
+keeping the same. There is still no resolution cap here on purpose: the 3000 px cap belongs to
+the phone, which has a low-memory limit a desktop does not, so `--long-edge` is a page size the
+user asked for and never a ceiling of its own.
 
 ## HEIC
 
@@ -42,6 +45,16 @@ real photo lands in the repository.
 ## Flags, messages, exit codes
 
 `USAGE` in `main.rs` is the flag list. `--grayscale` works too and is deliberately not in it.
+`--quality <1..100>` and `--long-edge <px>` are the two numbers behind a page size setting, and
+they are raw numbers here on purpose: the rung names a user reads are the client's product
+decision and live in one place only, which is not this file - the iPhone app offers two rungs
+behind one switch and calls neither of them by a number
+([`../ios/AGENTS.md`](../ios/AGENTS.md)). `--quality` is
+range-checked while the arguments are read, so a typo is answered before the first photo is
+opened; `--long-edge` is answered by the engine's own floor as soon as the first page reaches
+it. `--quality` next to an image output is refused rather than ignored, because only a PDF has
+pages.
+
 Parsing is a hand-rolled `while let` match in `parse_args`; keep it that way, no clap.
 `value_for` refuses a value starting with `-`, so a missing value is reported instead of
 swallowing the next argument. Do not loosen it for paths with a leading dash.
@@ -61,12 +74,22 @@ a version. `image` 0.25 with the `jpeg` feature is a dev-dependency, used only t
 HEIC test photo. If one more is truly unavoidable, set `default-features = false`, take only
 the features in use, and write in [Cargo.toml](./Cargo.toml) why it is there.
 
+## Two roads into a PDF
+
+Without `--quality`, `write_output` hands the images to `images_to_pdf`, exactly as it always
+did - that function and the two tests that count its bytes are frozen, see
+[../core_engine/AGENTS.md](../core_engine/AGENTS.md), and nothing about that road may move.
+With `--quality` the same pages take the road the phone takes instead, because
+`images_to_pdf` has no quality to set: `save_page` per page into a folder named after this
+process, then `pages_to_pdf` over those paths. The folder is removed again whether the PDF came
+out or not, and a folder that cannot be made is a sentence naming it.
+
 ## What the phone will not copy
 
-Not `write_output`, which hands a `.pdf` to `images_to_pdf` - leave both alone, see
-[../core_engine/AGENTS.md](../core_engine/AGENTS.md). The app calls `save_page` per page and
-`pages_to_pdf` over a list of paths, because forty pages through `images_to_pdf` peak around
-3.1 GB ([plan section 4](../iphone-client-plan.md#4-engine-changes)). Not the printed lines
+Not `write_output` itself: the app writes no image file and never takes the `images_to_pdf`
+road, whatever the user picked. It calls `save_page` per page and `pages_to_pdf` over a list of
+paths, because forty pages through `images_to_pdf` peak around 3.1 GB
+([plan section 4](../iphone-client-plan.md#4-engine-changes)). Not the printed lines
 either; their text is
 [plan section 12](../iphone-client-plan.md#12-every-line-of-text-the-app-shows). Only the tool
 order travels.

@@ -4,7 +4,9 @@ The iPhone app. `FreePDF/` is what ships - the screens and the storage model und
 and `check/` holds the two checks: one that needs no Xcode at all, one that drives the
 whole app on a simulator. The engine is reached through the four C functions in
 [`../ffi`](../ffi/AGENTS.md) and nothing else - no image work and no PDF work belongs in
-here.
+here. Four is still the count: the page size rung was added as one more parameter to the
+two functions that write a page, `freepdf_scan_page` and `freepdf_adjust_page`, rather than
+as a fifth function.
 
 ## One scan is one directory
 
@@ -15,6 +17,7 @@ Documents/Scans/
     page/ 0001.jpg 0002.jpg            <- 0004 unscanned = the resume point
     state/0001.txt 0002.txt            <- what the user last asked for on that page
     name.txt                           <- the name he typed, if he typed one. The title.
+    quality.txt                        <- one word: how small the pages of this scan are written.
     scan.pdf                           <- exists => finished. Arrives only by rename.
   2026-08-09_093207_1C7D/ ...
 ```
@@ -42,8 +45,8 @@ order of two rows and no data.
    ([`../core_engine/AGENTS.md`](../core_engine/AGENTS.md)). A real name is proof of a
    complete file - that is what replaces checksums and a validation pass.
 3. **Debris is invisible and swept.** Readers accept `0007.jpg` and nothing else inside
-   `photo/` and `page/`, `0007.txt` and nothing else inside `state/`, plus `scan.pdf` and
-   `name.txt`.
+   `photo/` and `page/`, `0007.txt` and nothing else inside `state/`, plus `scan.pdf`,
+   `name.txt` and `quality.txt`.
    `Scan.sweep()` deletes the rest - `.part` files,
    Foundation's `.dat.nosync…`, anything hand-copied in - and puts back a directory that is
    missing. Call it at launch, on every scan, before the list is shown: it is the only
@@ -69,6 +72,92 @@ asked for, and nothing in `Scan.state`, `photos`, `pages`, `unscanned` or `nextP
 reads it. The page is renamed first and the sidecar second, so the worst a kill in
 between costs is one nudge made again - never a wrong page, and never a screen lying
 about done or not-done.
+
+### `quality.txt` - how small the pages are written
+
+One word for the whole scan: `small` or `original`. `small` is `Engine.PageQuality`'s
+quality 45 with every pixel kept; `original` is quality 85 with every pixel kept, which is
+the engine's own `PageQuality::UNCHANGED` and byte for byte the page this app wrote before
+there was anything to choose. `Scan.quality` reads it, `Scan.writeQuality` writes it
+`.atomic`, and the two words are machine keys - they are not copy and are not translated.
+
+- **It is one fact about the scan, so it is one file - not `state/NNNN.txt`.** `state/` is
+  per page, and one fact stored forty times is a fact that can disagree with itself: forty
+  sidecars saying `small` and one saying `original` has no honest answer for a switch that
+  shows one position. It sits beside `name.txt` for exactly the reason the name does.
+  `readState` also counts exactly 25 tokens, so a 26th would change the on-disk format of
+  every page for a value that is not a page's.
+- **The word, never the numbers.** A stored `45` would freeze today's number into every old
+  scan and disagree with the switch the day the rung is retuned. The numbers behind a rung
+  live in `Engine.PageQuality` and nowhere else.
+- **`quality.txt` has to be in `sweep()`'s keep list, or the setting dies at every launch.**
+  The sweep deletes everything in a scan folder that is not on that list, and it runs in
+  `FreePDFApp.init` - so a name left off it means the user's choice survives until he next
+  opens the app, which is the worst kind of bug: it works while he is watching. The list is
+  one named constant in `Scan.swift` for that reason. Anything added to a scan folder from
+  now on is added to that constant in the same edit.
+- **A kill in the middle of a rewrite leaves the word new and some pages old.** `quality.txt`
+  is written first on purpose: the reverse order - pages at the new rung under a file naming
+  the old one - sends the switch back and costs the whole run again instead of one page.
+  What it costs is that a scan can hold pages of both sizes, and unlike the same kill during
+  a Grey flip **this one is invisible**: the pages all look right, they are only not all the
+  size the file promises. Flipping the switch twice repairs it. That is accepted rather than
+  fixed, because the honest fix is a marker file the sweep also has to know about and a
+  resume that finishes the run at the next launch - worth building the day a rung changes
+  something a person can see. **Measured on 2026-08-23 and still not worth it:** at 1:1 on
+  real paper a quality 45 page is not distinguishable from Original, fine print and long
+  digit strings included ([`../README.md`](../README.md) **Next steps** row 14), so a scan
+  holding both sizes reads right on every page - the only wrong thing is a number the user
+  never sees. Build the marker the day a visible rung is added; the parked CCITT-G4 rung
+  ([`../TASKS.md`](../TASKS.md) 40) would be exactly that day.
+- **Absent, empty, unreadable, or a word this version does not know reads as `small`.** No
+  sentence, exactly like `name`. That is not a shrug: `small` is what the app promises a
+  scan will cost, so a scan whose one small file was lost still comes out the size it
+  promised, and Original stays the thing the user chose on purpose.
+
+**Quality 45 is the default, and the check after the first photo is where it is seen and
+switched** (Julian, 2026-08-22 - [`../user-flows.md`](../user-flows.md) DECISIONS 7, the
+half of it he reversed). Two rungs reach the user and no more, so the control is a `Toggle`
+in `.switch` style: the design system has neither a picker nor a segmented control, and a
+switch is the honest control for a two-way choice.
+
+The same switch is on the pages screen too - the same value in, the same callback out, one
+setting with two places to reach it - because the first page check happens once per scan, on
+the first photo, so a scan he comes back to would otherwise have no way back. **That second
+switch is not Julian's decision, it is the agent's extension of his,** and it waits for him
+the way its label does.
+
+- **The preview and the written page are always made at the same rung.** The check screen's
+  picture is a real `freepdf_scan_page` run, so it is keyed on the rung - `.task(id: quality)`
+  - and a flip makes a new picture. Previewing one thing and writing another is the whole
+  failure this screen exists to prevent, so any future screen that shows a page must pass
+  the scan's rung too. That is why `Engine.scanPage` and `Engine.adjustPage` have **no
+  default argument** for the rung: every call site has to name one, and the Adjust screen's
+  live preview and `write` both had to be given the scan's, or Apply would silently
+  un-shrink a page.
+- **`ScanFlow` owns the file work, as with every other file move.** `setQuality` deletes
+  `scan.pdf`, writes `quality.txt`, then rewrites the pages that exist, one at a time. That
+  order is the kill-safety argument: the PDF is derived and costs two seconds; a kill after
+  the one atomic rename leaves the setting new and some pages old, which reads perfectly,
+  is repaired by flipping the switch twice, and means every page written from then on - the
+  drain's included - is at the new rung. The reverse order costs the whole run instead of
+  one page, because pages at the new rung under a file naming the old one send the switch
+  back.
+- **A rewrite is the run that made the page, not `write`.** A page with a `state/NNNN.txt`
+  goes back through `adjust_page` with exactly those stored values, so crop, turn and levels
+  survive and no crop is composed onto itself; a page without one goes back through
+  `scan_page`. Nothing new is written into `state/`, because what the user asked for did not
+  change - only how small it is written.
+- **On the check screen the flip rewrites nothing**, because no page file exists yet. It
+  writes the word and the drain then writes every page at it. That also keeps the engine at
+  one run at a time, instead of a rewrite racing that screen's own preview run.
+- **Once the photos are deleted the switch is dead, not gone.** A page cannot be rewritten
+  without its photo, which is the same reason **Adjust page** is dead for a page whose photo
+  is missing. The setting on disk stays what it was and still describes the pages, and a new
+  page shot into that scan is still written at it.
+- **A page whose photo is missing is answered by the engine's own sentence**, prefixed with
+  its page number; more than one becomes the copy table's "Pages 4, 9 and 18 were not
+  changed…" - the same takeover, the same "Keep the app open.", no new sentence invented.
 
 ### The step is derived, never stored
 
@@ -269,6 +358,10 @@ the page the engine makes of it, large, with three ways out - **Scan this page a
   second retake path. Adjust is deliberately not on this screen: it answers "carry on or
   start over", and a page fixed by hand would still leave the next twenty shot on the same
   bad desk.
+- **The page size switch lives here**, because this is the one screen where the choice can
+  be judged: the picture above it is made at the rung the switch shows. On is the default.
+  Value in, `onQuality` out - the screen writes nothing, and the rules are
+  [`quality.txt`](#qualitytxt---how-small-the-pages-are-written) above.
 - **The photo beside the page is taught here so the camera's thumbnail needs no caption.**
   Two pictures of one sheet look nothing alike, and this is the one screen with room to say
   why.
@@ -301,6 +394,12 @@ actions and hands the screen numbers.
   file gets the engine's suggestion plus the flipped switch. The switch itself reads the
   lowest-numbered page that has a state file, so leaving the scan and coming back shows
   what is on disk rather than what a screen remembered.
+- **How small the pages are written is a fact about the pages too**, so it is the second
+  switch in the same footer, under Grey, with the same value-in/callback-out shape. Flipping
+  it rewrites every page that exists through the same takeover, and it is dead once the
+  photos are gone - a page cannot be rewritten without its photo. Its rules are
+  [`quality.txt`](#qualitytxt---how-small-the-pages-are-written) above and are not repeated
+  here.
 - **"Shoot another page" deletes `scan.pdf` first.** The PDF is what this screen reads as
   finished, so a scan that still had one would answer the tap with the done screen and the
   new photo would never be drained.
@@ -347,6 +446,12 @@ thing it cannot hold itself - see below.
   price is that VoiceOver reads the field instead of the "PDF ready" title on opening.
   The block below stays reachable because the screen is a `ScrollView`: the keyboard is a
   bottom safe-area inset, which a scroll view turns into content it can scroll to.
+- **The PDF's real size is one read-only line, and no promise.** It is the finished file's
+  own bytes off disk, through the same `ByteCountFormatter` the photos block uses, and it is
+  the only place in the app that says what the page size setting actually bought. Left out
+  entirely when the size cannot be read, the way the photos block says nothing rather than
+  "Zero KB". Nothing here predicts a size: that would need every page encoded again, and a
+  formula would be the guess the engine's own rules forbid.
 - **The reader is the system's PDF view under the system's sheet**, and there is nothing
   else on it - no share, no print, no page count. The close control is a glyph, so the copy
   table's "Close the PDF" is the spoken label rather than a word on screen.
@@ -547,14 +652,21 @@ what a new Xcode project defaults to.
 - **`precondition`, never `assert`**, and no `-O`, for the same two reasons as
   [`../ffi/AGENTS.md`](../ffi/AGENTS.md): `assert` is compiled out under `-O`, and
   `precondition` prints its sentence only unoptimised.
-- **Every rule the model states has a mutation that breaks it.** Seventeen were run against
-  this check and all seventeen aborted with a readable sentence. Add an assertion, then
+- **Every rule the model states has a mutation that breaks it.** Twenty were run against
+  this check and all twenty aborted with a readable sentence. Add an assertion, then
   break it on purpose once and watch it fail - the plan's own milestone-1 test passed
   against a deliberately wrong implementation, which is how that habit was earned
   ([`../session-logs.md`](../session-logs.md)). Four of the seventeen were written after
   the mutation showed the rule was not watched at all: a sweep that eats `scan.pdf`, and
   each of the three guards in `pageNumber`, which the debris list had only ever tested
   together.
+- **The three `quality.txt` rules are watched, since 2026-08-23.** Section 18: an absent
+  file reads as `small`, one write/read round trip comes back both ways, empty and blank and
+  a word this version does not know all read as `small`, the sweep keeps `quality.txt` and
+  takes a half-written `quality.part`, and the rung is counted as neither a page nor a step.
+  Three mutations earned it - `quality.txt` off the keep list, an absent file reading as
+  `original`, and a `writeQuality` that returns true and writes nothing - and all three
+  aborted with a sentence naming what the check saw.
 - **One rule cannot be watched here: the Gregorian calendar.** A machine whose own calendar
   is Gregorian cannot tell `Calendar(identifier: .gregorian)` from `Calendar.current`. The
   check compares the name against a POSIX formatter, which is Gregorian by definition, so

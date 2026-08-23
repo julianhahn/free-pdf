@@ -11,6 +11,7 @@
 //! paths: a phone cannot hold forty decoded pages at once, so each page waits on
 //! disk as a JPEG and is handed to the PDF without ever being decoded again.
 
+use crate::rehuff;
 use image::codecs::jpeg::{JpegDecoder, JpegEncoder};
 use image::{ColorType, DynamicImage, ImageDecoder};
 use printpdf::{
@@ -30,13 +31,68 @@ const A4_LONG_MM: f32 = 297.0;
 /// JPEG quality of the images inside the PDF, from 0.0 to 1.0.
 const JPEG_QUALITY: f32 = 0.85;
 
-/// JPEG quality of a page written by [`save_page`], from 0 to 100.
+/// JPEG quality of a page written at [`PageQuality::UNCHANGED`], from 0 to 100.
 ///
 /// The same 85 as [`JPEG_QUALITY`], in the scale this encoder counts in. The two
-/// have to agree: a page written here is the stream the PDF embeds, so a
-/// document built page by page must not come out visibly different from the
-/// same document built by [`images_to_pdf`].
+/// agree at this one setting, and only here: a page written at 85 is the stream
+/// the PDF embeds, so a document built page by page must not come out visibly
+/// different from the same document built by [`images_to_pdf`]. A client that
+/// asks for a smaller page hands [`save_page`] a lower number, and then the two
+/// are meant to differ - so do not re-align them, and do not read a lower page
+/// quality as a bug. [`images_to_pdf`] has no such setting at all: a caller that
+/// wants to steer the page size takes the [`save_page`] road instead, which is
+/// what the command line runner does as soon as it is given a quality.
+///
+/// On top of the quality, a page written here also loses the bytes its own
+/// Huffman tables save ([`crate::rehuff`]) - which changes the code words, not
+/// one pixel. How much that is depends on the page: see [`save_page`].
 const PAGE_JPEG_QUALITY: u8 = 85;
+
+/// The [`PageQuality::longest_edge`] that means "keep every pixel".
+///
+/// Zero rather than a large number, so the do-nothing answer is one value a
+/// client can write down and not a bound it has to guess.
+const KEEP_EVERY_PIXEL: u32 = 0;
+
+/// The quality range this encoder counts in. Outside it the encoder would either
+/// be handed a number it does not understand or write a page nobody can read, so
+/// [`save_page`] refuses instead of pulling the number back into range.
+const QUALITY_RANGE: std::ops::RangeInclusive<u8> = 1..=100;
+
+/// How small a written page should be: the JPEG quality, and the longest edge the
+/// page may keep.
+///
+/// A struct rather than a bare number, because a bare `45` at a call site cannot
+/// be found again - nobody can grep for it, and nobody reading the call knows
+/// which of the two numbers it is. A struct rather than an enum of rung names
+/// ("Small", "Smallest"), because the rungs and the numbers behind them are the
+/// client's product decision: the names live on the screen the user reads and
+/// must not freeze inside this file, where changing them would be an engine
+/// change.
+///
+/// [`UNCHANGED`](PageQuality::UNCHANGED) is what the engine wrote before there
+/// was a setting, and a page written with it is byte for byte the same page.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PageQuality {
+    /// JPEG quality from 1 to 100. Higher is a bigger, better looking page.
+    pub jpeg_quality: u8,
+    /// The longest edge the page may keep, in pixels, or zero to keep every
+    /// pixel. [`save_page`] refuses anything else here; see its doc comment for
+    /// why the resampling is the client's step and not this one's.
+    pub longest_edge: u32,
+}
+
+impl PageQuality {
+    /// Today's page: quality 85, every pixel kept.
+    ///
+    /// A page written with this is byte for byte the page the engine wrote
+    /// before the setting existed, which is what lets a client offer a smaller
+    /// page without changing the one it already ships.
+    pub const UNCHANGED: PageQuality = PageQuality {
+        jpeg_quality: PAGE_JPEG_QUALITY,
+        longest_edge: KEEP_EVERY_PIXEL,
+    };
+}
 
 /// Writes the images as a single PDF, one page per image.
 ///
@@ -65,8 +121,38 @@ pub fn images_to_pdf(images: &[DynamicImage], out_path: &Path) -> Result<(), Str
 /// These bytes are the exact stream [`pages_to_pdf`] embeds, so a page is
 /// compressed once instead of twice. The engine has to be the one writing it: a
 /// PDF ignores the camera rotation tag, so a page written by the client's own
-/// image code would land sideways, and a progressive JPEG cannot be embedded at
-/// all.
+/// image code would land sideways, and a client's encoder may well write a
+/// progressive JPEG. A progressive page does in fact go into the PDF and render
+/// (measured: byte for byte through [`pages_to_pdf`], and poppler draws it to the
+/// same picture), but `/DCTDecode` is specified around baseline JPEG, progressive
+/// has a long history of failing in real readers, and nobody here can test
+/// Apple's PDFKit. So the engine writes baseline and does not find out.
+///
+/// The page's Huffman tables are then rebuilt from the page's own symbol counts
+/// ([`crate::rehuff`]). That is free: the quantised coefficients are copied over
+/// untouched, so the file decodes to the same pixels, and the page comes out
+/// smaller because `image`'s encoder writes the fixed example tables out of the
+/// JPEG standard's Annex K instead of tables that fit this page.
+///
+/// How much smaller depends on what is on the page, and the spread is wide, so
+/// no single figure is honest: measured 8 to 13% on a photographed page of text
+/// (thirteen real pages, median 10%, spread 7.6 to 13.5%), 2.5
+/// to 5.0% on grey text, about 16% on grainy paper or a page with a photograph
+/// on it, and up to 28% over a mixed scan of forty pages. The share grows the
+/// noisier the page and the lower the quality (42 to 44% at quality 30), and a
+/// document scanner's usual page is text - so expect the small end. The PDF
+/// shrinks by whatever share the pages did, and so does [`pages_to_pdf`]'s peak
+/// memory, which is about twice the total size of the page streams.
+///
+/// `quality.longest_edge` is refused unless it is zero, rather than ignored: an
+/// ignored field is a lie about what the call did. Resampling has to happen
+/// earlier in the chain, where the client's own size cap already is, for three
+/// measured reasons. It would pay `sharpen`'s full peak - 234 MB at 3000 px
+/// against 116 MB at 1754 px - because sharpening has already run by the time a
+/// page is written. It would blur away the sharpening that was just paid for.
+/// And a crop is documented as fractions of the image *after* the cap, so moving
+/// the cap moves what every stored crop box means. Shrink with
+/// [`crate::fit_within`] before sharpening and leave this field at zero.
 ///
 /// The bytes go to `<path>.part` and are renamed only once they are on disk, so
 /// a client that is killed mid-write finds either no file or a finished one -
@@ -75,9 +161,30 @@ pub fn images_to_pdf(images: &[DynamicImage], out_path: &Path) -> Result<(), Str
 /// - Parameters:
 ///   img: The finished page.
 ///   path: Where to write it. An existing file is overwritten.
+///   quality: How small the page should be. [`PageQuality::UNCHANGED`] writes
+///   the page the engine has always written, byte for byte.
 /// - Returns:
-///   Nothing on success, or a message naming the file and what went wrong.
-pub fn save_page(img: &DynamicImage, path: &Path) -> Result<(), String> {
+///   Nothing on success, or a message naming the file and what went wrong - or
+///   naming the quality, when it is outside 1 to 100 or asks for a resampling
+///   this step cannot do.
+pub fn save_page(img: &DynamicImage, path: &Path, quality: PageQuality) -> Result<(), String> {
+    if !QUALITY_RANGE.contains(&quality.jpeg_quality) {
+        return Err(format!(
+            "The page quality must be between {} and {}, but was {}.",
+            QUALITY_RANGE.start(),
+            QUALITY_RANGE.end(),
+            quality.jpeg_quality
+        ));
+    }
+
+    if quality.longest_edge != KEEP_EVERY_PIXEL {
+        return Err(format!(
+            "The page cannot be shrunk to {} pixels while it is written, because it is already \
+             sharpened by then. Shrink it before sharpening and leave the longest edge at {}.",
+            quality.longest_edge, KEEP_EVERY_PIXEL
+        ));
+    }
+
     // JPEG takes 8-bit grey or 8-bit RGB and nothing else. Grey stays grey, so a
     // page the user greyed keeps its smaller size instead of being blown back up
     // to three channels.
@@ -91,8 +198,18 @@ pub fn save_page(img: &DynamicImage, path: &Path) -> Result<(), String> {
     };
 
     let mut jpeg = Vec::new();
-    src.write_with_encoder(JpegEncoder::new_with_quality(&mut jpeg, PAGE_JPEG_QUALITY))
-        .map_err(|e| format!("Failed to encode the page for {}: {}", path.display(), e))?;
+    src.write_with_encoder(JpegEncoder::new_with_quality(
+        &mut jpeg,
+        quality.jpeg_quality,
+    ))
+    .map_err(|e| format!("Failed to encode the page for {}: {}", path.display(), e))?;
+
+    // Smaller by 8 to 13% on a text page and up to 28% over a mixed scan, same
+    // pixels either way. `unwrap_or` and never `unwrap`: a JPEG
+    // the recoder refuses - a restart marker, a progressive scan, anything it did
+    // not expect - keeps its original bytes. So this call cannot fail, a page is
+    // never lost, and a scan is never left unfinishable by it.
+    let jpeg = rehuff::rehuff(&jpeg).unwrap_or(jpeg);
 
     let part = path.with_extension("part");
     let mut file = File::create(&part).map_err(|e| failed(&part, e))?;
@@ -322,6 +439,12 @@ fn to_raw_image(img: &DynamicImage) -> RawImage {
 
 /// JPEG-compresses the embedded images. Without this printpdf stores raw
 /// pixels, and one phone photo alone already makes a PDF of several megabytes.
+///
+/// This is [`images_to_pdf`]'s path only. On the [`pages_to_pdf`] path all four
+/// `PdfSaveOptions` fields do nothing at all: `ExternalXObject` never reaches
+/// `image_optimization` (printpdf/src/xobject.rs:54-88), and `optimize` only
+/// wraps a `doc.compress()` call that is commented out. Measured: the same file
+/// size at every setting, which is why that path passes the plain default.
 fn save_options() -> PdfSaveOptions {
     PdfSaveOptions {
         image_optimization: Some(ImageOptimizationOptions {

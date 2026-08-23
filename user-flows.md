@@ -229,7 +229,21 @@ page shows the engine's sentence and all three controls still work.
 | First control | Scan this page again | Diese Seite noch einmal scannen |
 | Second control | Scan 1 page | 1 Seite scannen |
 | Last control | Photograph the rest | Restliche Seiten fotografieren |
+| Switch | Smaller pages | Kleinere Seiten |
+| The line under the switch | About half the file size. Switch it off if this page looks too soft. | Etwa halb so groß. Schalte es aus, wenn diese Seite zu weich aussieht. |
+| Switch, spoken hint | Writes every page of this scan at about half the file size. | Schreibt jede Seite dieses Scans mit etwa halber Dateigröße. |
 ```
+
+The last three rows are **new words and wait for Julian's approval** (2026-08-22). They are
+in the code as they stand here so the screen is not mute, in the voice of the tables around
+them, and nothing already approved was reworded to make room for them.
+
+The switch is on this screen because this is where the size choice can be judged: the
+picture above it is a real engine run at the rung the switch shows, so flipping it makes a
+new picture and what he looks at is what every page of the scan will be. On is the default.
+Off is Original, for the scan where the smaller page does not look good enough. Nothing is
+written into the scan's `page/` here - the drain still writes every page - so the flip on
+this screen only changes the setting and the picture.
 
 ---
 
@@ -319,6 +333,14 @@ only lives in memory today and a relaunch is the only retry there is.
 | Jump, confirm | Go | Los |
 ```
 
+This screen carries the page size switch a second time, in the footer under Grey - the same
+setting as on the check after the first photo, one value and two places to reach it. Its two
+words are in the table in section 7 beside Grey's, because that is where this screen's switch
+copy already lives. Here the switch *rewrites*: every page that already exists goes back
+through the engine at the new rung, the same takeover **Apply to all pages** uses, and it is
+dead rather than gone once the photos have been deleted, because a page cannot be rewritten
+without its photo.
+
 Changes to today: pinch-to-zoom on the page (this screen exists to check small print, and
 1600 px flat is too little), a **Retry** on a refused page, a confirmation on delete, and
 a page-jump so a 40-page scan is not 40 swipes, shown only from ten pages up.
@@ -405,6 +427,8 @@ Apply would write. Only Apply writes the page. (Julian, 2026-08-16, reversing th
 | Tool | Crop | Zuschneiden |
 | Tool | Turn | Drehen |
 | Pages screen switch | Grey | Graustufen |
+| Pages screen switch | Smaller pages | Kleinere Seiten |
+| Pages screen switch, spoken hint | Rewrites every page of this scan at about half the file size. | Schreibt jede Seite dieses Scans neu, mit etwa halber Dateigröße. |
 | All-pages switch | Apply to all pages | Auf alle Seiten anwenden |
 | Running, one page | Applying… | Wird angewendet… |
 | Running, all pages | Applying to 40 pages… | Wird auf 40 Seiten angewendet… |
@@ -418,6 +442,9 @@ Apply would write. Only Apply writes the page. (Julian, 2026-08-16, reversing th
 | Edges warning | The page runs off the frame. Move back and photograph it again. | Die Seite ragt aus dem Bild. Geh weiter weg und fotografiere sie noch einmal. |
 | Edges, nothing to cut | The sheet fills the whole photo, so there is nothing to cut away. | Das Blatt füllt das ganze Foto, es gibt nichts abzuschneiden. |
 ```
+
+The two **Smaller pages** rows are new words and **wait for Julian's approval**
+(2026-08-22); everything else in this table is approved and nothing in it was reworded.
 
 ### 7a. Each tool, and how it is reached
 
@@ -437,21 +464,23 @@ Apply would write. Only Apply writes the page. (Julian, 2026-08-16, reversing th
 | rotate | Adjust → Turn | one button, a quarter turn clockwise each tap. The turn is kept in the page's state file, so the engine turns the page again at every Apply |
 | Paper::is_the_whole_image | Adjust → Edges | none — it is the line under the Edges control |
 | Paper::runs_off_the_picture | Adjust → Edges | none — it is the warning line under the Edges control |
-| save_page | nowhere, by design | none. Quality 85 is fixed and stays fixed |
+| save_page | the pages screen, and the check after the first photo | one switch, **Smaller pages**, for the whole scan. On is the default — quality 45, every pixel kept. Off is Original, the page the engine has always written, byte for byte. Flipping it rewrites every page that already exists |
 | pages_to_pdf | the pages screen | the Make PDF button, unchanged |
 | images_to_pdf | never reachable | deliberately not on the phone: it would peak near 3.1 GB and iOS kills the app |
 | A4 page size | never reachable | fixed at A4. Not built |
-| LONGEST_EDGE 3000 px cap | never reachable | the cap stays. It is the memory guarantee. Not built |
+| LONGEST_EDGE 3000 px cap | never reachable | the cap has not moved and is not a setting. It is the memory guarantee: `sharpen` costs 33 bytes a pixel and the cap is what keeps a 12 MP photo off the jetsam limit. The size choice is the `save_page` row above, and it sits **underneath** this cap |
+| a 1700 px longest edge | never reachable | it exists in the engine and behind `backend-core-runner --long-edge`, and is deliberately not offered in the app: 1700 px across A4 is about 150 dpi, and reading the text back out of a page later wants about 300. It takes 74% off and is visibly softer |
 | the fixed order of the recipe | never reachable | the order is fixed; only each step's values move |
 ```
 
-The C boundary has to be widened before any of this is buildable: `crop` and `rotate` are
-not imported by the FFI at all, and `Levels` never crosses it. Today Swift can only call
-`scanPage` and `pagesToPDF`.
-
-It is **one** new C function for the adjusted case: it takes the photo path, the page path
-and a struct holding all the values, and replaces `scan_page` when the user has adjusted
-something. One function, not seven.
+The C boundary was widened for all of this and is built: `freepdf_adjust_page` takes the
+photo path, the page path and **one** `FreepdfAdjustments` struct holding every value -
+one function, not seven - and `freepdf_suggest_adjustments` asks what the engine would have
+chosen. The page size rung crossed as a parameter rather than a fifth function:
+`freepdf_scan_page` and `freepdf_adjust_page` each take a `FreepdfPageQuality *`, and NULL
+still means Original, so nothing outside the app changed meaning. Still four C functions -
+the header is [`ffi/include/freepdf.h`](./ffi/include/freepdf.h) and the rules are
+[`ffi/AGENTS.md`](./ffi/AGENTS.md).
 
 ### 7b. One page or all pages
 
@@ -525,7 +554,14 @@ something. One function, not seven.
 | Reader sheet title | PDF | PDF |
 | Reader sheet close, spoken | Close the PDF | PDF schließen |
 | Photos group | Photos | Fotos |
+| PDF size | This PDF is 1.3 MB. | Dieses PDF ist 1,3 MB groß. |
 ```
+
+The last row is **new words and waits for Julian's approval** (2026-08-22). It is read-only
+and it is the honest end of the size choice: the only place in the app that says what the
+setting actually bought, in real bytes off the finished PDF rather than a promise. It is
+left out entirely when the size could not be read, the way the photos block says nothing
+rather than "Zero KB".
 
 1. **Open PDF** → a reader sheet inside the app. Nothing copied, nothing leaves.
 2. **Change pages** → deletes `scan.pdf` and drops back to the pages, so one bad page
@@ -596,6 +632,7 @@ Nothing is stored, so nothing is lost. Where reopening lands:
 | after Make PDF | the done screen, share again |
 | after deleting the photos | "photos deleted", the button is gone |
 | mid apply-to-all | the pages, some adjusted and some not, with no way to tell which |
+| mid page-size rewrite | the pages. The setting is already the new one, so the switch is honest and every page written from then on is at the new rung; the pages the run had not reached yet are still the old size. Flipping the switch twice rewrites them. Nothing is lost and no page is half a page |
 ```
 
 ---
@@ -622,6 +659,18 @@ All settled, Julian, 2026-08-12. Each one is written into the section named besi
 
 7. **The 3000 px cap stays.** No quality picker. Not built — it is the memory guarantee.
    (Section 7a.)
+
+   **Half of it reversed, Julian, 2026-08-22.** The cap is untouched and is still the
+   memory guarantee. What was wrong was "no quality picker": every scan is now written at
+   quality 45 by default, and the check after the first photo carries one switch, **Smaller
+   pages**, that turns it off back to Original. His words: *"Yes the q45 sounds good should
+   be alrwady used for the first oagwn when previewing and just set on to default and can be
+   disabled if the render for the first page doesn't look great."* His reason, in plainer
+   words: he wants the smaller page without having to ask for it, and a way out on the one
+   screen where he can already see what it costs. The preview on that screen is made at the
+   same rung the pages are written at, so what he judges is what he gets. It is still not a
+   picker — two rungs is a switch, and the design system has neither a picker nor a
+   segmented control. (Sections 4c, 6, 7, 7a and 9.)
 
 8. **Renaming the PDF is built**: a text field on the done screen. The name is stored with
    the scan and is also the list row's title. (Sections 9 and 10.)

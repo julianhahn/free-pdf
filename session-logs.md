@@ -8,6 +8,124 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-23 - main is merged in, and two numbering collisions were settled
+
+The page size branch had been sitting beside `main` for ten of its commits and nine of its
+own, and `main` had refactored the very files this branch changed. A trial merge showed seven
+conflicts, so `main` was merged in before anything else was built on top.
+
+**The two code conflicts.** `main` split `AdjustView.swift` into four files under `Adjust/`
+and deleted the original, which this branch had changed - a modify/delete, the kind git cannot
+decide. The three changed lines moved to where the split put their job: the
+`quality: Engine.PageQuality` property to `Adjust/AdjustView.swift` beside `grey`, and the
+`rung` the preview run passes to `Adjust/AdjustValues.swift`. That was not cosmetic:
+`EngineCalls.adjustPage` takes four arguments on this branch and `main`'s call site passed
+three, so without the move the app would not have built. In `FirstPageCheck.swift` both sides
+had added a modifier at the same place - this branch keyed the page run on the rung, `main`
+added the stand-in's one-page tap - and the resolution keeps both. `scan_check.sh` prints
+`one page scanned from the check screen` beside `scan ok`, which is `main`'s new assertion
+running through this branch's change.
+
+**Two numbering collisions, settled the same way: whoever is referenced more keeps the
+number.** Both branches had written a task 36. `main`'s - the bottom edge, dated 2026-08-18 -
+is **still open**, carries three rounds across README and five log entries, and keeps 36. The
+page size block renumbered to **37 to 41**, and every pointer to it moved with it. In README
+**Next steps** the same thing had happened to row 7: `main`'s four edge rows keep 7 to 10 and
+the page size rows became 11 to 14. Renumbering is a rename, so the prose in the older log
+entries is untouched and only the numbers in them follow.
+
+The test count both sides had guessed was counted on the merged tree instead: **69 green on a
+Mac, 66 elsewhere** - 53 in `core_engine/tests/engine.rs`, 8 in `ffi/src/lib.rs`, 5 in
+`backend-core-runner` plus its 3 HEIC tests. All four checks pass on the merged tree.
+
+## 2026-08-23 - A Mac ran the three checks, and real paper corrected two numbers
+
+The whole page size branch was built in a Linux container, so everything needing Apple's
+toolchain was unverified. It all passes, and nothing had to be fixed: `cargo test --workspace`
+68 green, `bash ffi/bridge_check.sh` -> "bridge ok" with all eight assertions - the five the
+rung added had never executed once - `bash ios/check/run.sh` -> "resume ok", and
+`bash ios/check/scan_check.sh` -> "scan ok" in the "iPhone 17 Pro" simulator. **The eight Swift
+files compile**, so the `freepdf.h` / `EngineCalls.swift` worry the last entry left is closed.
+
+Then the measurement only this machine can make. Every byte figure in the repository came from
+synthetic photographs of synthetic glyphs; `backend-core-runner` was run by hand over the
+thirteen real photographed sheets in the gitignored `test_images/phone/` at Original, quality
+45, and quality 45 with a 1700 px edge, and the pages were opened in Preview. Against **the
+page the app writes** (`save_page` at 85, recode included): quality 45 is **about 45% off**
+(40 to 68%), the 1700 px edge **about 81%** (76 to 92%). Against **the runner's Original**
+(`images_to_pdf`, no recode): **about 51%** and **about 82%**. The Huffman recode alone, same
+pixels, is **8 to 13%** on a photographed text page (thirteen probes, median 9.9%).
+
+So two of the old figures had drifted and one held. "About 71% with a 1700 px edge" was really
+81%, and the recode's "5 to 9%" was really 8 to 13% - both were synthetic. Quality 45's "about
+40%" was close and is now 45%. Corrected with the baseline named in README, TASKS 37/38/39,
+`core_engine/AGENTS.md`, `pdf.rs`, `rehuff.rs`, `tests/engine.rs` and `Engine.swift`. The two
+entries below this one keep their old numbers on purpose: this file is the past.
+
+`LEAST_PAGE_SAVING` (0.15) did not move and its test still points at the synthetic gradient.
+All thirteen real pages measure **under** that bound, which is the reason the pin exists there
+and not on a text fixture - the comment now says so with the real numbers.
+
+**And the copy is honest.** "About half the file size" promises what 45% delivers, and at 1:1
+in Preview the fine print of a quality 45 page - long digit strings included - is not
+distinguishable from Original. The 1700 px rung is visibly softer, which is why it stays out
+of the UI.
+
+With the Mac there anyway, two things the repository had written down as gaps got closed.
+`ios/check/run.sh` grew **section 18**: the three `quality.txt` rules it named but never
+watched - an absent file reads as `small`, a write/read round trip comes back both ways, the
+sweep keeps the file and takes a half-written `quality.part` - plus empty, blank and an
+unknown word. Three mutations of `Scan.swift` earned it and all three aborted with a sentence:
+the file off the keep list, an absent file reading as `original`, and a `writeQuality` that
+returns true and writes nothing. And the **marker file for a kill mid-rewrite stays unbuilt**,
+now for a measured reason rather than a guess: the rule was "build it the day a rung changes
+something a person can see", and quality 45 is not distinguishable from Original at 1:1, so a
+scan holding both sizes reads right on every page. TASKS 40's bilevel rung would be that day.
+
+Next person, three things. The five lines of English and German still wait for Julian (README
+**Next steps** row 12). Two questions still need a phone in a hand, not a simulator: whether the
+stacked switches read as clutter, and how the re-run feels (row 13). And `test_images/` may
+never be committed or read from code, so this measurement is reproducible by hand and not in
+CI - redo it the same way if the encoder ever changes.
+
+## 2026-08-22 - How small a page is written is a choice, and quality 45 is the default
+
+TASKS.md 37 to 41, one session. `save_page` now rebuilds each page's Huffman tables from its
+own symbol counts (new private `core_engine/src/rehuff.rs`, called through `unwrap_or`): the
+same pixels, **5 to 9% fewer bytes on a text page** - the "20 to 30%" in commit 966a52f's own
+message was the best case quoted as the rule, and is corrected everywhere now. Then `save_page`
+took a `PageQuality` and the two writing C functions took a `FreepdfPageQuality *` beside it,
+NULL and `PageQuality::UNCHANGED` still writing the page this engine always wrote byte for
+byte; the runner grew `--quality` and `--long-edge`. Still four C functions - a parameter, not
+a fifth. Then the app made quality 45 its default: one word in `quality.txt` per scan, in
+`sweep()`'s keep list, and one switch **Smaller pages** on the check after the first photo,
+whose preview runs at that same rung so what Julian judges is what gets written (his reversal
+of the picker half of `user-flows.md` DECISIONS 7). Measured on dense text: **about 40% off at
+quality 45 and about 71% with a 1700 px edge**, against the page the app writes today. The
+runner prints 48.6% and 74.0% for the same rungs, and both are right - its Original goes
+through `images_to_pdf`, which never sees the recode, so name the baseline whenever a
+percentage is quoted. That second rung stays out of the UI, because 150 dpi costs the OCR the
+project wants later.
+
+A review of the iOS work then found three real bugs, fixed in `0548c05`: the switch could jump
+while the picture above it was still the other rung's page (it says "Making this page again…"
+and goes dead while the run is out), a fast flip started one engine run per tap instead of
+waiting out the 300 ms settle the Adjust preview already waits, and `setQuality` discarded what
+`writeQuality` returned, so a failed write would have left pages at a rung the disk does not
+name. One thing is written down rather than fixed: a kill mid-rewrite leaves the word new and
+some pages old, invisibly, and flipping twice repairs it ([`../ios/AGENTS.md`](./ios/AGENTS.md)).
+
+`cargo test --workspace` is 65 green here and 68 on a Mac.
+
+Next person, four things. The Swift is **unbuilt**: no Xcode and no `swiftc` here, so every iOS
+line is right by inspection only, and a review already caught the app not compiling once when
+the header grew a parameter and `EngineCalls.swift` still passed four arguments - `freepdf.h`
+and that file are one unit. Nothing has been seen on a phone, and the switch's five lines of
+English and German still need Julian (README **Next steps** rows 12 and 13). Every byte figure
+came from synthetic photographs of synthetic glyphs, so the shares carry and the absolute
+numbers do not - `--quality` over his own scans is the one measurement that closes it. And two
+things were investigated and deliberately not built, so they are answers and not gaps:
+Tesseract in the bundle (TASKS.md 41) and the CCITT-G4 rung at 93.5% off (TASKS.md 40).
 ## 2026-08-18 - The ruler now loads the photo the way the app does, and the documents say what it measures
 
 TASKS.md 36, third round, and no engine code changed - `core_engine/examples/edge_error.rs` loads

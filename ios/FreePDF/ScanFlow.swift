@@ -27,6 +27,14 @@ struct ScanFlow: View {
     @State private var pages: [Int] = []
     /// What the photos cost, read with them rather than on every redraw.
     @State private var photoBytes = 0
+    /// What the finished PDF costs, read the same way, for the one line the done screen
+    /// prints. Zero until there is one.
+    @State private var pdfBytes = 0
+    /// How small the pages of this scan are written, as `quality.txt` says it. Part of the
+    /// same cache as `photos` and `pages` and refreshed with them, because a view body must
+    /// not read the files itself - and it starts on the default, which is what an absent
+    /// file means too.
+    @State private var quality = Engine.PageQuality.small
     /// Whether `scan.pdf` was there the last time the files were read. Part of the same
     /// cache and for the same reason: `scan.state` lists two directories, and a body that
     /// lists a directory the drain is writing into answers differently twice in a frame.
@@ -85,6 +93,13 @@ struct ScanFlow: View {
             } else if checkingFirst, let first = photos.first {
                 FirstPageCheck(photo: scan.photoURL(first),
                                number: first,
+                               quality: quality,
+                               // The one screen where the page size can be judged, so it
+                               // is where the switch sits. The screen hands the rung out
+                               // and this owns the file work, like every other move.
+                               onQuality: { wanted in
+                                   Task { await setQuality(to: wanted) }
+                               },
                                // The retake that already exists: it puts the camera back
                                // on that page number, and no second path is built here.
                                onRetake: {
@@ -116,6 +131,7 @@ struct ScanFlow: View {
                            page: scan.pageURL(adjusting),
                            position: (numbers.firstIndex(of: adjusting) ?? 0) + 1,
                            grey: grey,
+                           quality: quality,
                            stored: scan.readState(adjusting),
                            applying: applyingOne,
                            message: message,
@@ -128,6 +144,7 @@ struct ScanFlow: View {
                          storedName: name,
                          photos: photos.count,
                          photoBytes: photoBytes,
+                         pdfBytes: pdfBytes,
                          focusTaken: $focusTaken,
                          onName: {
                              // Every keystroke, because there is no Save button: the write
@@ -250,9 +267,14 @@ struct ScanFlow: View {
     private func drain() async {
         while !Task.isCancelled,
               let number = unscanned.first(where: { !failed.contains($0) }) {
+            // The scan's own rung, out of the cache with everything else: a page the
+            // drain writes has to be the size the switch promised, including every page
+            // shot after the switch was moved.
+            let rung = quality
             do {
                 try await Task.detached(priority: .utility) {
-                    try Engine.scanPage(scan.photoURL(number), into: scan.pageURL(number))
+                    try Engine.scanPage(scan.photoURL(number),
+                                        into: scan.pageURL(number), rung)
                 }.value
                 // The page the engine just built carries the engine's own recipe, so
                 // any older sidecar is about a photo that is gone - a retake. It goes
@@ -376,6 +398,81 @@ struct ScanFlow: View {
         }
     }
 
+    /// How small a page is written is one fact about the whole scan, exactly like Grey, so
+    /// moving the switch rewrites every page that exists: the same takeover, the same
+    /// words, and nothing about a page changes but its size on disk.
+    ///
+    /// The order, and what a kill costs at each point:
+    ///
+    /// 1. **The PDF.** Every action that touches a page deletes it first, and this is no
+    ///    different: a kill here costs the PDF only, which is derived from the pages and
+    ///    comes back in two seconds.
+    /// 2. **`quality.txt`.** One atomic rename, so it is there whole or not at all. A kill
+    ///    here leaves the setting new and the pages old, and nothing is lost: every page
+    ///    written from that moment on - the drain's included - is at the new rung, and the
+    ///    switch shows what the file says, so flipping it twice puts the old pages right.
+    ///    The other order would be worse: pages at the new rung under a file naming the old
+    ///    one would send the switch back and cost the whole run again, not one page.
+    /// 3. **The pages, one at a time.** Each is renamed into place by the engine, so a kill
+    ///    costs the one page in flight - and that page is whole and old or whole and new,
+    ///    never half. A scan left half at each rung reads perfectly and looks slightly
+    ///    uneven, which is what the takeover's "Keep the app open." already warns about
+    ///    (`../../user-flows.md` DECISIONS point 3); no page and no scan is ever lost.
+    private func setQuality(to wanted: Engine.PageQuality) async {
+        guard !applyingOne, applyingAll == nil, wanted != quality else { return }
+        message = nil
+        scan.deletePDF()
+        // The word first, and nothing after it if it did not land: a page written at a
+        // rung the disk does not name would send the switch back to the old position and
+        // cost the whole run again, which is worse than the one page a kill costs.
+        guard scan.writeQuality(wanted) else {
+            message = "The page size could not be saved, so nothing was changed."
+            return
+        }
+        quality = wanted
+        // The pages that exist, read once off the disk. A photo with no page yet belongs to
+        // the drain, which writes it at the new rung by itself - and on the first page check
+        // there is no page at all yet, where doing it here would be a second engine run
+        // beside the one this screen's own picture needs.
+        let written = Set(scan.pages)
+        await everyPage { one in
+            guard written.contains(one) else { return true }
+            return await rewrite(one, at: wanted)
+        }
+    }
+
+    /// One page written again at the given rung, and nothing else about it changed.
+    ///
+    /// Two ways back, and the disk says which: a page that still has its `state/NNNN.txt`
+    /// goes through `adjust_page` with exactly those values, so a crop, a turn or a nudged
+    /// level survives; a page with none goes through `scan_page`, which is the run that made
+    /// it in the first place. Nothing is written into `state/` either way, because what the
+    /// user asked for has not changed - only how small it is written.
+    ///
+    /// A page whose photo is gone cannot be made again at all, and the engine is what says
+    /// so: `No file found at …/photo/0007.jpg.` `everyPage` puts `Page 7: ` in front of it,
+    /// and more than one missing photo becomes the copy table's "Pages 4, 9 and 18 were not
+    /// changed, because their photos are missing." The page file that is there stays exactly
+    /// as it was, because a call that fails writes nothing.
+    private func rewrite(_ number: Int, at rung: Engine.PageQuality) async -> Bool {
+        let photo = scan.photoURL(number)
+        let page = scan.pageURL(number)
+        let stored = scan.readState(number)
+        do {
+            try await Task.detached(priority: .userInitiated) {
+                if let stored {
+                    try Engine.adjustPage(photo, into: page, stored, rung)
+                } else {
+                    try Engine.scanPage(photo, into: page, rung)
+                }
+            }.value
+            return true
+        } catch {
+            message = error.localizedDescription
+            return false
+        }
+    }
+
     /// What that page was last told, or what the engine would do to it by itself.
     private func asked(_ number: Int) async -> Engine.Adjustments? {
         if let stored = scan.readState(number) { return stored }
@@ -402,10 +499,14 @@ struct ScanFlow: View {
     /// was looking at: a photo with no sheet in it has no corners to pull flat, and one
     /// that runs off the frame would be bent. Both are left alone rather than refused,
     /// exactly as the automatic run leaves them ([`../../ffi/AGENTS.md`](../../ffi/AGENTS.md)).
+    /// The rung is the scan's own and travels with every write: it is one setting for the
+    /// whole scan, so an Apply that dropped it would quietly push one page back to full
+    /// quality behind a switch that says otherwise.
     private func write(_ number: Int, _ values: Engine.Adjustments, on own: Bool) async -> Bool {
         let photo = scan.photoURL(number)
         let page = scan.pageURL(number)
         let values = values.composed(onto: scan.readState(number))
+        let rung = quality
         do {
             let asked = try await Task.detached(priority: .userInitiated) { () -> Engine.Adjustments in
                 var mine = values
@@ -418,7 +519,7 @@ struct ScanFlow: View {
                         mine.corners = Array(repeating: 0, count: 8)
                     }
                 }
-                try Engine.adjustPage(photo, into: page, mine)
+                try Engine.adjustPage(photo, into: page, mine, rung)
                 return mine
             }.value
             // The page first, its sidecar second, and that order is the whole safety
@@ -450,10 +551,12 @@ struct ScanFlow: View {
                   making: making,
                   message: message,
                   grey: grey,
+                  quality: quality,
                   showing: $showing,
                   onRetake: retake,
                   onDelete: deletePage,
                   onGrey: { wanted in Task { await flipGrey(to: wanted) } },
+                  onQuality: { wanted in Task { await setQuality(to: wanted) } },
                   onAdjust: { number in
                       message = nil
                       adjusting = number
@@ -532,7 +635,9 @@ struct ScanFlow: View {
         photos = scan.photos
         pages = scan.pages
         photoBytes = scan.photoBytes
+        pdfBytes = scan.pdfBytes
         finished = scan.finished
+        quality = scan.quality
         name = scan.name ?? ""
         // The lowest-numbered page that has a state file answers for the scan.
         grey = Array(Set(photos + pages)).sorted().lazy.compactMap(scan.readState).first?.grey ?? false

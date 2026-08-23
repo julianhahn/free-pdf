@@ -33,12 +33,12 @@ extension AdjustView {
             // settled drag costs two engine passes at most, never one per frame.
             if previewValues != before { return }
         }
-        let asked = previewValues, source = photo
+        let asked = previewValues, source = photo, rung = quality
         let scratch = FileManager.default.temporaryDirectory
             .appendingPathComponent("adjust-preview-\(UUID().uuidString).jpg")
         do {
             try await Task.detached(priority: .userInitiated) {
-                try Engine.adjustPage(source, into: scratch, asked)
+                try Engine.adjustPage(source, into: scratch, asked, rung)
             }.value
             guard !Task.isCancelled else {
                 try? FileManager.default.removeItem(at: scratch)

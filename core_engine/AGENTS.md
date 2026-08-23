@@ -74,7 +74,27 @@ centre maths exists once.
 assert the size of what they write. `JPEG_QUALITY = 0.85` and the forced
 `ImageCompression::Jpeg` belong together: left alone, printpdf picks lossless LZW for grey,
 and a greyed scan grew from 107 KB to 347 KB. `PAGE_JPEG_QUALITY = 85` is the same quality in
-the scale the page encoder counts in, and the two have to keep agreeing.
+the scale the page encoder counts in, and the two agree **at that one setting only**:
+`save_page` now takes a `PageQuality`, and a client asking for a smaller page passes a lower
+number on purpose. So do not re-align the two, and do not read a lower page quality as a bug.
+
+`PageQuality { jpeg_quality, longest_edge }` is a struct and not a bare number, because a bare
+`45` at a call site cannot be found again; and not an enum of rung names, because the names the
+user reads and the numbers behind them are the client's decision. `PageQuality::UNCHANGED` is
+quality 85 with every pixel kept, and a page written with it is byte for byte the page this
+engine has always written - `the_default_quality_writes_the_very_same_page_as_before` pins that
+with a length and a fingerprint taken off commit 966a52f.
+
+`longest_edge` is **refused** unless it is zero, rather than ignored, because an ignored field is
+a lie about what the call did. The resampling belongs where the client's size cap already is,
+before sharpening: `sharpen` is the memory peak (234 MB at 3000 px against 116 MB at 1754 px),
+shrinking after sharpening throws the sharpening away, and a crop is fractions of the image
+*after* the cap, so moving the cap changes what every stored crop box means. `fit_within` is the
+tool, Lanczos3 and shrink only - the box filter a client reaches for instead measured moire 26.6
+against 5.5 at a 1240 px edge and 62% more ink damage for *more* bytes at 2000 px, and
+`FilterType` cannot even be named outside this crate. One thing not to promise: 80% off a
+photographed page and "not even visible" are not both reachable - 80% needs a 1200 to 1400 px
+edge, which three probes called plainly blurred.
 
 Why the page path exists at all, so nobody simplifies it away later:
 
@@ -90,6 +110,40 @@ Why the page path exists at all, so nobody simplifies it away later:
   silently re-encoded page still opens and still looks right, so no other assertion can see
   it - and it only works because the page it checks is noise
   ([tests/AGENTS.md](./tests/AGENTS.md)).
+
+## rehuff.rs: the same pixels in fewer bytes
+
+`image`'s JPEG encoder writes the fixed example Huffman tables out of the standard's Annex K,
+which are nobody's page. `rehuff` rebuilds them from the page's own symbol counts and carries
+every quantised coefficient over untouched, so the file decodes to the very same pixels and
+simply weighs less. It is private, has no dependency, no `unsafe` and no panic path, and
+`save_page` calls it through `unwrap_or`: a JPEG it refuses keeps its original bytes, so a scan
+can never be left unfinishable by it. It is not a setting and there is nothing to switch,
+because it costs the user nothing.
+
+**What it is worth, and do not quote the best case.** 8 to 13% on real photographed text
+pages - thirteen of them, median 10% - 15 to 16% on grainy and photographic ones, 2.5 to 5% on
+grey text. A document scanner's typical page is text, so 8 to 13% is the number to plan with.
+The earlier "5 to 9%" was four probes on synthetic glyphs and read a little low; the thirteen
+that replaced it on 2026-08-23 are photographs of real paper. The first write-up said 20 to 30%, which was
+one 40-page synthetic run quoted as the rule. The "up to 28% over a mixed scan" that
+`rehuff.rs`, `pdf.rs` and `tests/engine.rs` still carry is that same run, and it is kept beside
+the per-page spread on purpose: it is what a whole synthetic scan of mixed page kinds came to,
+not what any one real page will do. Quote the page kind, never the scan.
+
+**Four other compression levers were measured and are dead ends.** They are written down here
+so nobody spends the day again: chroma subsampling is impossible with `image` 0.25 at all - it
+hardcodes h:1, v:1 - and would need a different encoder. `to_grayscale` as a compression lever
+is 7.1%, which is not worth spending the colour on. 4-bit grey measured **larger** than grey at
+quality 65. Flate over the PDF's non-image streams saves 0 bytes, because the pages are already
+the whole file, and PDF-1.5 object streams save 0.07%. The one lever that is not a dead end is
+bilevel CCITT-G4 at 93.5% off, and it is parked rather than built because the threshold it
+needs deletes faint pencil silently ([`../TASKS.md`](../TASKS.md) 40).
+
+**Every one of those numbers came from synthetic photographs of synthetic glyphs.**
+`test_images/` is gitignored and reading it from code is forbidden
+([`../AGENTS.md`](../AGENTS.md)), so the shares are sound - the same pipeline against itself -
+but the absolute bytes are unproven on real paper.
 
 ## Limits, not bugs
 

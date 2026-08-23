@@ -2,8 +2,24 @@
 #include <stdint.h>
 #include <stddef.h>
 
+/* How small a written page should be: the JPEG quality, and the longest edge the
+   page may keep. One rung of the client's page size setting, and the client owns
+   the names the user reads for it - this is only the numbers behind them.
+   Pass NULL for Original: that is the page every call wrote before this struct
+   existed, down to the byte.
+   Neither number is bent to fit. A quality outside 1 to 100, a negative longest
+   edge, one below what a page can still be read at, or one above the memory cap,
+   comes back as a sentence and writes nothing. */
+typedef struct {
+    int32_t jpeg_quality;  /* 1 to 100. Higher is a bigger, better looking page. */
+    /* The longest edge the page may keep, in pixels, or 0 to keep every pixel.
+       Shrinking happens before sharpening, where the size cap already is. */
+    int32_t longest_edge;
+} FreepdfPageQuality;
+
 /* 0 = ok. Anything else = failed, and `error` holds a sentence (may be NULL). */
 int32_t freepdf_scan_page(const char *photo_path, const char *out_page_path,
+                          const FreepdfPageQuality *quality,
                           char *error, size_t error_size);
 
 /* Every value the Adjust screen can move, in the order the recipe uses them.
@@ -17,8 +33,8 @@ typedef struct {
     int32_t adjust_the_tones;
     float sharpen_radius;      /* 0 sharpens nothing */
     /* The cut, as fractions 0…1 of the image the engine holds right before cropping -
-       the one this recipe made, after the corners, the straightening, the 3000 px cap
-       and the turn. A width or height of 0, or one too thin to reach one pixel, cuts
+       the one this recipe made, after the corners, the straightening, the page size
+       step and the turn. A width or height of 0, or one too thin to reach one pixel, cuts
        nothing. */
     float crop_x, crop_y, crop_width, crop_height;
     uint32_t quarter_turns;    /* turns clockwise, 0 to 3 */
@@ -54,6 +70,7 @@ int32_t freepdf_suggest_adjustments(const char *photo_path,
    freepdf_scan_page once the user has changed something. */
 int32_t freepdf_adjust_page(const char *photo_path, const char *out_page_path,
                             const FreepdfAdjustments *values,
+                            const FreepdfPageQuality *quality,
                             char *error, size_t error_size);
 int32_t freepdf_pages_to_pdf(const char *const *page_paths, size_t page_count,
                              const char *out_pdf_path,

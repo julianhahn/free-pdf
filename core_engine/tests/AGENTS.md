@@ -7,9 +7,10 @@ root:
 cargo test --workspace
 ```
 
-43 tests are in this file. Five more are in `backend-core-runner/src/main.rs`, three of them
-only on macOS, and four in `ffi/src/lib.rs`, so the workspace shows 52 green on a Mac and 49
-elsewhere. A different number means something else was touched. [`../../README.md`](../../README.md) prints both counts
+53 tests are in this file. Eight more are in `backend-core-runner/src/main.rs`, three of them
+only on macOS, and eight in `ffi/src/lib.rs`, so the workspace shows 69 green on a Mac and 66
+elsewhere. Counted by running it on 2026-08-23. A different number means something else was
+touched. [`../../README.md`](../../README.md) prints both counts
 under "Start here" - move them with the count, in the same commit.
 
 ## Tests build their own images
@@ -30,7 +31,9 @@ either; of `crooked_page` 40 of 22,541, and its last 64 bytes still match. So an
 the form "the page went into the PDF unchanged" passes on a page that was decoded and
 re-encoded, unless the page is noise, where 3,018,895 of 3,034,201 bytes change. Do not swap
 `noise_page` for a friendlier picture in
-`page_files_go_into_the_pdf_without_being_decoded`; the test then proves nothing at all.
+`page_files_go_into_the_pdf_without_being_decoded`, nor in
+`a_page_written_small_still_goes_into_the_pdf_untouched`, which asks the same question of a page
+written at a lower quality; either test then proves nothing at all.
 
 Never read a file the test did not just write itself, `test_images/` included. Build the input
 in code, the way `a_sideways_photo_is_turned_upright_when_loaded` splices the hand-written
@@ -40,7 +43,7 @@ in code, the way `a_sideways_photo_is_turned_upright_when_loaded` splices the ha
 
 Write only through `temp_path("<name>")`, and pick a name no other test uses. Nothing cleans
 up and the names are fixed, so a reused name means two tests overwrite each other in parallel
-and the failure looks random. Twelve names are taken today, one of them a directory
+and the failure looks random. Twenty-one names are taken today, one of them a directory
 (`temp_path("pages")`). A test that asserts a file is absent
 deletes it first, as `refuses_to_write_a_pdf_without_pages` does. No `tempfile` crate: there
 is no `[dev-dependencies]` section and none is needed.
@@ -68,6 +71,12 @@ Keep the guards that prove a fixture is still hard, and keep them before the rea
 `before < 0.5` in `straightening_puts_the_lines_of_writing_back_in_their_rows`,
 `warmth_before > 15` in `levels_remove_the_colour_cast_from_the_paper`. Without them the real
 assertion passes on a page that was never crooked and paper that was never warm.
+
+`the_default_quality_writes_the_very_same_page_as_before` is the strictest of them: it holds the
+length and a fingerprint of the page commit 966a52f wrote, so the default page quality can never
+drift. If it fails, the default changed - fix the default, do not touch the two numbers. They
+were read off that commit, which is also why the test writes its own page and compares numbers
+instead of reading a file it did not write.
 
 Counting bytes (`embedded_scans_are_compressed`, `grayscale_does_not_grow_the_pdf`) belongs
 here because a fat PDF is invisible to everything else: it still parses, still opens, still

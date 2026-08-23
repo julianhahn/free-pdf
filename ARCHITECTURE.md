@@ -12,15 +12,18 @@ them. Read the AGENTS.md beside a file before you touch it.
       photo/0001.jpg 0002.jpg 0004.jpg     gaps stay, numbers are never reused
       page/ 0001.jpg 0002.jpg              a photo with no page = the resume point
       state/0001.txt                       what the user last asked for on that page
+      name.txt                             the name he typed. The title.
+      quality.txt                          one word: how small the pages are written
       scan.pdf                             exists => finished. Arrives only by rename.
                               ▲
                               │  every read is a fresh directory listing. No cache
                               │  of the truth, no manifest, nothing to disagree.
-   ios/  SwiftUI, 13 files    │
+   ios/  SwiftUI, 15 files    │
       FreePDFApp ── sweep() at launch, the only repair pass
          └─ ScanList ──tap──▶ ScanFlow ───── Scan.swift  (the disk. Foundation only)
                                  │
-                                 │  refresh(): photos, pages, bytes, finished, grey
+                                 │  refresh(): photos, pages, photo bytes, pdf bytes,
+                                 │             finished, quality, name, grey
                                  │  the switch turns that into exactly one screen
                                  ├─ CameraView      shooting
                                  ├─ takeover        applying to every page
@@ -29,7 +32,8 @@ them. Read the AGENTS.md beside a file before you touch it.
                                  ├─ PagesView       nothing left to drain
                                  └─ scanning        the drain
                                  │
-                                 └─ the write policy: apply / flipGrey / write / makePDF
+                                 └─ the write policy: apply / flipGrey / setQuality /
+                                                      write / makePDF
                                                      (no SwiftUI in any of it)
                                  │  paths and plain numbers in
                                  ▼
@@ -38,16 +42,21 @@ them. Read the AGENTS.md beside a file before you touch it.
    ios/FreePDF/EngineCalls.swift  ──▶  ffi/include/freepdf.h
                                  │     0 = it worked. Anything else = one sentence,
                                  │     copied into the caller's buffer, shown unchanged.
-   ffi/  Rust, ~620 lines, four C functions
+   ffi/  Rust, ~1,040 lines (`wc -l`, 708 of them not tests), four C functions
       scan_page   suggest_adjustments   adjust_page   pages_to_pdf
+      the two that write a page also take a FreepdfPageQuality * - NULL means Original
       ★ THE ORDER OF THE TOOLS LIVES HERE, not in the engine:
-        deskew → straighten → levels → 3000 px cap → sharpen → [turn → crop → grey] → write
+        deskew → straighten → levels → 3000 px cap + the page size rung → sharpen
+                → [turn → crop → grey] → write
                                  │
                                  ▼
-   core_engine/  Rust, ~1500 lines. No order, no state, opens no file but load_image + pdf.rs
+   core_engine/  Rust, ~3,250 lines (`wc -l`). No order, no state, opens no file but
+                 load_image + pdf.rs
       paper.rs  find_paper ──corners──▶ deskew.rs  deskew / straighten
-      tools.rs  levels, sharpen, rotate, crop, grey
-      pdf.rs    save_page ──paths──▶ pages_to_pdf        Result<_, String> everywhere
+      tools.rs  levels, sharpen, rotate, crop, grey, fit_within
+      pdf.rs    save_page(img, path, PageQuality) ──paths──▶ pages_to_pdf
+      rehuff.rs the page's own Huffman tables, same pixels, fewer bytes. Private.
+                                                       Result<_, String> everywhere
       every tool is a pair:  measure (cannot fail)  /  act (refuses, never clamps)
 
    design/system/  tokens/*.css ──build-tokens.mjs──▶ ios/FreePDF/Tokens.swift
@@ -60,8 +69,9 @@ knows no order and holds no state, which is what lets a client rerun one step
 ([`core_engine/AGENTS.md`](./core_engine/AGENTS.md)).
 
 **ffi** is the smallest client there is, and the only one that speaks C. Four functions,
-paths and plain numbers in, an `int32` out. It owns the order of the tools
-([`ffi/AGENTS.md`](./ffi/AGENTS.md)).
+paths and plain numbers in - three structs of plain numbers among them, `FreepdfAdjustments`
+and `FreepdfPageQuality` in and `FreepdfSuggestion` out - and an `int32` out. It owns the
+order of the tools ([`ffi/AGENTS.md`](./ffi/AGENTS.md)).
 
 **ios** is a router with screens hanging off it. `Scan.swift` is the disk and owns every
 delete, `scan.pdf` included; `ScanFlow` reads it into a cache, decides from that cache which
@@ -102,7 +112,8 @@ and nothing else.
 ## 3. The ranked list
 
 Ranked by how much a reader's head is unburdened per line of risk. Every item removes
-something. Checks: `cargo test --workspace`; `bash ffi/bridge_check.sh` (~1 s);
+something. Checks: `cargo test --workspace`; `bash ffi/bridge_check.sh` (~1 s, and it
+needs a Mac - its Swift half compiles nowhere else, so on Linux it stops there);
 `bash ios/check/run.sh` (~2 s, no Xcode); `bash ios/check/scan_check.sh` (~3 min cold,
 simulator - warm it is seconds, so do not skip it);
 `cd storybook && npx storybook build`; `node design/system/tokens/build-tokens.mjs --check`.
@@ -405,11 +416,19 @@ every table in that guide against those files. Only this document still names th
 ### 18. [ ] `README.md`'s Next steps row 3 says what is being built, and it is out of date
 
 The README's own line above it promises "it is the one place that says what is being built right
-now, and every session leaves it correct". Row 3 then says tasks "14 to 18 are built. Next is 19,
+now, and every session leaves it correct". Row 3 then said tasks "14 to 18 are built. Next is 19,
 the done screen", that a crop and a turn "die at the next Apply", and that "Grey still greys the
-screen only". Tasks 19 to 23 landed (e526f60, d488852) and 24 to 27 are being worked through
+screen only". Tasks 19 to 23 landed (e526f60, d488852) and 24 to 27 were being worked through
 (6a63de5). This was left out of item 7 on purpose: every other line there was a fact readable off
 one file, and this one needs someone who knows which tasks are actually finished on a phone.
+
+**Where it stands on 2026-08-22.** None of the quoted words is in the row any more - it has been
+rewritten since and now names tasks 14 to 28; rows 4 to 7 carry 29 to 38, rows 8 and 9 are
+what is still open, and 39 is under **Parked**. So this
+item is no longer one stale paragraph to strike; what is left of it is the standing job the
+README states about itself, which is that a session checks that section against the task list
+before it calls the work finished. Close it or reword it, but do not go looking for the sentences
+above.
 
 - **Removes:** the last doc line in the repo that describes an older app, and the reason a reader
   cannot trust the one paragraph the README tells him to trust.
@@ -492,8 +511,9 @@ Do not re-propose these. Each was checked and each adds without removing.
 
 - **A view model or `ObservableObject` for `ScanFlow`.** It would become the second truth the
   whole storage model exists to avoid.
-- **A `Snapshot` struct for the six cache properties.** Collapses six lines, adds a type,
-  removes no decision.
+- **A `Snapshot` struct for the eight cache properties.** Collapses eight lines, adds a type,
+  removes no decision. It was six before the page size setting added `pdfBytes` and `quality`
+  on 2026-08-22, and the answer did not change with them.
 - **A protocol over `Engine`, or a `ScanStore` repository over `Scan`.** One implementation, one
   caller, and the store would put a second truth between the screens and the disk.
 - **One shared progress view for the drain and the takeover.** They look alike and promise the
@@ -520,7 +540,10 @@ Do not re-propose these. Each was checked and each adds without removing.
 - **`thiserror`, an error enum, or error codes.** The String is the contract; a typed error
   needs a renderer and the sentence would then live in two places.
 - **A fifth C function** for `sizeof`, a version, or `freepdf_last_error`. Four functions is the
-  design, and the existing preconditions already catch a shifted field.
+  design, and the existing preconditions already catch a shifted field. The page size rung is
+  what that design looks like when it holds: it arrived on 2026-08-22 as one more parameter on
+  the two functions that write a page, with NULL meaning Original, so no caller that did not
+  ask for it changed at all.
 - **A `Corners` value type for the 8-float array.** Every constructor is in this repo and
   produces 8; the type costs more reading than the risk it removes.
 - **Making `Adjustments` `Codable`** to delete `writeState`/`readState`. It would delete ~50

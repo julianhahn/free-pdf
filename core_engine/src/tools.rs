@@ -5,6 +5,7 @@
 //! which is the whole point of the manual workflow.
 
 use crate::paper::{find_paper, Paper};
+use image::imageops::FilterType;
 use image::DynamicImage;
 
 /// Turns the image clockwise.
@@ -28,6 +29,58 @@ pub fn rotate(img: &DynamicImage, degrees: u32) -> Result<DynamicImage, String> 
             "Rotation must be 0, 90, 180 or 270 degrees, but was {degrees}."
         )),
     }
+}
+
+/// The smallest longest edge worth resampling to, in pixels.
+///
+/// 600 px is about 51 dpi on A4: at that size a 10 pt letter is under three
+/// pixels tall and the page has stopped being a document. Below this the caller
+/// has mistaken pixels for something else - percent, points, millimetres - so it
+/// is refused rather than carried out. The client's own smallest step is 1700 px
+/// (about 145 dpi on A4), well clear of this floor.
+const SMALLEST_PAGE_EDGE: u32 = 600;
+
+/// Shrinks the image until neither edge is longer than `longest_edge`, keeping
+/// the shape of the page.
+///
+/// Shrink only: an image already inside the bound comes back as it is. Making a
+/// page bigger adds no detail, it only adds bytes, and a client asking for a
+/// smaller page would get a larger one.
+///
+/// Lanczos3, measured against the alternatives on real pages. The box filter -
+/// `DynamicImage::thumbnail`, which is what a client reaching for the cheapest
+/// call gets - is the worst of them below the size cap: it scores moire 26.6
+/// against Lanczos3's 5.5 at a 1240 px edge, and at 2000 px it damages 62% more
+/// ink for *more* bytes, because the aliasing it leaves behind is detail the
+/// encoder then has to pay for. Lanczos3 costs f32 scratch planes, which is why
+/// it is worth naming rather than leaving to whoever calls it.
+///
+/// This lives in the engine because a resample is image in, image out, which is
+/// the shape this crate is for - and because `FilterType` cannot even be named
+/// outside it: the C wrapper deliberately has no `image` dependency, so that the
+/// two can never link different versions of it.
+///
+/// - Parameters:
+///   img: The image to shrink.
+///   longest_edge: The longest edge the result may have, in pixels.
+/// - Returns:
+///   The shrunk image, the same image when it already fits, or a message when
+///   the bound is smaller than a page can usefully be.
+pub fn fit_within(img: &DynamicImage, longest_edge: u32) -> Result<DynamicImage, String> {
+    if longest_edge < SMALLEST_PAGE_EDGE {
+        return Err(format!(
+            "A page has to keep a longest edge of at least {SMALLEST_PAGE_EDGE} pixels, \
+             but {longest_edge} was asked for."
+        ));
+    }
+
+    if img.width().max(img.height()) <= longest_edge {
+        return Ok(img.clone());
+    }
+
+    // `resize` fits the image inside the box and keeps the aspect ratio itself,
+    // so the same bound is passed for both edges whichever way up the page is.
+    Ok(img.resize(longest_edge, longest_edge, FilterType::Lanczos3))
 }
 
 /// Drops the colour, keeping the brightness of every pixel.
