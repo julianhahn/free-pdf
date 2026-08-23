@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The check that needs no Xcode: seventeen sections, each built as real files and read
+# The check that needs no Xcode: eighteen sections, each built as real files and read
 # back through the model the app itself uses. Twelve are moments - ten where the process
 # is killed, two the user reaches on his own - and the rest are the sentences the list
 # rows say and the values a page keeps.

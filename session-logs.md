@@ -41,6 +41,17 @@ in Preview the fine print of a quality 45 page - long digit strings included - i
 distinguishable from Original. The 1700 px rung is visibly softer, which is why it stays out
 of the UI.
 
+With the Mac there anyway, two things the repository had written down as gaps got closed.
+`ios/check/run.sh` grew **section 18**: the three `quality.txt` rules it named but never
+watched - an absent file reads as `small`, a write/read round trip comes back both ways, the
+sweep keeps the file and takes a half-written `quality.part` - plus empty, blank and an
+unknown word. Three mutations of `Scan.swift` earned it and all three aborted with a sentence:
+the file off the keep list, an absent file reading as `original`, and a `writeQuality` that
+returns true and writes nothing. And the **marker file for a kill mid-rewrite stays unbuilt**,
+now for a measured reason rather than a guess: the rule was "build it the day a rung changes
+something a person can see", and quality 45 is not distinguishable from Original at 1:1, so a
+scan holding both sizes reads right on every page. TASKS 39's bilevel rung would be that day.
+
 Next person, three things. The five lines of English and German still wait for Julian (README
 **Next steps** row 8). Two questions still need a phone in a hand, not a simulator: whether the
 stacked switches read as clutter, and how the re-run feels (row 9). And `test_images/` may

@@ -104,7 +104,12 @@ there was anything to choose. `Scan.quality` reads it, `Scan.writeQuality` write
   size the file promises. Flipping the switch twice repairs it. That is accepted rather than
   fixed, because the honest fix is a marker file the sweep also has to know about and a
   resume that finishes the run at the next launch - worth building the day a rung changes
-  something a person can see.
+  something a person can see. **Measured on 2026-08-23 and still not worth it:** at 1:1 on
+  real paper a quality 45 page is not distinguishable from Original, fine print and long
+  digit strings included ([`../README.md`](../README.md) **Next steps** row 10), so a scan
+  holding both sizes reads right on every page - the only wrong thing is a number the user
+  never sees. Build the marker the day a visible rung is added; the parked CCITT-G4 rung
+  ([`../TASKS.md`](../TASKS.md) 39) would be exactly that day.
 - **Absent, empty, unreadable, or a word this version does not know reads as `small`.** No
   sentence, exactly like `name`. That is not a shrug: `small` is what the app promises a
   scan will cost, so a scan whose one small file was lost still comes out the size it
@@ -707,19 +712,21 @@ what a new Xcode project defaults to.
 - **`precondition`, never `assert`**, and no `-O`, for the same two reasons as
   [`../ffi/AGENTS.md`](../ffi/AGENTS.md): `assert` is compiled out under `-O`, and
   `precondition` prints its sentence only unoptimised.
-- **Every rule the model states has a mutation that breaks it.** Seventeen were run against
-  this check and all seventeen aborted with a readable sentence. Add an assertion, then
+- **Every rule the model states has a mutation that breaks it.** Twenty were run against
+  this check and all twenty aborted with a readable sentence. Add an assertion, then
   break it on purpose once and watch it fail - the plan's own milestone-1 test passed
   against a deliberately wrong implementation, which is how that habit was earned
   ([`../session-logs.md`](../session-logs.md)). Four of the seventeen were written after
   the mutation showed the rule was not watched at all: a sweep that eats `scan.pdf`, and
   each of the three guards in `pageNumber`, which the debris list had only ever tested
   together.
-- **The three `quality.txt` rules are not watched yet.** `Scan.quality`, `writeQuality` and
-  the sweep's keep list are all in the half of the app `run.sh` compiles, so the assertions
-  belong here and are missing: an absent `quality.txt` reads as `small`, the sweep keeps it,
-  and one write/read round trip comes back. Written down in
-  [`../README.md`](../README.md) under **Next steps** so it is not forgotten (2026-08-22).
+- **The three `quality.txt` rules are watched, since 2026-08-23.** Section 18: an absent
+  file reads as `small`, one write/read round trip comes back both ways, empty and blank and
+  a word this version does not know all read as `small`, the sweep keeps `quality.txt` and
+  takes a half-written `quality.part`, and the rung is counted as neither a page nor a step.
+  Three mutations earned it - `quality.txt` off the keep list, an absent file reading as
+  `original`, and a `writeQuality` that returns true and writes nothing - and all three
+  aborted with a sentence naming what the check saw.
 - **One rule cannot be watched here: the Gregorian calendar.** A machine whose own calendar
   is Gregorian cannot tell `Calendar(identifier: .gregorian)` from `Calendar.current`. The
   check compares the name against a POSIX formatter, which is Gregorian by definition, so

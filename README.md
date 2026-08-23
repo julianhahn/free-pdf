@@ -186,13 +186,13 @@ Things noticed but not scheduled.
   drifted and are corrected everywhere; the recode read a little low. The measurement is
   reproducible but not repeatable in CI - `test_images/` may never be committed or read
   from code ([`AGENTS.md`](./AGENTS.md)), so a future agent has to redo it by hand.
-- **Two small inconsistencies the page size work found and left alone.** `ios/check/run.sh`
-  has no assertion for the three `quality.txt` rules (an absent file reads as `small`, the
-  sweep keeps it, one write/read round trip) - the rule is written in
-  [`ios/AGENTS.md`](./ios/AGENTS.md) and the assertion is not. And on the pages screen the
-  Grey switch stays live once the photos are deleted while the new size switch is frozen;
-  neither can rewrite a page without its photo, so one of the two is wrong and it is
-  probably Grey.
+- **~~`ios/check/run.sh` does not watch the `quality.txt` rules.~~ Closed on 2026-08-23** -
+  section 18, and three mutations of `Scan.swift` prove it aborts
+  ([`ios/AGENTS.md`](./ios/AGENTS.md)).
+- **The Grey switch stays live once the photos are deleted, the size switch is frozen.**
+  Neither can rewrite a page without its photo, so one of the two is wrong and it is
+  probably Grey. Left alone on purpose: which switch a user may still touch is a product
+  answer, not a bug fix - it is one line either way once Julian says which.
 - **Forty pages on a real phone is still unweighed.** Twelve were measured on the simulator
   and the whole run peaked at 334 MB, which is comfortable
   ([plan section 9](./iphone-client-plan.md#9-memory)) - but that number is the Mac
