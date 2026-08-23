@@ -8,6 +8,45 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-23 - A Mac ran the three checks, and real paper corrected two numbers
+
+The whole page size branch was built in a Linux container, so everything needing Apple's
+toolchain was unverified. It all passes, and nothing had to be fixed: `cargo test --workspace`
+68 green, `bash ffi/bridge_check.sh` -> "bridge ok" with all eight assertions - the five the
+rung added had never executed once - `bash ios/check/run.sh` -> "resume ok", and
+`bash ios/check/scan_check.sh` -> "scan ok" in the "iPhone 17 Pro" simulator. **The eight Swift
+files compile**, so the `freepdf.h` / `EngineCalls.swift` worry the last entry left is closed.
+
+Then the measurement only this machine can make. Every byte figure in the repository came from
+synthetic photographs of synthetic glyphs; `backend-core-runner` was run by hand over the
+thirteen real photographed sheets in the gitignored `test_images/phone/` at Original, quality
+45, and quality 45 with a 1700 px edge, and the pages were opened in Preview. Against **the
+page the app writes** (`save_page` at 85, recode included): quality 45 is **about 45% off**
+(40 to 68%), the 1700 px edge **about 81%** (76 to 92%). Against **the runner's Original**
+(`images_to_pdf`, no recode): **about 51%** and **about 82%**. The Huffman recode alone, same
+pixels, is **8 to 13%** on a photographed text page (thirteen probes, median 9.9%).
+
+So two of the old figures had drifted and one held. "About 71% with a 1700 px edge" was really
+81%, and the recode's "5 to 9%" was really 8 to 13% - both were synthetic. Quality 45's "about
+40%" was close and is now 45%. Corrected with the baseline named in README, TASKS 36/37/38,
+`core_engine/AGENTS.md`, `pdf.rs`, `rehuff.rs`, `tests/engine.rs` and `Engine.swift`. The two
+entries below this one keep their old numbers on purpose: this file is the past.
+
+`LEAST_PAGE_SAVING` (0.15) did not move and its test still points at the synthetic gradient.
+All thirteen real pages measure **under** that bound, which is the reason the pin exists there
+and not on a text fixture - the comment now says so with the real numbers.
+
+**And the copy is honest.** "About half the file size" promises what 45% delivers, and at 1:1
+in Preview the fine print of a quality 45 page - long digit strings included - is not
+distinguishable from Original. The 1700 px rung is visibly softer, which is why it stays out
+of the UI.
+
+Next person, three things. The five lines of English and German still wait for Julian (README
+**Next steps** row 8). Two questions still need a phone in a hand, not a simulator: whether the
+stacked switches read as clutter, and how the re-run feels (row 9). And `test_images/` may
+never be committed or read from code, so this measurement is reproducible by hand and not in
+CI - redo it the same way if the encoder ever changes.
+
 ## 2026-08-22 - How small a page is written is a choice, and quality 45 is the default
 
 TASKS.md 36 to 40, one session. `save_page` now rebuilds each page's Huffman tables from its

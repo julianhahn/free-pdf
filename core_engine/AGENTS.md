@@ -121,9 +121,11 @@ simply weighs less. It is private, has no dependency, no `unsafe` and no panic p
 can never be left unfinishable by it. It is not a setting and there is nothing to switch,
 because it costs the user nothing.
 
-**What it is worth, and do not quote the best case.** 5 to 9% on realistic text pages, 15 to
-16% on grainy and photographic ones, 2.5 to 5% on grey text. A document scanner's typical page
-is text, so 5 to 9% is the number to plan with. The first write-up said 20 to 30%, which was
+**What it is worth, and do not quote the best case.** 8 to 13% on real photographed text
+pages - thirteen of them, median 10% - 15 to 16% on grainy and photographic ones, 2.5 to 5% on
+grey text. A document scanner's typical page is text, so 8 to 13% is the number to plan with.
+The earlier "5 to 9%" was four probes on synthetic glyphs and read a little low; the thirteen
+that replaced it on 2026-08-23 are photographs of real paper. The first write-up said 20 to 30%, which was
 one 40-page synthetic run quoted as the rule. The "up to 28% over a mixed scan" that
 `rehuff.rs`, `pdf.rs` and `tests/engine.rs` still carry is that same run, and it is kept beside
 the per-page spread on purpose: it is what a whole synthetic scan of mixed page kinds came to,

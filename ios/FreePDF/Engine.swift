@@ -25,11 +25,13 @@ enum Engine {
     /// names live here and not in C, because how many rungs there are and what they
     /// promise is the app's decision ([`../../ffi/AGENTS.md`](../../ffi/AGENTS.md)).
     ///
-    /// Measured end to end on a dense text page: 777,981 bytes at `.original`, 400,105 at
-    /// `.small` - 48.6% off, and invisible at 100% zoom. The engine has a third rung, a
-    /// 1700 px longest edge, which takes 74.0% off and is visibly softer. It is
-    /// deliberately not offered: 1700 px across A4 is about 150 dpi, and reading the text
-    /// back out of the page later wants about 300.
+    /// Measured on 2026-08-23 over thirteen real photographed sheets: `.small` takes
+    /// **about 45% off** what `.original` writes - 40 to 68% across the thirteen - and is
+    /// invisible at 100% zoom, fine print and long digit strings included. One page's
+    /// bytes, near the middle: 996,409 at `.original`, 526,077 at `.small`. The engine has
+    /// a third rung, a 1700 px longest edge, which takes about 81% off and is visibly
+    /// softer. It is deliberately not offered: 1700 px across A4 is about 150 dpi, and
+    /// reading the text back out of the page later wants about 300.
     ///
     /// `Equatable` so a screen can key its preview on the rung itself - a flip is a new
     /// run - and `Sendable` because that run is a detached task.

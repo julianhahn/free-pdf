@@ -63,17 +63,18 @@ cargo run -p backend-core-runner -- <your-photo>.jpg -o out.pdf --scan
 straighten, levels, sharpen at radius 0.6. Every tool can also be asked for on its own.
 
 `--quality <1..100>` and `--long-edge <px>` say how small the pages should be, and are the two
-numbers a client's page size setting is built out of. Measured on one photographed page of
-dense text: the PDF is 1,327,815 bytes with no flag at all, 730,453 at `--quality 45`
-(45% off) and 368,148 at `--quality 45 --long-edge 1700` (72% off).
+numbers a client's page size setting is built out of. Measured on 2026-08-23 over the thirteen
+real photographed sheets in `test_images/`: with no flag the PDF is 1,078,248 bytes for a
+typical one, 526,077 at `--quality 45` and 180,962 at `--quality 45 --long-edge 1700`. Across
+all thirteen that is **about 51% off** at quality 45 and **about 82%** with the 1700 px edge.
 
-Read those two shares for what they are. With no flag the runner builds the PDF through
-`images_to_pdf`, which is a different encoder and gets no Huffman recode, so 45% is the whole
-road change and not the quality drop on its own. Quality alone, page against page on the road
-the phone takes, is **48.6% off**: 777,981 bytes at Original against 400,105 at quality 45,
-invisible at 100% zoom. The 1700 px edge takes the same page to 201,951, which is 74.0% off
-and visibly softer. Every number here comes from a synthetic photograph of synthetic glyphs -
-see **Parked**.
+**Name the baseline whenever you quote a share.** With no flag the runner builds the PDF
+through `images_to_pdf`, which gets no Huffman recode, so its Original is 8 to 13% fatter than
+the page the app writes and its shares read that much kinder. Against the app's own Original -
+`save_page` at quality 85, recode included - the same two rungs are **about 45% off** at
+quality 45 (40 to 68% across the thirteen) and **about 81%** at 1700 px (76 to 92%). Quality 45
+is invisible at 100% zoom on real paper, fine print and long digit strings included; the 1700
+px edge is visibly softer.
 
 ## Next steps
 
@@ -109,10 +110,11 @@ camera; [`TASKS.md`](./TASKS.md) 34 is done too - after the first photo of a sca
 shows the page that photo becomes, once, with retake or "Photograph the rest". [`TASKS.md`](./TASKS.md) 35
 closes the camera work - the last photo taken sits small in a corner of the viewfinder, so he
 sees which sheet that was and not only a number. | client agent |
-| 7 | **done** on 2026-08-22 ([`TASKS.md`](./TASKS.md) 36 to 38; 39 and 40 are the two things the same session measured and refused, and they are answers rather than open work) - how small a page is written is a choice, and the app makes it. `save_page` rebuilds each page's Huffman tables from its own symbol counts, so the same pixels cost fewer bytes; then it took a `PageQuality` and `freepdf_scan_page` / `freepdf_adjust_page` took a `FreepdfPageQuality *` beside it, NULL still meaning Original; then the app made quality 45 its default in `quality.txt` and put one switch, **Smaller pages**, on the check after the first photo and on the pages screen. Two rungs reach the user and no more. The engine's 1700 px rung is deliberately not offered - about 150 dpi on A4, and reading the text back out later wants about 300 - which is the one of the sixteen capabilities, resolution, that stays without a control on purpose. **Two things are open**: the five new lines of text wait for Julian's approval, and none of it has been seen on a phone. | engine + ffi + client |
+| 7 | **done** on 2026-08-22 ([`TASKS.md`](./TASKS.md) 36 to 38; 39 and 40 are the two things the same session measured and refused, and they are answers rather than open work) - how small a page is written is a choice, and the app makes it. `save_page` rebuilds each page's Huffman tables from its own symbol counts, so the same pixels cost fewer bytes; then it took a `PageQuality` and `freepdf_scan_page` / `freepdf_adjust_page` took a `FreepdfPageQuality *` beside it, NULL still meaning Original; then the app made quality 45 its default in `quality.txt` and put one switch, **Smaller pages**, on the check after the first photo and on the pages screen. Two rungs reach the user and no more. The engine's 1700 px rung is deliberately not offered - about 150 dpi on A4, and reading the text back out later wants about 300 - which is the one of the sixteen capabilities, resolution, that stays without a control on purpose. All of it was built on Linux and checked on a Mac on 2026-08-23: `cargo test --workspace`, `bridge_check.sh`, `run.sh` and `scan_check.sh` all pass, so **the Swift compiles and the app runs**, and the byte figures were remeasured on real paper (row 10). **One thing is open**: the five new lines of text wait for Julian's approval. | engine + ffi + client |
 | 5 | **done** on 2026-08-18 ([`TASKS.md`](./TASKS.md) 31) - the automatic run no longer refuses a sheet that leaves the frame. It cuts on the points where the paper crosses the edge, exactly as Adjust already did, and the pages screen puts a calm note under such a page saying it is not the whole sheet, with the retake that already exists. Checked against the twelve real photos: eleven byte for byte as before, `runs_off_1.jpg` cut. | engine + client |
 | 8 | **open** - the five lines of text the page size setting adds are new words and none is approved: the switch **Smaller pages** / **Kleinere Seiten**, its line "About half the file size. Switch it off if this page looks too soft.", the two spoken hints, and the done screen's "This PDF is 1.3 MB." They are in the code so no screen is mute, written in the voice of the tables around them, and they are marked as waiting in [`user-flows.md`](./user-flows.md) sections 4c, 7 and 9. Nothing already approved was reworded, and nothing was added to the design system's own tables: a client agent may not invent copy ([`client-guide-design-system/AGENTS.md`](./client-guide-design-system/AGENTS.md)), so the words wait in the app's own copy tables until he says yes. | Julian, by reading |
-| 9 | **open** - none of the page size work has been seen on a phone. What only a phone answers: whether two switches stacked in the pages footer and one above the two buttons on the check screen read as one setting or as clutter; whether "About half the file size" is an honest promise on a photographed page that is not dense text; and how long the re-run feels when the switch is flipped on the check screen, where the old picture stays up until the new one lands. The Swift is unbuilt here as well - there is no Swift toolchain on this Linux box, so every Swift line is right by inspection only. | Julian, on a phone |
+| 9 | **open, smaller than it was** - the page size work now builds and runs: on 2026-08-23 `scan_check.sh` compiled the app and drove it in the "iPhone 17 Pro" simulator, so the Swift is no longer right by inspection only. Two questions are left and only a phone in a hand answers them: whether two switches stacked in the pages footer and one above the two buttons on the check screen read as one setting or as clutter, and how long the re-run feels when the switch is flipped on the check screen, where the old picture stays up until the new one lands. The third question this row used to ask - whether "About half the file size" is honest - is answered: **yes**, 45% off the page the app writes, median over thirteen real photographed sheets, and the fine print survives it. | Julian, on a phone |
+| 10 | **done** on 2026-08-23 - the measurement only a Mac can make. Every byte figure in the repository came from synthetic photographs of synthetic glyphs; the runner was run by hand over the thirteen real sheets in the gitignored `test_images/phone/` at all three rungs and the pages were looked at in Preview. Two figures had drifted: the 1700 px rung is **about 81%** off the app's page, not 71%, and the Huffman recode is **8 to 13%** on a text page, not 5 to 9%. Quality 45 held at **about 45%**. Corrected in README, TASKS 36 and 37, `core_engine/AGENTS.md`, `pdf.rs`, `rehuff.rs`, `tests/engine.rs` and `Engine.swift`, each with its baseline named. `LEAST_PAGE_SAVING` did not move - all thirteen real pages sit under it, which is the reason its test keeps the synthetic gradient fixture. | engine, on a Mac |
 
 ```sh
 cd storybook && npm install && npm run storybook    # step 1 happens here
@@ -130,7 +132,7 @@ own iCloud container is gone, and a `ShareLink` is the whole export
 | # | State | What gets built | Check |
 | --- | --- | --- | --- |
 | 1 | **done** | `save_page`, `pages_to_pdf`, `place(...)` in the engine. | `cargo test --workspace`, and `--scan` on any photo still produces a PDF |
-| 2 | **done** | `ffi/`: one `staticlib` the app links into itself, the hand-written `ffi/include/freepdf.h`, and four C functions: `freepdf_scan_page`, `freepdf_suggest_adjustments`, `freepdf_adjust_page` and `freepdf_pages_to_pdf` - the page size rung came as a parameter on the two that write a page, not as a fifth function. ([rules](./ffi/AGENTS.md)) | `bash ffi/bridge_check.sh` -> "bridge ok" (~1 s, host architecture, **needs a Mac**: the Swift half will not compile anywhere else, so the five assertions the page size rung added have never run) |
+| 2 | **done** | `ffi/`: one `staticlib` the app links into itself, the hand-written `ffi/include/freepdf.h`, and four C functions: `freepdf_scan_page`, `freepdf_suggest_adjustments`, `freepdf_adjust_page` and `freepdf_pages_to_pdf` - the page size rung came as a parameter on the two that write a page, not as a fifth function. ([rules](./ffi/AGENTS.md)) | `bash ffi/bridge_check.sh` -> "bridge ok" (~1 s, host architecture, **needs a Mac**: the Swift half will not compile anywhere else. Run on a Mac 2026-08-23, all eight assertions green, the page size rung's five among them) |
 | 3 | **done** | `ios/FreePDF/Scan.swift` plus `ios/check/`: the folder layout, the derived step, the sweep. Foundation only. ([rules](./ios/AGENTS.md)) | `bash ios/check/run.sh` -> "resume ok" (~2 s, no Xcode) |
 | 4 | **done** | The Xcode project and the app: list, flow, the scan loop, the FFI calls (two then, four now), and the camera stand-in with its `-autofake` launch argument. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` -> "scan ok" (~3 min, "iPhone 17 Pro" simulator) |
 | 5 | **done** | `ios/FreePDF/CameraView.swift`: the session, the preview, the shutter and `PageWriter`. The stand-in lost its button and kept its drawing. ([rules](./ios/AGENTS.md)) | `bash ios/check/scan_check.sh` still says "scan ok"; the camera itself is by hand: shoot 5 pages, force-quit while aiming at 6, relaunch - the row reads "5 pages - keep shooting" and the counter says "Page 6" |
@@ -177,12 +179,13 @@ Things noticed but not scheduled.
   non-image streams saves 0 bytes, because the pages are already the whole file, and
   PDF-1.5 object streams save 0.07%. None of these is worth trying again; that is why they
   are written down.
-- **Every compression number in this repository comes from synthetic photographs of
-  synthetic glyphs.** `test_images/` is gitignored and reading it from code is forbidden
-  ([`AGENTS.md`](./AGENTS.md)), so the shares are sound - they are ratios of the same
-  pipeline against itself - but the absolute bytes are unproven on real paper. Only Julian
-  can close that, by running `cargo run -p backend-core-runner -- <his photo> -o out.pdf
-  --scan --quality 45` over his own scans and looking at the pages.
+- **~~Every compression number comes from synthetic glyphs.~~ Closed on 2026-08-23** by
+  hand, on Julian's Mac, over the thirteen real photographed sheets in the gitignored
+  `test_images/phone/`: `--scan`, then `--scan --quality 45`, then the same with
+  `--long-edge 1700`, and the pages looked at in Preview. Two of the three shares had
+  drifted and are corrected everywhere; the recode read a little low. The measurement is
+  reproducible but not repeatable in CI - `test_images/` may never be committed or read
+  from code ([`AGENTS.md`](./AGENTS.md)), so a future agent has to redo it by hand.
 - **Two small inconsistencies the page size work found and left alone.** `ios/check/run.sh`
   has no assertion for the three `quality.txt` rules (an absent file reads as `small`, the
   sweep keeps it, one write/read round trip) - the rule is written in

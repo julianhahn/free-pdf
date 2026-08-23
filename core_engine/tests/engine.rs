@@ -206,14 +206,15 @@ fn page_files_go_into_the_pdf_without_being_decoded() {
 /// `test_image(1200, 1600)`: 174,229 bytes become 136,069, so 21.90% goes.
 ///
 /// That 21.90% is this fixture's number and no other page's. A real photographed
-/// page of text saves about 6% (four probes: 5.1%, 7.7 to 8.9%, 8.1%, 8.9%), grey
-/// text 2.5 to 5.0%, grainy paper or a page with a photograph on it about 16%, and
-/// a mixed 40 page scan 28% over the whole scan. So the bound belongs to the
-/// gradient, and the gradient stays: this test is the first rung's byte pin - what
-/// it watches is that the rebuild still happens at all, and pointing it at a text
-/// fixture would put the bound under the noise of the encoder. The bound sits
-/// below the 21.90% rather than on it, because the exact figure moves with the
-/// `image` crate's encoder; under this, the rebuild has stopped happening.
+/// page of text saves 8 to 13% - thirteen of them measured on 2026-08-23, median
+/// 9.9% and none above 13.5% - grey text 2.5 to 5.0%, grainy paper or a page with
+/// a photograph on it about 16%, and a mixed 40 page scan 28% over the whole scan.
+/// All thirteen sit under this bound, which is exactly why the bound belongs to
+/// the gradient, and the gradient stays: this test is the first rung's byte pin -
+/// what it watches is that the rebuild still happens at all, and pointing it at a
+/// text fixture would put the bound under the noise of the encoder. The bound
+/// sits below the 21.90% rather than on it, because the exact figure moves with
+/// the `image` crate's encoder; under this, the rebuild has stopped happening.
 const LEAST_PAGE_SAVING: f64 = 0.15;
 
 #[test]

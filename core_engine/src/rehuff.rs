@@ -743,11 +743,12 @@ fn write_tables(frame: &Frame, tables: &[Option<Table>; TABLE_SLOTS], out: &mut 
 /// the fixed Annex K tables `image`'s encoder writes.
 ///
 /// How much shorter is the page's business, not this module's, and the spread is
-/// wide: measured 5 to 9% on a photographed page of small text, 2.5 to 5.0% on
-/// grey text, about 16% on grainy paper or a page carrying a photograph, and up
-/// to 28% over a mixed 40 page scan - more the noisier the page and the lower the
-/// quality (42 to 44% at quality 30). A scanner's usual page is text, so the
-/// small end is the one to expect. [`crate::save_page`] carries the numbers.
+/// wide: measured 8 to 13% on a photographed page of text - thirteen real pages,
+/// median 10% - 2.5 to 5.0% on grey text, about 16% on grainy paper or a page
+/// carrying a photograph, and up to 28% over a mixed 40 page scan - more the
+/// noisier the page and the lower the quality (42 to 44% at quality 30). A
+/// scanner's usual page is text, so the small end is the one to expect.
+/// [`crate::save_page`] carries the numbers.
 ///
 /// The segments go out in libjpeg's own order - APPn, DQT, SOF0, DHT, SOS -
 /// because there is no reason to look unusual to a reader with expectations.

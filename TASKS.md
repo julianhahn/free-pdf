@@ -1295,9 +1295,11 @@ bytes and a scan can never be left unfinishable by it. `pages_to_pdf` still embe
 byte for byte, so the promise that no page is ever decoded stands.
 
 **What it is worth, corrected.** It was first written up as 20 to 30% and that was the best
-case quoted as the rule. Four measurements on realistic text pages put it at **5 to 9%**; it
-earns **15 to 16%** on grainy and photographic pages and **2.5 to 5%** on grey text. A
-document scanner's typical page is text, so 5 to 9% is the honest number to plan with.
+case quoted as the rule. Thirteen real photographed pages put it at **8 to 13%** (median 10%,
+measured 2026-08-23); it earns **15 to 16%** on grainy and photographic pages and **2.5 to 5%**
+on grey text. A document scanner's typical page is text, so 8 to 13% is the honest number to
+plan with. The **5 to 9%** this section carried until then was four probes on synthetic glyphs
+and read a little low.
 
 **Check.** `cargo test --workspace`. Two tests: a written page decodes to the same pixels the
 encoder alone writes and is at least 15% smaller, and a greyed page still reaches the PDF as
@@ -1326,10 +1328,15 @@ is ever clamped - out of range comes back as a sentence and writes nothing.
 - **`backend-core-runner` grew `--quality` and `--long-edge`**, which is what makes the ladder
   measurable from a command line at all.
 
-**Measured** end to end on a dense text page: Original 777,981 B; quality 45 400,105 B (48.6%
-off, invisible at 100% zoom); quality 45 with a 1700 px edge 201,951 B (74.0% off, and visibly
-softer). 80% off and "not even visible" are not both reachable on a photographed page, and the
-docs say so now instead of promising it.
+**Measured** on 2026-08-23 over the thirteen real photographed sheets in `test_images/`,
+against the page the app writes (`save_page` at quality 85, recode included): quality 45 takes
+**about 45% off** (40 to 68% across the thirteen) and is invisible at 100% zoom, fine print and
+long digit strings included; the 1700 px edge takes **about 81%** (76 to 92%) and is visibly
+softer. One page's bytes, near the middle of that spread: 996,409 B at Original, 526,077 at
+quality 45, 180,962 at 1700 px. Against the runner's Original, which goes through
+`images_to_pdf` and gets no recode, the same two rungs read **about 51%** and **about 82%** -
+name the baseline whenever you quote a share. The earlier 48.6% and 74.0% came from a synthetic
+photograph of synthetic glyphs; the shares carried, the second one badly.
 
 **Check.** `cargo test --workspace` and `bash ffi/bridge_check.sh` -> "bridge ok".
 
@@ -1367,18 +1374,19 @@ PDF's real size.
   `adjust_page` with exactly those stored values, one without through `scan_page`. Nothing new
   is written into `state/` - what the user asked for did not change.
 
-**Still open, and both are Julian's.** The five lines of text are new words and none is
-approved (`user-flows.md` sections 4c, 7 and 9 mark them as waiting), and none of this has been
-seen on a phone. The Swift is also unbuilt: there is no Swift toolchain on the Linux box it was
-written on, so `ios/check/run.sh` stops at `swiftc: command not found` and
-`ios/check/scan_check.sh` stops at `ffi/build-ios.sh`, which needs Apple's clang and the iOS
-SDK. `cargo test --workspace` is green.
+**Still open, and it is Julian's.** The five lines of text are new words and none is approved
+(`user-flows.md` sections 4c, 7 and 9 mark them as waiting), and none of this has been seen on
+a phone.
 
-**Check, once there is a Mac.** `bash ios/check/run.sh` -> "resume ok",
-`bash ios/check/scan_check.sh` -> "scan ok", `bash ffi/bridge_check.sh` -> "bridge ok"; then by
-hand on a phone: shoot one page and read the check screen, flip the switch off and watch a new
-picture arrive, photograph the rest and see the done screen's size line, then flip the switch
-on the pages screen and see every page rewritten.
+**Checked on a Mac, 2026-08-23.** The Swift was written on a Linux box with no toolchain and
+was right by inspection only; it compiles. `cargo test --workspace` 68 green,
+`bash ffi/bridge_check.sh` -> "bridge ok" (all eight assertions, the five this rung added
+among them), `bash ios/check/run.sh` -> "resume ok", `bash ios/check/scan_check.sh` -> "scan
+ok" in the "iPhone 17 Pro" simulator. Nothing had to be fixed.
+
+**What is left, and only a phone answers it.** Shoot one page and read the check screen, flip
+the switch off and watch a new picture arrive, photograph the rest and see the done screen's
+size line, then flip the switch on the pages screen and see every page rewritten.
 
 ## 39. A bilevel rung that refuses an unsafe page - PARKED, measured, not built
 
