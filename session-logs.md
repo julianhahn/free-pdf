@@ -15,7 +15,14 @@ The app was built for Julian's iPhone 15 Pro, signed and installed
 `devicectl`'s own identifier is NOT what xcodebuild takes, which cost a failed build). Then it
 was walked through in the simulator, which is where the dead switch above was found.
 
-**Julian's open question, answered with a picture.** The pages screen carries **Smaller pages**
+**Julian answered it the same evening: say it. The pages screen's switch now carries a line -
+"Every page you already have is written again." - and once the photos are deleted, where the
+promise cannot be kept, the same line says why instead: "The photos are gone, so the pages
+cannot be written again." The half-the-size sentence is deliberately not repeated; that one
+belongs to the screen where a page is on show to judge. Both are in `user-flows.md` section 7
+with their German.
+
+**The question, and what the screens showed.** The pages screen carries **Smaller pages**
 with nothing under it while the check screen explains it. It is deliberate in the copy tables -
 `user-flows.md` section 4c lists a "line under the switch" row and section 7 does not - but no
 reason is written anywhere. What the screens show: the missing half-the-size sentence is

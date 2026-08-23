@@ -429,6 +429,8 @@ Apply would write. Only Apply writes the page. (Julian, 2026-08-16, reversing th
 | Pages screen switch | Grey | Graustufen |
 | Pages screen switch | Smaller pages | Kleinere Seiten |
 | Pages screen switch, spoken hint | Rewrites every page of this scan at about half the file size. | Schreibt jede Seite dieses Scans neu, mit etwa halber Dateigröße. |
+| The line under the pages screen switch | Every page you already have is written again. | Jede Seite, die es schon gibt, wird neu geschrieben. |
+| …once the photos are deleted | The photos are gone, so the pages cannot be written again. | Die Fotos sind gelöscht, die Seiten können also nicht neu geschrieben werden. |
 | All-pages switch | Apply to all pages | Auf alle Seiten anwenden |
 | Running, one page | Applying… | Wird angewendet… |
 | Running, all pages | Applying to 40 pages… | Wird auf 40 Seiten angewendet… |
@@ -445,6 +447,15 @@ Apply would write. Only Apply writes the page. (Julian, 2026-08-16, reversing th
 
 The two **Smaller pages** rows are new words and **wait for Julian's approval**
 (2026-08-22); everything else in this table is approved and nothing in it was reworded.
+
+The two lines under that switch are newer still, and Julian asked for them on 2026-08-23
+after looking at the screen: it did not say that flipping the switch rewrites the pages that
+already exist, and the only place that fact lived was the spoken hint - so the person who
+could see the screen was told less than the person who could not. The second line is what the
+first turns into once the photos are deleted and the switch is frozen, because a control that
+goes quiet without a reason is what the check screen's own switch refuses to be. The half-the-
+size promise is deliberately **not** repeated here: it is the check screen's sentence, where a
+page is on screen to judge.
 
 ### 7a. Each tool, and how it is reached
 

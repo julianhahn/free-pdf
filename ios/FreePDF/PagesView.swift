@@ -307,11 +307,25 @@ struct PagesView: View {
             // The same switch as on the check after the first photo, the same value and the
             // same callback: one setting, two places to reach it. Dead rather than gone once
             // the photos are, the way Adjust page is for a page whose photo is missing.
-            Toggle("Smaller pages", isOn: Binding(get: { quality == .small },
-                                                  set: { onQuality($0 ? .small : .original) }))
-                .toggleStyle(SettingStyle(off: frozen))
-                .disabled(frozen)
-                .accessibilityHint("Rewrites every page of this scan at about half the file size.")
+            VStack(alignment: .leading, spacing: Token.Size.space1) {
+                Toggle("Smaller pages", isOn: Binding(get: { quality == .small },
+                                                      set: { onQuality($0 ? .small : .original) }))
+                    .toggleStyle(SettingStyle(off: frozen))
+                    .disabled(frozen)
+                    .accessibilityHint("Rewrites every page of this scan at about half the file size.")
+                // Not the check screen's sentence. There the switch decides how the FIRST page
+                // gets written and the promise worth making is how small it will be; here every
+                // page already exists, and the surprising half is that flipping it writes them
+                // all again. Until now that was said only in the spoken hint, so the person who
+                // could see the screen was told less than the person who could not.
+                //
+                // Frozen, the sentence would be a promise the screen cannot keep, so it says the
+                // reason instead - a control that goes quiet without one is the thing the check
+                // screen's own switch refuses to be.
+                MetaLine(sentence: frozen
+                         ? "The photos are gone, so the pages cannot be written again."
+                         : "Every page you already have is written again.")
+            }
 
             // Hidden until every photo has a page, so a scan cannot quietly lose a page
             // to a PDF the user thought was whole.
