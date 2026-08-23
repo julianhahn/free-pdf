@@ -93,10 +93,13 @@ Why the page path exists at all, so nobody simplifies it away later:
 
 ## Limits, not bugs
 
+The six steps that search for the sheet, the order they run in and which raster each of them
+counts its pixels in are [`src/paper/AGENTS.md`](./src/paper/AGENTS.md).
+
 Finding the sheet starts from brightness and then follows the edges of the paper, so a document
 on a white desk still breaks it: there is no step from paper to desk for a ray to stop on. That
-is recorded as a `ponytail:` note in `src/paper.rs` with the way up; do not paper over it with a
-threshold.
+is recorded as a `ponytail:` note on `find_paper` in `src/paper/mod.rs` with the way up; do not
+paper over it with a threshold.
 
 Every fitted side is then read again in the full sized photo and laid on the edge it finds there
 (`sides_read_again_in_the_photo`), on the INNERMOST of nine readings rather than the middle of
