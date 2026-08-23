@@ -265,3 +265,13 @@ The storage design gives up on power loss and kernel panic, and the PDF step is 
 resumable page by page. Every process-level kill is covered
 ([plan section 8](./iphone-client-plan.md#8-what-a-kill-costs-per-phase)). The floor: **no
 interruption at any moment costs more than one page, and none of them can cost the scan.**
+
+## License
+
+[PolyForm Noncommercial 1.0.0](./LICENSE.md). Read it, run it, change it, pass it on - all of
+that is yours for any noncommercial purpose. Selling it, or building a commercial product on
+it, is not covered and needs a separate word with Julian Hahn, who holds the copyright. That
+choice is deliberate: the point is people taking the thing apart and making it better, not
+somebody shipping it for money.
+
+A contribution comes in under these same terms.
