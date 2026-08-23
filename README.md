@@ -147,6 +147,7 @@ beside it - not this page.
 | [`ios/AGENTS.md`](./ios/AGENTS.md) | The phone side: one scan is one directory, the three rules that carry it, the step derived from the files, the screens and the drain, how the Rust library gets linked, and the two checks. |
 | [`backend-core-runner/AGENTS.md`](./backend-core-runner/AGENTS.md) | The tool order, which is a contract; flags, messages and exit codes; HEIC. |
 | [`iphone-client-plan.md`](./iphone-client-plan.md) | The authority on what is not built yet, in twelve numbered sections: the screens, the camera, the export, memory, and every line of UI text in English and German. A section moves out of it into an AGENTS.md when its code is written. |
+| [`docs/selectable-text-and-highlights.md`](./docs/selectable-text-and-highlights.md) | Background, not a rule: how a PDF carries text at all, how OCR lays an invisible text layer over a scan, and why a highlight looks the same in every viewer. |
 | [`session-logs.md`](./session-logs.md) | What each session actually did, newest first. |
 
 ## Limits worth knowing

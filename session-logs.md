@@ -8,6 +8,16 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-23 - Written down how PDF text, OCR and highlights work
+
+No code. New [`docs/selectable-text-and-highlights.md`](./docs/selectable-text-and-highlights.md),
+49 lines, listed in README under **Where to find what**: a PDF page is drawing instructions, so a
+viewer builds the selectable text layer itself from glyph positions; OCR adds nothing but the same
+words placed invisibly (`3 Tr`) over the picture, which is why `deskew` and `apply_levels` decide
+how well a scan selects; a highlight is an `/Annots` object with `/QuadPoints` and `/AP` and never
+names the text, so it would work on today's image-only pages. Nothing is scheduled from it - the
+plan still has OCR out of scope, and README's Next steps is unchanged.
+
 ## 2026-08-18 - The viewfinder shows the last page photographed
 
 TASKS.md 35. [`ios/FreePDF/CameraView.swift`](./ios/FreePDF/CameraView.swift) keeps one
