@@ -79,10 +79,7 @@ struct FirstPageCheck: View {
                 .font(Token.Face.body(Token.Size.textSub))
                 .lineSpacing(Token.Size.textSub * (Token.Number.leadingBody - 1))
                 .foregroundStyle(Token.Palette.text)
-            Text("Not right? More light or a plainer surface fixes most of it.")
-                .font(Token.Face.body(Token.Size.textMeta))
-                .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
-                .foregroundStyle(Token.Palette.textMuted)
+            MetaLine(sentence: "Not right? More light or a plainer surface fixes most of it.")
             // Only beside a page there is something to judge, exactly like the promise
             // above it: the switch asks "does this look good enough", and over a refusal
             // there is nothing to answer about. The pages screen carries the same switch
@@ -140,12 +137,9 @@ struct FirstPageCheck: View {
             // While the run is out, the picture above is still the page the other rung
             // made, and this line is the only thing that can say so. No spinner: this app
             // says things in sentences.
-            Text(making
-                 ? "Making this page again…"
-                 : "About half the file size. Switch it off if this page looks too soft.")
-                .font(Token.Face.body(Token.Size.textMeta))
-                .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
-                .foregroundStyle(Token.Palette.textMuted)
+            MetaLine(sentence: making
+                     ? "Making this page again…"
+                     : "About half the file size. Switch it off if this page looks too soft.")
         }
     }
 

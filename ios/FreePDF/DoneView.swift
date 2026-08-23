@@ -100,10 +100,7 @@ struct DoneView: View {
                 // could not be read at all, which is the photos block's rule about having
                 // nothing to say.
                 if pdfBytes > 0 {
-                    Text("This PDF is \(size(pdfBytes)).")
-                        .font(Token.Face.body(Token.Size.textMeta))
-                        .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
-                        .foregroundStyle(Token.Palette.textMuted)
+                    MetaLine(sentence: "This PDF is \(size(pdfBytes)).")
                 }
                 // Gone whole once the photos are, never greyed out: there is nothing left
                 // to press and nothing to announce.
@@ -174,10 +171,7 @@ struct DoneView: View {
             Button(photosLine) { confirmingPhotos = true }
                 .buttonStyle(OutlineStyle(ink: Token.Palette.destructive,
                                           edge: Token.Palette.destructive))
-            Text("The PDF stays. Deleted photos cannot be brought back.")
-                .font(Token.Face.body(Token.Size.textMeta))
-                .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
-                .foregroundStyle(Token.Palette.textMuted)
+            MetaLine(sentence: "The PDF stays. Deleted photos cannot be brought back.")
         }
         // Asked every time and never remembered: there is no settings screen, and doing
         // nothing is the other half of the choice, so no "keep the photos" button exists.

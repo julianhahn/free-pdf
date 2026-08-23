@@ -113,10 +113,7 @@ extension AdjustView {
 
     /// A line under the picture that is not a failure - the Edges note the engine feeds.
     func note(_ sentence: String) -> some View {
-        Text(sentence)
-            .font(Token.Face.body(Token.Size.textMeta))
-            .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
-            .foregroundStyle(Token.Palette.textMuted)
+        MetaLine(sentence: sentence)
     }
 
     /// The ghost reset. It is on every tool, and it puts this tool's controls back on the

@@ -8,6 +8,38 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-23 - Two switches looked at on a real screen, and the grey sentence exists once
+
+The app was built for Julian's iPhone 15 Pro, signed and installed
+(`xcodebuild -destination 'id=<hardware udid>'`, then `xcrun devicectl device install app` -
+`devicectl`'s own identifier is NOT what xcodebuild takes, which cost a failed build). Then it
+was walked through in the simulator, which is where the dead switch above was found.
+
+**Julian's open question, answered with a picture.** The pages screen carries **Smaller pages**
+with nothing under it while the check screen explains it. It is deliberate in the copy tables -
+`user-flows.md` section 4c lists a "line under the switch" row and section 7 does not - but no
+reason is written anywhere. What the screens show: the missing half-the-size sentence is
+defensible, it would stand twice nearly identically. What is a real gap is that only the
+**pages** screen's switch rewrites pages that already exist, and the one place that says so is
+its VoiceOver hint ("**Re**writes every page…"). A person who can see the screen is told less
+than a person who cannot. That is copy, so it waits for Julian with the other five lines.
+
+**`MetaLine`.** Six places wrote the same three lines - body face at meta size, body leading,
+muted ink - for the done screen's size line and photo warning, the check screen's "not right?"
+and its switch line, the drain's note, and the Edges note in Adjust. Now one view beside
+`ErrorLine`, which is where the app already keeps a sentence two screens share.
+
+Four other grey sentences were **left alone on purpose**, and this is a correction of a claim
+made earlier in the same session: they carry no `lineSpacing`, and that first looked like drift
+from copying. It is not. "Name for the shared copy", "Keep the app open.", a slider's end
+label and the number under a thumbnail cannot wrap, and leading between the lines of a single
+line is nothing. Changing them would have altered four screens for no reason. The camera's
+"no camera" sentence is on the dark viewfinder in `onDarkMuted` and is a different thing again.
+
+The refactor is proved by pixels, not by the compiler: the check screen was captured before and
+after, and **0 of 2502 rows below the status bar differ**. That is the check a style change
+deserves, and it is cheap - `xcrun simctl io <udid> screenshot`, then compare rows.
+
 ## 2026-08-23 - The page size branch is on main, and the app's switch exists once
 
 `claude/pdf-compression-ocr-bundle-6tj04c` is merged into `main` (`2505dc9`). One thing had to

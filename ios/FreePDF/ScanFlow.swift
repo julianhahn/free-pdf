@@ -200,10 +200,7 @@ struct ScanFlow: View {
                     .monospacedDigit()
                     .foregroundStyle(Token.Palette.text)
                 bar(atPhoto, of: photos.count)
-                Text(note)
-                    .font(Token.Face.body(Token.Size.textMeta))
-                    .lineSpacing(Token.Size.textMeta * (Token.Number.leadingBody - 1))
-                    .foregroundStyle(Token.Palette.textMuted)
+                MetaLine(sentence: note)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         }
