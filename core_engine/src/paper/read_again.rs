@@ -32,17 +32,31 @@ use image::{DynamicImage, GenericImageView};
 const INWARD_BIAS: f32 = 0.5;
 
 /// How many places along each side are measured again in the full sized photo, spread
-/// evenly between its two ends and none of them at an end. Nine, over the whole side: a
-/// photographed sheet is never flat, so its edge bows along its length and the places have
-/// to be spread over the whole of it for the innermost of them to be the innermost of the
-/// edge - see [`where_the_side_goes`]. How far a real edge bows is measured in the
-/// `ponytail:` note on [`sides_read_again_in_the_photo`]. The ends are left out because a
-/// corner is where two edges meet and neither is clean there.
+/// evenly between its two ends and none of them at an end: a photographed sheet is never
+/// flat, so its edge bows along its length and the places have to be spread over the whole of
+/// it for the innermost of them to be the innermost of the edge - see [`where_the_side_goes`].
+/// How far a real edge bows is measured in the `ponytail:` note on
+/// [`sides_read_again_in_the_photo`]. The ends are left out because a corner is where two
+/// edges meet and neither is clean there.
 ///
-/// These nine now fix two numbers, not one: where the side sits and how it leans
-/// ([`how_the_side_leans`]). A lean is therefore fitted between a tenth and nine tenths of a
-/// side and then carried out to the two corners, where nothing reads at all.
-pub(super) const PLACES_READ_AGAIN: usize = 9;
+/// These places fix two numbers, not one: where the side sits and how it leans
+/// ([`how_the_side_leans`]).
+///
+/// **Twenty-nine, and it is half of a pair - see [`MOST_INWARD`], which carries the sweep.**
+/// `part = place / (PLACES_READ_AGAIN + 1)`, so this number alone decides how close to a
+/// corner anything is read at all: nine reads a tenth to nine tenths of a side and leaves the
+/// outer tenths blind, which is exactly where a bow is worst and where Julian's page kept its
+/// desk (2026-08-24). Twenty-nine reads a thirtieth to twenty-nine thirtieths. Raising this
+/// while [`MOST_INWARD`] was still ten changed nothing at all - the readings found the corner
+/// and the cap refused to go there - which is why the two must be swept together and why a
+/// result from moving one of them alone means nothing.
+///
+/// It is not free and it is not a knob to keep turning: it multiplies the full sized reads,
+/// the most expensive part of the search, by more than three. At twenty-nine and sixty the
+/// twelve gain nothing further from more places (a hundred was measured and moved no corner).
+///
+/// [`MOST_INWARD`]: super::where_a_side_goes::MOST_INWARD
+pub(super) const PLACES_READ_AGAIN: usize = 29;
 
 /// How far either way the true edge is looked for, in pixels of the photograph. Sixty,
 /// because a real sheet is not flat: on `extra_4`, a letter with a fold in it, the left

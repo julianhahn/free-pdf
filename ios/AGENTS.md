@@ -640,8 +640,49 @@ xcodebuild -project ios/FreePDF.xcodeproj -scheme FreePDF \
   -destination 'id=<udid>' -allowProvisioningUpdates build
 xcrun devicectl device install app --device <udid> \
   ~/Library/Developer/Xcode/DerivedData/FreePDF-*/Build/Products/Debug-iphoneos/FreePDF.app
-xcrun devicectl device process launch --device <udid> com.julianhahn.freepdf
+xcrun devicectl device process launch --device <udid> --terminate-existing com.julianhahn.freepdf
 ```
+
+**`--terminate-existing` is not optional, and leaving it off is how an engine change gets
+reported as not working.** `install` replaces the files; a copy of the app already running
+keeps the OLD library until its process ends. Julian reopening it from the app switcher is
+therefore testing the build before yours, and what he reports back is about code you did not
+write. On 2026-08-24 that cost a round trip on a real fix - he had said the same thing about
+several earlier sessions ("this is like the 6th time"), and nothing in this file warned about
+it. So: after every install, launch with `--terminate-existing` and say that you did. If the
+phone is locked the launch is refused outright (`FBSOpenApplicationErrorDomain error 7`,
+"device was not, or could not be, unlocked") - ask for it to be unlocked rather than assuming
+the app restarted.
+
+**Prove the library is younger than your change before you claim anything.** One command,
+and it turns "I changed it" into a fact:
+
+```sh
+stat -f '%Sm %N' -t '%H:%M:%S' core_engine/src/paper/where_a_side_goes.rs \
+  target/aarch64-apple-ios/release/libfreepdf.a
+```
+
+The Xcode project runs cargo itself through a "Build the engine" phase, so a `.a` older than
+the source means the phase did not run and the app on the phone is the previous engine.
+
+**Reading a scan back off the phone**, which is how a report about one page becomes a
+measurement rather than a guess:
+
+```sh
+xcrun devicectl device info files --device <udid> --domain-type appDataContainer \
+  --domain-identifier com.julianhahn.freepdf --username mobile      # note: --username
+xcrun devicectl device copy from --device <udid> --domain-type appDataContainer \
+  --domain-identifier com.julianhahn.freepdf \
+  --source Documents/Scans/<scan>/photo/0001.jpg --destination "$HOME/photo.jpg"  # note: no --user
+```
+
+Three traps, all of which fail quietly. The listing subcommand takes `--username` and the
+copy takes `--user`, and passing `--user` to the copy makes it fail with `CoreDeviceError
+7000` for a path that plainly exists. The copy writes NOTHING - no error, no file - when its
+destination is inside a sandboxed working directory, so send it to `$HOME` and move it after.
+And a whole directory cannot be copied, only one file at a time. A scan with no `state/`
+directory is the automatic output; one with `state/NNNN.txt` is a page the user adjusted by
+hand, which is not what an engine change should be judged on.
 
 Two things stop that the first time, and neither is a bug. `DEVELOPMENT_TEAM` has to be in
 the project - only Xcode's Signing & Capabilities editor can put it there, because a free

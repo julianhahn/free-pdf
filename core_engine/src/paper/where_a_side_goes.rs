@@ -16,13 +16,38 @@ use super::sides::middle_of;
 /// the last decimal - every reading of such a side is the same, so its innermost is its
 /// middle.
 ///
-/// Ten, because a page may lose about a millimetre of its white margin and no more
-/// (Julian, 2026-08-18). A millimetre of these photos is 11.7 pixels: the twelve pages come
-/// out 2318 to 2590 pixels across, mean 2460, for the 210 mm of an A4 sheet. Ten plus
-/// [`INWARD_HAIR`] is 11.5 pixels, a hair under that millimetre, and measured with
-/// `examples/edge_error.rs` it is also the largest value at which no middle of any side of
-/// the twelve reads past +12 - two of the forty-eight read exactly +12, `extra_4`'s right
-/// side and `sheen_6`'s, so the ceiling is reached but not crowded.
+/// Sixty, because a page may lose four millimetres of its white margin rather than carry a
+/// strip of desk (Julian, 2026-08-24, on his own page on the phone - the same trade he made on
+/// 2026-08-18 at one millimetre, and again that morning at three, neither of which was enough
+/// for him to call the corner clean). A millimetre of these photos is 11.7 pixels: the twelve
+/// pages come out 2318 to 2590 pixels across, mean 2460, for the 210 mm of an A4 sheet.
+///
+/// **This cap and [`PLACES_READ_AGAIN`] gate each other, and neither one alone does anything.**
+/// This is where a side may be MOVED to; that is where a side is READ. A corner no reading
+/// found cannot be reached however far this is raised, and a corner a reading did find cannot
+/// be reached if this refuses to go there. Swept one at a time over the twelve, each looked
+/// useless - at ten, spreading the readings over nine, thirteen, nineteen and twenty-nine
+/// places left the run of places outside the paper on Julian's right side at twenty-one every
+/// time; at nine readings, raising this from thirty to forty moved his corner from -22 to -21
+/// and no further. Swept together they work:
+///
+/// | readings | this cap | his right side, nine places / corner / run |
+/// | ---      | ---      | ---                                        |
+/// | 9        | 10       | -18 / -42 / 21                             |
+/// | 9        | 30       |  +2 / -22 /  9                             |
+/// | 19       | 60       |  +9 / -11 /  4                             |
+/// | 29       | 60       | +18 /  -6 /  2                             |
+/// | 29       | 100      | +18 /  -6 /  2 - nothing left to buy       |
+///
+/// Over the twelve at twenty-nine and sixty: 43 of the 48 sides read within -3, against 37 at
+/// nine and ten, for a mean middle of 17.4 pixels against 7.2 and a worst of 50 against 12 -
+/// so a page pays about 1.5 mm of margin on average and 4.3 mm at worst. On the photograph
+/// Julian took after this shipped, three of the four sides read -1 to -3 with runs of one or
+/// two places, which is noise and not a strip, and he called the corner good.
+///
+/// **The +12 middle the earlier values were chosen to hold is deliberately given up**, and with
+/// it the reasoning that picked ten: no value holding that ceiling can also pull a corner out
+/// of the desk, because a straight side pays at its middle for whatever it buys at its end.
 ///
 /// It is also the only guard a misread place needs where the PLACING of a side is concerned. A
 /// misread also swings the lean, and there the guard is [`MOST_LEAN`] - see
@@ -31,16 +56,22 @@ use super::sides::middle_of;
 /// and one places across it reads +0 to +15 at ninety-eight of them and dives at three single
 /// places, -50, -55 and -43, whose neighbours read +11 to +14 - so those three are something
 /// on the desk touching the sheet and not the sheet. Laid on the plain innermost reading that
-/// page would be cut 55 pixels short; capped here it is cut the same 11.5 as every other
-/// bowed side.
+/// page would be cut 55 pixels short; capped here it is cut 61.5 rather than the 11.5 it was.
+/// **That is what this value costs, stated plainly**: a misread place may now cut more than
+/// five times as deep as before, and this cap has almost stopped being a guard at all. None
+/// of the thirteen photos shows a page cut into its text and the suite is green, which is
+/// evidence and not a proof. A page missing a line of its writing is what to look for, and
+/// the way back is a guard that knows a misread from a bow - not a lower number here, which
+/// only puts the desk back.
 ///
 /// [`INWARD_HAIR`]: super::read_again::INWARD_HAIR
-pub(super) const MOST_INWARD: f32 = 10.0;
+/// [`PLACES_READ_AGAIN`]: super::read_again::PLACES_READ_AGAIN
+pub(super) const MOST_INWARD: f32 = 60.0;
 
 /// How much further inward one end of a side may be moved than the other, in pixels of the
 /// photograph across the whole side ([`how_the_side_leans`]).
 ///
-/// Twelve, and NOT for the reason [`MOST_INWARD`] is ten. The +12 middle cannot bound a
+/// Twelve, and NOT for the reason [`MOST_INWARD`] has its value. The +12 middle cannot bound a
 /// lean at all: a side bowing further than [`MOST_INWARD`] has its middle pinned at
 /// [`MOST_INWARD`] plus [`INWARD_HAIR`] whatever it leans, and for any other side a wider
 /// search can only leave LESS bow, so a lower middle. What twelve rests on is the collapse

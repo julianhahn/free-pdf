@@ -8,6 +8,52 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-24 - The corner Julian saw, and the two caps that gate each other
+
+He reported a wedge of desk at the BOTTOM RIGHT CORNER, the class the third round parked.
+Settled against HIS page, pulled off the phone with `devicectl` rather than guessed at from the
+twelve.
+
+**The finding.** `PLACES_READ_AGAIN` decides where a side is READ and `MOST_INWARD` how far it
+may be MOVED, and either alone pins the result. Swept one at a time each looked useless - more
+readings found his corner and the cap of ten refused to reach it, so the run of places outside
+the paper sat at twenty-one whether the readings were spread over 9, 13, 19 or 29 places; and
+at nine readings the cap saturated, thirty to forty moving his corner -22 to -21. **That was
+first written up as "a straight side cannot be aimed better than it already is", which was
+wrong.** Swept together - 29 places, `MOST_INWARD = 60` - his corner goes -42 to -6 and its run
+21 places to 2. Over the twelve, 43 of 48 sides within -3 against 37, about 1.5 mm of margin off
+a page and 4.3 mm at worst. 69 green. He looked at a fresh photograph and called it good.
+
+**Two prices, written at the constants, not buried.** The +12 middle rows 8 and 9 of the README
+held is given up. And `MOST_INWARD` has nearly stopped being a guard - a misread place may cut
+61.5 pixels where it cut 11.5 - so a page missing a line of writing is the thing to watch for,
+and the way back is a guard that knows a misread from a bow, not a lower number.
+
+**Three process failures this session, all now written into an AGENTS.md, because Julian said
+this was the sixth time he had been told a crop change shipped when nothing changed for him.**
+
+- **`install` does not restart a running app.** It replaces the files; a copy already running
+  keeps the old library, so reopening from the app switcher tests the previous build. Launch
+  with `--terminate-existing` after every install and say so. In `ios/AGENTS.md` with the
+  locked-device error, and with the `stat` one-liner that proves the `.a` is younger than the
+  source before any claim is made.
+- **A sweep that rewrites a constant must verify the write.** A shell quirk wrote an empty
+  value, `= .0;` did not compile, five runs measured nothing - and the loop printed a tidy
+  table anyway off a stale binary. Rule in `core_engine/AGENTS.md`.
+- **`devicectl` traps**: the listing takes `--username` and the copy takes `--user`; the copy
+  writes nothing at all, silently, into a sandboxed working directory; a directory cannot be
+  copied. All in `ios/AGENTS.md`.
+
+**Damage to own up to.** The working tree already held uncommitted work from an earlier session
+on this same task - a modified `where_a_side_goes.rs` and an untracked
+`core_engine/examples/tmp_walk.rs`. A throwaway file of the same name was written over it and
+then deleted, and the sweep overwrote whatever `MOST_INWARD` that session had left. Neither is
+recoverable. Read `git status` before writing anything, and never name a scratch file something
+a previous session would have picked.
+
+Julian also reported that a first tap on the empty border of a button often does nothing and he
+has to tap again. Not touched, at his direction - it goes after the corners.
+
 ## 2026-08-23 - Two switches looked at on a real screen, and the grey sentence exists once
 
 The app was built for Julian's iPhone 15 Pro, signed and installed

@@ -145,6 +145,33 @@ needs deletes faint pencil silently ([`../TASKS.md`](../TASKS.md) 40).
 ([`../AGENTS.md`](../AGENTS.md)), so the shares are sound - the same pipeline against itself -
 but the absolute bytes are unproven on real paper.
 
+## Sweeping a constant to find its value
+
+Two of these caps - `MOST_INWARD` and `PLACES_READ_AGAIN` in `paper/` - are found by sweeping
+them over the photos in `test_images/phone/` rather than reasoned out. Two rules, both learnt
+by getting them wrong on 2026-08-24.
+
+**Verify the write, or the sweep measures nothing.** A loop that rewrites a constant with
+`sed` and then builds must check the file afterwards:
+
+```sh
+sed -i '' "s/^pub(super) const MOST_INWARD: f32 = .*/pub(super) const MOST_INWARD: f32 = ${n}.0;/" $M
+grep -q "f32 = ${n}.0;" $M || { echo "SED FEHLGESCHLAGEN"; return; }
+```
+
+Without that line a shell quirk wrote an empty value, the file held `= .0;`, five runs in a
+row failed to compile - and the loop still printed a tidy table of numbers, because the
+measuring commands fell back on a stale binary and the summarising `awk` happily averaged
+nothing. Plausible output from code that never built is worse than an error.
+
+**Caps that gate each other must be swept TOGETHER.** `PLACES_READ_AGAIN` decides where a side
+is READ and `MOST_INWARD` how far it may be MOVED, and either one alone pins the result:
+more readings find a corner the old cap then refuses to reach, and a bigger cap cannot reach a
+corner no reading found. Swept one at a time, each looked useless and the second was written
+off as "a straight side cannot be aimed better than it already is". Swept together, 29 and 60
+took Julian's corner from -42 to -6. A one-at-a-time sweep over two caps proves nothing about
+either.
+
 ## Limits, not bugs
 
 The six steps that search for the sheet, the order they run in and which raster each of them

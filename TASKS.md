@@ -1284,6 +1284,10 @@ camera and can run beside 32 and 33.
 
 ## 36. The bottom edge still overshoots, and cropping in is allowed - Julian, 2026-08-18
 
+**Read the fourth round at the end of this section first if you are here about a CORNER.**
+The bottom this title names has been clean since the third round; what is left, and what
+Julian reported on 2026-08-24, is a left or right side at its very end.
+
 **Read this whole section before you touch anything.** Three attempts at this have already
 been made today, two of them wrong, and the wrong ones are written down here so you do not
 repeat them. The person who made them is the agent handing over; the numbers are all
@@ -1830,6 +1834,93 @@ is not a constant: a side that may bend, or a corner of its own for each end, bo
 `ponytail:` note on `sides_read_again_in_the_photo`.
 
 ---
+
+
+### Fourth round on 2026-08-24 - the corner Julian named, and the lane that failed before the one that worked
+
+**What he reported, on a build made that morning.** "Unten rechts die Ecke hat wieder ein paar
+pixel overshot" - one CORNER, not an edge, and the first report against this task that is not
+about a top or a bottom. It is the class the third round parked: a left or a right side, worst
+at its very end.
+
+**Measured on HIS photograph, not on the twelve.** The scan was pulled off the phone with
+`xcrun devicectl device copy from --device <udid> --domain-type appDataContainer
+--domain-identifier com.julianhahn.freepdf --source Documents/Scans/<scan>/photo/0001.jpg
+--destination <path>`. Two notes for the next person: `devicectl`'s own identifier column is not
+the udid `xcodebuild` and this command take, and the copy writes nothing at all if its
+destination is inside a sandboxed working directory - it reports success and produces no file.
+The scan carried no `state/` directory, so it was the automatic output and not something he had
+adjusted by hand.
+
+The ruler on that photo: left `+11/+1`, right `+12/-18`, top `+4/+1`, bottom `+7/+2`. Three
+sides clean, the right one 18 pixels into the desk at one of its nine places. Walked at 101
+places instead of nine, that side reads -18 inside the span the readings cover and **-42
+outside it**, in an unbroken run of 21 places - a RUN by this task's own rule, so real desk and
+not the ruler. On the finished page the strip is nothing for the first 80% of the edge and then
+grows to 39 pixels at the corner, which is 3.8 mm of an A4 width. That is what he saw.
+
+**The finding that matters: the two caps gate each other, and a sweep of one proves nothing.**
+`PLACES_READ_AGAIN` decides WHERE a side is read - `part = place / (PLACES + 1)`, so nine reads
+a tenth to nine tenths and leaves the outer tenths, where the bow is worst, blind.
+`MOST_INWARD` decides HOW FAR the side may then be moved. Either one alone pins the result, and
+this round wasted a lane by not seeing it:
+
+```
+| readings | MOST_INWARD | his right side: nine places / corner / run |
+| ---      | ---         | ---                                        |
+| 9        | 10          | -18 / -42 / 21   <- what he reported       |
+| 13       | 10          | -15 / -40 / 21                             |
+| 19       | 10          | -16 / -40 / 21                             |
+| 29       | 10          | -16 / -40 / 21   <- readings alone: nothing |
+| 9        | 30          |  +2 / -22 /  9   <- cap alone: halved       |
+| 9        | 40          |  +1 / -21 /  8      and then stuck         |
+| 19       | 30          |  +4 / -20 /  7                             |
+| 19       | 60          |  +9 / -11 /  4                             |
+| 29       | 60          | +18 /  -6 /  2   <- shipped                |
+| 29       | 100         | +18 /  -6 /  2      nothing left to buy    |
+```
+
+The first four rows were read as "a straight side cannot be aimed better than it already is"
+and the lane was written off. That was wrong: the readings DID find the corner, and the cap of
+ten refused to go there. The last rows are the same code with both moved. **Never conclude
+anything about one of these two from a sweep that held the other fixed.**
+
+**What shipped**: `PLACES_READ_AGAIN` 9 to 29, `MOST_INWARD` 10 to 60. Over the twelve, 43 of
+the 48 sides read within -3 against 37, mean middle 17.4 pixels against 7.2, worst 50 against
+12 - about 1.5 mm of margin off a page and 4.3 mm at worst. `cargo test --workspace` is 69
+green, the two synthetic corner fixtures among them. On the photograph Julian took after it
+was installed, left -3, right -2, top -1, each with a run of one or two places, and he called
+it good; the bottom reads two saturated places in a run of two, which is the spike signature
+and not a strip.
+
+**A second thing this round got wrong, and the rule that came out of it.** The sweep loop
+rewrote the constants with `sed` and did not check the file afterwards. A shell quirk wrote an
+empty value, `MOST_INWARD: f32 = .0;` did not compile, five runs in a row measured nothing -
+and the loop still printed a tidy table, because the measuring commands fell back on a stale
+binary. Every sweep now greps the file for the value it just wrote and aborts if it is not
+there. The rule is in [`core_engine/AGENTS.md`](./core_engine/AGENTS.md).
+
+**Three things this round decides, and one it does not.**
+
+1. **The +12 ceiling is deliberately given up.** Rows 8 and 9 of the README chose `MOST_INWARD`
+   as the largest value holding it. It is now six times that. No value can hold that ceiling AND pull a corner out of the
+   desk, because a straight side pays at its middle for whatever it buys at its end. Julian's
+   trade, twice now: white margin is invisible, desk is not.
+2. **The guard against a misread place has nearly stopped being one.** `extra_2`'s left side,
+   whose -50 reading the third round proved is something on the desk and not the sheet, is now
+   cut 61.5 pixels rather than 11.5 - the cap no longer bounds that misread at all, it just
+   about permits it. None of the thirteen photos shows a page cut into its text and the suite is
+   green; that is evidence, not proof. **A page missing a line of its writing is the thing to
+   look for**, and the way back is a guard that can tell a misread place from a bow - lowering
+   this number only puts the desk back.
+3. **His corner is -6, and he accepted it by eye.** The ceiling of a straight side on a bowed
+   edge has NOT moved - what moved is how much margin is spent buying room under it. Five of the
+   48 sides still read worse than -3. Taking those out wants a side that can BOW, a real change
+   to `Side` and the four-ray fit rather than a constant, and it is not scheduled.
+
+**Still not met**, and unchanged as a statement: the acceptance asks every side within -3 and
+43 of 48 are. What decides the rest is the same as always - Julian looking at a page.
+
 
 ## 37 to 40. How small a page is written - Julian, 2026-08-22
 
