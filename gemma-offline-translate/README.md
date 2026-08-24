@@ -1,17 +1,18 @@
-# gemma-offline-translate - translate a text file without a network
+# gemma-offline-translate - two people, one phone, no network
 
-A text file in, the same file in another language out. The model is a file on your disk, so
-nothing you translate leaves the machine: no account, no server, no API key.
+The phone lies flat on the table between two people. Each presses the button on their half,
+says a sentence, and the other half shows it in their language and reads it out loud. The
+models are files on the device, so nothing that is said leaves it: no account, no server, no
+API key.
 
-Two parts:
+The shape is one core and thin clients:
 
-- **`translate_engine`** (Rust) - all the work. One function per step: read the file, cut it
-  into passages, translate one passage, put the passages back.
-- **`translate-runner`** - the command line client. It decides the order of the steps and
-  prints what happened. A graphical client would replace this part and nothing else.
-
-The engine offers single tools, the client owns the order. So a person can look at one
-passage, redo it, or correct it by hand, instead of watching a whole file go past.
+- **`translate_engine`** (Rust) - the text work. One function per step.
+- **`translate-runner`** - the command line client. It is how the core runs without a phone.
+- **`speech_engine`, `conversation`, `ffi`** - sound in, the turn machine, and the C header a
+  phone app links. Planned, not built: [`app-plan.md`](./app-plan.md).
+- **clients** - the user interface, one per platform, each as thin as it can be. They own the
+  microphone, the loudspeaker, the voice and the drawing, and decide nothing else.
 
 ## Start here
 
@@ -19,16 +20,18 @@ passage, redo it, or correct it by hand, instead of watching a whole file go pas
 cargo test --workspace
 ```
 
-16 green, and they need neither a model file nor llama.cpp: the tests bring their own
-answers. Then read [Next steps](#next-steps).
+16 green, and they need neither a model file nor llama.cpp: the tests bring their own answers.
+Then read [`TASKS.md`](./TASKS.md) - it is the queue, and an agent that has read nothing else
+can take the top task. [`app-plan.md`](./app-plan.md) is the authority on everything not built
+yet: the screens, the turn machine, the C surface, the models.
 
-## What you need for a real translation
+## What runs today
 
-1. **llama.cpp**, built, so you have a `llama-cli` program. That is what runs the model.
-2. **A Gemma model file** in GGUF form, downloaded once. A 4-bit Gemma 3 4B file is about
-   3 GB and is enough for letters and documents.
+A text file, translated passage by passage on the command line. That is the text half of the
+voice app, already working, and it is what the voice turn will call.
 
-The engine never downloads either one. Where they are is your answer to give:
+You need llama.cpp built (`llama-cli`) and a Gemma `.gguf` file on the disk. The engine
+downloads neither; where they are is your answer to give:
 
 ```sh
 cargo run -p translate-runner -- letter.txt --from de --to en \
@@ -37,10 +40,8 @@ cargo run -p translate-runner -- letter.txt --from de --to en \
   -o letter.en.txt
 ```
 
-Or put the two paths in `LLAMA_CLI` and `GEMMA_MODEL` and leave the flags out.
-`--help` lists everything.
-
-## What the engine does today
+Or put the two paths in `LLAMA_CLI` and `GEMMA_MODEL` and leave the flags out. `--help` lists
+everything.
 
 | `translate_engine` function | What it does |
 | --- | --- |
@@ -50,26 +51,30 @@ Or put the two paths in `LLAMA_CLI` and `GEMMA_MODEL` and leave the flags out.
 | `rebuild_text(document, translations)` | Puts the translations back into the shape the file had. |
 | `save_text(text, path)` | Writes the finished file. |
 | `Language::from_code(code)` | Turns `de` into German, and refuses a code it does not know by name. |
-| `LlamaCli::new(program, model)` | Points the engine at your llama.cpp and your model file, and says which path is empty when one is. |
+| `LlamaCli::new(program, model)` | Points the core at your llama.cpp and your model file, and says which path is empty when one is. |
 
-A file is translated passage by passage because a whole file in one prompt runs past what the
-model can hold, and one bad answer would spoil the entire text.
+## Build order
 
-## Next steps
+Riskiest thing first, and the risk here is **seconds on a cheap phone**: this is built on an
+iPhone 15 Pro but it is for one shared Samsung A-series phone, where a model runs on the CPU
+and may not fit in memory at all ([`app-plan.md`](./app-plan.md) section 8). So the whole chain
+is measured - on a desk, then on that phone - before a single screen is drawn. Every step ends in something that runs, and every check is one command. The numbered
+tasks are in [`TASKS.md`](./TASKS.md).
 
-- [ ] **Try it against a real Gemma file and write down what came out.** Everything above the
-      model is covered by tests, and the CLI has been driven end to end with a stand-in
-      program. The `llama-cli` flags themselves have not been run against a real llama.cpp
-      build yet, and llama.cpp renames its flags now and then - `translate_engine/src/model.rs`
-      is the one file that would need the fix.
-- [ ] **Say what a passage cost.** A long file takes minutes, and right now the only sign of
-      life is `Passage 3 of 40`.
-- [ ] **Keep the words a person chose.** A name or a term that must not be translated should
-      be a list the client hands in, not something the prompt hopes for.
-- [ ] **More file kinds.** Today it is plain text. Markdown would need the marks left alone.
-- [ ] **Link the model in instead of running a program.** A crate such as `llama-cpp-2` would
-      drop the `llama-cli` dependency and make this usable from a phone app. It is a bigger
-      build, which is why it is not first.
+1. **Know the model.** Which Gemma is current, and does it take sound directly? If it does,
+   the speech crate never gets written. Task 1.
+2. **Link it in.** llama.cpp as a library, not as a program a phone may not start. Tasks 2, 3.
+3. **Hear a sentence.** `speech_engine`, then measure. After this the 3 second budget is
+   either standing or dead, and it is cheap to find out here. Tasks 4, 5.
+4. **The turn machine.** `conversation`: one side at a time, replay, every refusal a sentence.
+   Tasks 6, 7.
+5. **The C surface.** `ffi` plus a `bridge_check.sh` that calls every function from C. Task 8.
+   With it, **the gate**: one turn timed on the cheap Android phone this is actually for, and
+   model tiers if it needs them. Tasks 8b, 8c, 9.
+6. **The iPhone client.** Pick the languages, then one real turn end to end. Tasks 10, 11.
+7. **Make it usable.** Listening you can see, a replay button, a dead button that says why,
+   and a screen for every error the core can return. Tasks 12 to 14.
+8. **Measure it on the phone.** The real number, at the sizes steps 2 and 3 chose. Task 15.
 
 ## Licence
 
@@ -77,5 +82,5 @@ The code is under the [PolyForm Noncommercial License 1.0.0](./LICENSE.md): use 
 share it, for anything that is not commercial. It is a source-available licence, not an
 OSI open-source one - commercial use needs a word with me first.
 
-The **model** is not covered by that. Gemma has its own terms from Google, which you accept
+The **models** are not covered by that. Gemma has its own terms from Google, which you accept
 when you download the weights, and they apply whatever this repository says.
