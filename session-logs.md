@@ -8,6 +8,17 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-24 - gemma-offline-translate moved out, this repo is FreePDF only again
+
+The parked folder has its own home now: `github.com/julianhahn/gemma-offline-translate`,
+private, first commit `3b521ae`. The whole tree went over unchanged, `CLAUDE.md` symlink
+included, and `cargo test --workspace` (16 green), `clippy` and `fmt --check` all passed
+there before the push.
+
+`gemma-offline-translate/` is deleted here, so there is one copy of the truth. Nothing in
+**Next steps** changed - the folder never belonged to FreePDF. This branch has done its job
+and can be deleted once Julian says so.
+
 ## 2026-08-24 - A second project, parked in this repo because GitHub said no
 
 Julian asked for an own open repo, `gemma-offline-translate`: a text file in, the same file in
