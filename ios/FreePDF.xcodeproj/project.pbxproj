@@ -52,6 +52,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = ABCDEF0123456789ABCDEF0B /* Build configuration list for PBXNativeTarget "FreePDF" */;
 			buildPhases = (
+				ABCDEF0123456789ABCDEF10 /* Build the engine */,
 				ABCDEF0123456789ABCDEF07 /* Sources */,
 				ABCDEF0123456789ABCDEF08 /* Frameworks */,
 				ABCDEF0123456789ABCDEF09 /* Resources */,
@@ -111,6 +112,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		ABCDEF0123456789ABCDEF10 /* Build the engine */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Build the engine";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ -x \"$HOME/.cargo/bin/cargo\" ]; then export PATH=\"$HOME/.cargo/bin:$PATH\"; fi\ncase \"$PLATFORM_NAME\" in\n  iphonesimulator) rust_target=aarch64-apple-ios-sim ;;\n  *)               rust_target=aarch64-apple-ios ;;\nesac\nexport IPHONEOS_DEPLOYMENT_TARGET=18.0\ncd \"$SRCROOT/..\"\ncargo build -p core_engine_ffi --release --target \"$rust_target\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		ABCDEF0123456789ABCDEF07 /* Sources */ = {

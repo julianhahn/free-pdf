@@ -70,7 +70,8 @@ themselves are drawn by Storybook.
 | 33 | iOS: shooting another page does not stop after one — DONE | - | bash ios/check/scan_check.sh, by hand |
 | 34 | iOS: after the first page, the app shows what it is about to do — DONE | - | bash ios/check/run.sh, bash ios/check/scan_check.sh, by hand |
 | 35 | iOS: the viewfinder shows the last page photographed — DONE | 34 | bash ios/check/scan_check.sh, by hand |
-| 36 | The bottom edge still overshoots, and cropping in is allowed — the edge Julian named is clean, the row is NOT done: a page's top and bottom read no worse than -1, nine left or right sides still keep desk, and Julian looking at a page decides the rest | - | cargo run --example edge_error, cargo test --workspace, by eye on a phone |
+| 36 | The bottom edge still overshoots, and cropping in is allowed — the corner Julian named on 2026-08-24 is clean by eye and reads -2, the row is NOT done: five of the 48 sides still keep desk, and only a side that can BOW takes those out | - | cargo run --example edge_error, cargo test --workspace, by eye on a phone |
+| 42 | iOS: the first tap on a button's empty border does nothing — NEXT | - | bash ios/check/scan_check.sh, by hand on a phone |
 ```
 
 Task 13 stands alone: it is Rust and C, it touches no screen, and it can be done at any time.
@@ -2166,3 +2167,57 @@ does, `user-flows.md` wins.
 **byte-identical** to `/Users/julianhahn/free-pdf/design/system/` - tokens, `readme.md`,
 `styles.css` and the manifest all match. There is nothing to merge. Task 1 and task 2 change the
 repo's copy; the delivered copy can then be deleted.
+
+---
+
+## 42. iOS: the first tap on a button's empty border does nothing - Julian, 2026-08-24
+
+**What he sees.** "Ein erster Tap auf einfach den leeren Border-Teil des Buttons macht meistens
+erst beim zweiten oder wiederholten Mal was. Nicht beim ersten Tap. Ich muss oefter tappen,
+damit es funktioniert." So: a tap that lands inside the button's outline but NOT on its label
+is swallowed, and the same spot works on a second or third try. He reported it on a real phone
+on the build of 2026-08-24, and asked for it after the corner work.
+
+**Read before you touch anything.**
+
+- `/Users/julianhahn/free-pdf/ios/AGENTS.md` - the section on the buttons and on anything that
+  wraps them in a scroll view.
+- `/Users/julianhahn/free-pdf/design/system/components/core/` - the button's drawn shape, its
+  padding and its border, which is what decides how much of it is "empty border".
+- `/Users/julianhahn/free-pdf/user-flows.md` - which screens carry which buttons, so the report
+  can say whether it is one screen or all of them.
+
+**Find out which of these it is before you change a line.** They have different fixes and
+guessing produces the same "I changed it and nothing happened" this task list already records
+once:
+
+1. **The tap area is only the drawn content.** A SwiftUI view whose background is drawn but
+   which has no `contentShape` takes hits only where something is painted, so the padding
+   between the label and the border is dead. Fix is `.contentShape(Rectangle())` on the button's
+   own frame.
+2. **A scroll view eats the first touch.** Inside a `ScrollView`, the first tap can go to the
+   scroll gesture rather than to the button, and the second lands because the gesture is already
+   settled. That matches "first tap does nothing, second works" better than a dead area does.
+3. **A sheet, an overlay or the magnifier is holding a transparent layer over the button**,
+   which takes the first tap and dismisses itself. Check anything with `allowsHitTesting`.
+
+Reproduce it on the simulator first with `scan_check.sh`, and say in the report which screens
+show it and which do not - if it is every button, it is the shared component; if it is one
+screen, it is that screen's layout.
+
+**Build.** Whatever the cause turns out to be, the fix goes in the ONE place all the buttons
+route through, not on the screen where it was noticed. A guard added per screen leaves every
+sibling broken, which is the same mistake task 36 spent three rounds on.
+
+**Do not** widen the tap area past the drawn border to make it feel better - the drawn shape is
+approved design, and a hit area larger than the shape makes neighbouring controls steal touches.
+The target is that the whole drawn button responds on the FIRST tap, not that it grows.
+
+**Acceptance.**
+
+- Every button responds to a single tap anywhere inside its drawn outline, including the empty
+  padding between the label and the border, on a real phone.
+- `bash /Users/julianhahn/free-pdf/ios/check/scan_check.sh` passes.
+- Julian taps the borders on his own phone and says it is right. That is what decides it.
+
+**Blocked by.** Nothing.
