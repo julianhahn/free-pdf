@@ -1,0 +1,11 @@
+target/
+.DS_Store
+
+# Model weights are hundreds of megabytes and carry their own licence. They stay
+# on the machine that downloaded them, never in git history.
+models/
+*.gguf
+
+# Documents people translate are their own. A test file left lying around here
+# would be committed by the next `git add`.
+documents/

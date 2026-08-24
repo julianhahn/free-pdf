@@ -8,6 +8,21 @@ This file is the past. The future is [`README.md`](./README.md) under **Next ste
 both get updated in the same commit as the work
 ([`AGENTS.md`](./AGENTS.md#every-session-ends-in-these-two-files)).
 
+## 2026-08-24 - A second project, parked in this repo because GitHub said no
+
+Julian asked for an own open repo, `gemma-offline-translate`: a text file in, the same file in
+another language out, with a Gemma model in a local file. Built as its own Rust workspace -
+`translate_engine` (load, cut into passages, translate one, put back) plus a
+`translate-runner` command line client - under the same PolyForm Noncommercial licence, with
+the same rules as here: single tools, client owns the order, offline only, errors as sentences.
+16 tests green, and they need neither llama.cpp nor a model file.
+
+**It sits in `gemma-offline-translate/` and does not belong to FreePDF.** The GitHub app in this
+session may not create repositories (403), so the folder is parked here for transport only: the
+README under **Next steps** in this repo is untouched, because nothing in it became false.
+Julian creates the empty repo, then the folder moves out - the commands are in the session
+answer. Whoever moves it, delete the folder here in the same commit.
+
 ## 2026-08-24 - The corner Julian saw, and the two caps that gate each other
 
 He reported a wedge of desk at the BOTTOM RIGHT CORNER, the class the third round parked.

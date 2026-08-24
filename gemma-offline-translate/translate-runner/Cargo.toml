@@ -1,0 +1,11 @@
+[package]
+name = "translate-runner"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "gemma-translate"
+path = "src/main.rs"
+
+[dependencies]
+translate_engine = { path = "../translate_engine" }
